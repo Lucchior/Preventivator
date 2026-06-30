@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Preventivi Stampa 3D e Laser</title>
+  <style>
+    :root {
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #22c55e;
+      --accent-dark: #16a34a;
+      --danger: #ef4444;
+      --border: #374151;
+      --input: #0b1220;
+      --shadow: 0 10px 25px rgba(0,0,0,.18);
+      --radius: 16px;
+      --blue: #38bdf8;
+      --amber: #f59e0b;
+      --violet: #a78bfa;
+      --violet-dark: #7c3aed;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(180deg, #0b1020 0%, #0f172a 100%);
+      color: var(--text);
+    }
+    .app { max-width: 1140px; margin: 0 auto; padding: 16px 16px 40px; }
+    .hero {
+      background: rgba(17,24,39,.88);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 22px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+    .hero h1 { margin: 0 0 8px; font-size: clamp(24px, 4vw, 34px); }
+    .hero p { margin: 0; color: var(--muted); line-height: 1.5; }
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: linear-gradient(180deg, rgba(15,23,42,.95), rgba(15,23,42,.75));
+      padding: 8px 0;
+      backdrop-filter: blur(10px);
+    }
+    .tab-btn {
+      border: 1px solid var(--border);
+      background: rgba(17,24,39,.9);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .tab-btn.active, .tab-btn:hover { background: var(--accent); color: #052e16; border-color: transparent; }
+    .tab-btn[data-tab="tab-macchine"].active, .tab-btn[data-tab="tab-macchine"]:hover { background: var(--violet); color: #2e1065; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 16px; align-items: start; }
+    .card {
+      background: rgba(17,24,39,.9);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .card.zone-resources {
+      background: rgba(30,20,52,.55);
+      border: 1px solid rgba(167,139,250,.28);
+      position: relative;
+    }
+    .card.zone-resources::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      border-radius: var(--radius) var(--radius) 0 0;
+      background: linear-gradient(90deg, var(--violet-dark), var(--violet));
+    }
+    .card.zone-resources h2, .card.zone-resources h3 { color: #e9e3ff; }
+    .card.zone-resources input:focus, .card.zone-resources select:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(167,139,250,.2); }
+    .card.zone-resources .primary { background: var(--violet); color: #2e1065; }
+    .card.zone-resources .primary:hover { background: var(--violet-dark); color: #f5f3ff; }
+    .card.zone-resources .item { border: 1px solid rgba(167,139,250,.18); background: rgba(46,29,79,.4); }
+    .card.zone-resources .ok { color: #ede9fe; background: rgba(167,139,250,.16); border: 1px solid rgba(167,139,250,.32); }
+    .zone-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #c4b5fd;
+      background: rgba(167,139,250,.14);
+      border: 1px solid rgba(167,139,250,.3);
+      border-radius: 999px;
+      padding: 4px 10px;
+      margin-bottom: 10px;
+    }
+    .zone-tag.quote {
+      color: #bbf7d0;
+      background: rgba(34,197,94,.14);
+      border-color: rgba(34,197,94,.3);
+    }
+    .card h2, .card h3 { margin-top: 0; margin-bottom: 10px; }
+    .subtitle { color: var(--muted); margin-top: -4px; margin-bottom: 16px; line-height: 1.45; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+    .field.full { grid-column: 1 / -1; }
+    label { font-size: 14px; color: var(--muted); font-weight: 600; }
+    input, select {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--input);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 13px 14px;
+      font-size: 16px;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(34,197,94,.18); }
+    .checkbox-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 52px;
+      background: rgba(11,18,32,.55);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .checkbox-wrap input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent);
+      margin: 0;
+      flex: 0 0 auto;
+    }
+    .checkbox-wrap span { font-size: 15px; font-weight: 700; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .primary { background: var(--accent); color: #052e16; }
+    .primary:hover { background: var(--accent-dark); color: #ecfdf5; }
+    .secondary { background: #243041; color: var(--text); border: 1px solid var(--border); }
+    .danger { background: rgba(239,68,68,.14); color: #fecaca; border: 1px solid rgba(239,68,68,.35); }
+    .list { display: grid; gap: 12px; }
+    .item { background: rgba(31,41,55,.9); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 14px; }
+    .item-head { display: flex; justify-content: space-between; align-items: start; gap: 10px; margin-bottom: 8px; }
+    .item-title { font-size: 16px; font-weight: 800; }
+    .muted { color: var(--muted); }
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+    .stat { background: rgba(11,18,32,.65); border: 1px solid rgba(255,255,255,.05); border-radius: 12px; padding: 12px; }
+    .stat .k { color: var(--muted); font-size: 13px; margin-bottom: 4px; }
+    .stat .v { font-size: 18px; font-weight: 800; }
+    .summary { display: grid; gap: 10px; }
+    .summary-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px dashed rgba(255,255,255,.08);
+      padding-bottom: 10px;
+    }
+    .summary-line:last-child { border-bottom: 0; }
+    .summary-line strong { text-align: right; }
+    .empty {
+      color: var(--muted);
+      background: rgba(11,18,32,.45);
+      border: 1px dashed rgba(255,255,255,.12);
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+    }
+    .ok {
+      color: #bbf7d0;
+      background: rgba(34,197,94,.12);
+      border: 1px solid rgba(34,197,94,.22);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+      display: none;
+    }
+    .section-block {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      padding: 14px;
+      background: rgba(11,18,32,.42);
+      margin-bottom: 14px;
+    }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .section-title { font-size: 16px; font-weight: 800; }
+    .total-box {
+      margin-top: 10px;
+      background: rgba(34,197,94,.12);
+      border: 1px solid rgba(34,197,94,.22);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .total-box .label { color: #bbf7d0; font-size: 14px; }
+    .total-box .value { font-size: 28px; font-weight: 900; margin-top: 6px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      background: rgba(148,163,184,.18);
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .badge.blue { background: rgba(56,189,248,.14); color: #bae6fd; }
+    .badge.amber { background: rgba(245,158,11,.14); color: #fde68a; }
+    .badge.green { background: rgba(34,197,94,.14); color: #bbf7d0; }
+    .badge.red { background: rgba(239,68,68,.14); color: #fecaca; }
+    .badge.violet { background: rgba(167,139,250,.16); color: #ddd6fe; }
+    .hidden { display: none !important; }
+    .print-only { display: none; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+    @media print {
+      body * { visibility: hidden; }
+      #printArea, #printArea * { visibility: visible; }
+      #printArea {
+        display: block !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: #fff;
+        color: #111827;
+      }
+      @page { margin: 16mm; }
+    }
+    #printArea {
+      display: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #111827;
+      background: #fff;
+      padding: 0;
+    }
+    #printArea .doc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 3px solid #16a34a;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    #printArea .doc-header h1 { margin: 0; font-size: 24px; color: #0f172a; }
+    #printArea .doc-header .doc-sub { color: #475569; font-size: 13px; margin-top: 4px; }
+    #printArea .doc-number { text-align: right; color: #475569; font-size: 13px; }
+    #printArea .doc-number strong { display: block; color: #0f172a; font-size: 15px; }
+    #printArea .doc-section { margin-bottom: 22px; }
+    #printArea .doc-section h2 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #16a34a;
+      margin: 0 0 10px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 6px;
+    }
+    #printArea .doc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 24px;
+    }
+    #printArea .doc-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed #e2e8f0; font-size: 14px; }
+    #printArea .doc-row span:first-child { color: #64748b; }
+    #printArea .doc-row span:last-child { font-weight: 700; color: #0f172a; text-align: right; }
+    #printArea .price-table { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+    #printArea .price-table .doc-row { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; margin: 0; }
+    #printArea .price-table .doc-row:last-child { border-bottom: none; }
+    #printArea .price-total {
+      background: #f0fdf4;
+      padding: 16px;
+      border-radius: 10px;
+      margin-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #bbf7d0;
+    }
+    #printArea .price-total .label { font-size: 14px; color: #166534; font-weight: 700; }
+    #printArea .price-total .value { font-size: 26px; font-weight: 900; color: #14532d; }
+    #printArea .doc-footer { margin-top: 36px; padding-top: 14px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
+    @media (max-width: 640px) {
+      .app { padding: 12px; }
+      .form-grid, .stats, .tabs { grid-template-columns: 1fr; }
+      .hero { padding: 16px; }
+      .card { padding: 15px; }
+      .item-head, .summary-line, .section-head { flex-direction: column; }
+      .summary-line strong { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="hero">
+      <h1>Preventivi Stampa 3D e Laser</h1>
+      <p>Web-app responsive per creare preventivi separati o combinati con stampa 3D e incisore laser. I dati vengono salvati nel browser e restano disponibili anche su iPhone quando riapri la pagina sullo stesso dispositivo.</p>
+    </section>
+
+    <nav class="tabs" aria-label="Navigazione sezioni">
+      <button class="tab-btn active" data-tab="tab-macchine">Macchine</button>
+      <button class="tab-btn" data-tab="tab-lavoro">Lavoro</button>
+      <button class="tab-btn" data-tab="tab-riepilogo">Riepilogo</button>
+    </nav>
+
+    <section id="tab-macchine" class="tab-panel active">
+      <div class="grid">
+        <div class="card zone-resources">
+          <span class="zone-tag">📦 Risorse: parco macchine</span>
+          <h2>Aggiungi macchina</h2>
+          <p class="subtitle">Puoi salvare sia stampanti 3D sia incisori laser, con i relativi costi e il consumo orario, da riutilizzare nei preventivi singoli o combinati. Il costo energia per il preventivo viene calcolato come ore di lavoro × consumo (kW/h) × costo energia (€/kWh).</p>
+          <form id="machineForm">
+            <div class="form-grid">
+              <div class="field">
+                <label for="machineType">Tipo macchina</label>
+                <select id="machineType" required>
+                  <option value="3d">Stampante 3D</option>
+                  <option value="laser">Incisore laser</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="machineName">Nome macchina</label>
+                <input id="machineName" type="text" placeholder="Es. Bambu Lab X1C / Laser CO2 60W" required />
+              </div>
+              <div class="field">
+                <label for="machineCost">Costo macchina (€)</label>
+                <input id="machineCost" type="number" min="0" step="0.01" placeholder="0.00" required />
+              </div>
+              <div class="field">
+                <label for="energyCost">Costo energia (€/kWh)</label>
+                <input id="energyCost" type="number" min="0" step="0.0001" placeholder="0.0000" required />
+              </div>
+              <div class="field">
+                <label for="powerConsumption">Consumo macchina (kW/h)</label>
+                <input id="powerConsumption" type="number" min="0" step="0.01" placeholder="0.00" required />
+              </div>
+              <div class="field full">
+                <label for="maintenanceCost">Manutenzione ogni 1000h (€)</label>
+                <input id="maintenanceCost" type="number" min="0" step="0.01" placeholder="0.00" required />
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary" type="submit">Salva macchina</button>
+              <button class="secondary" type="button" id="resetMachines">Azzera elenco</button>
+            </div>
+            <div class="ok" id="machineSaved">Macchina salvata correttamente.</div>
+          </form>
+        </div>
+        <div class="card zone-resources">
+          <span class="zone-tag">📦 Risorse: parco macchine</span>
+          <h3>Macchine salvate</h3>
+          <div id="machineList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-lavoro" class="tab-panel">
+      <div class="grid">
+        <div class="card">
+          <span class="zone-tag quote">🧾 Preventivo</span>
+          <h2>Dati del lavoro</h2>
+          <p class="subtitle">Scegli se fare un preventivo solo 3D, solo laser oppure combinato con entrambe le lavorazioni, includendo anche le ore di preparazione e post-produzione manuale.</p>
+          <form id="jobForm">
+            <div class="form-grid">
+              <div class="field full">
+                <label for="jobMode">Tipo preventivo</label>
+                <select id="jobMode" required>
+                  <option value="3d">Solo stampa 3D</option>
+                  <option value="laser">Solo incisore laser</option>
+                  <option value="combined">Stampa 3D + incisore laser</option>
+                </select>
+              </div>
+              <div class="field full">
+                <label for="jobName">Nome preventivo</label>
+                <input id="jobName" type="text" placeholder="Es. Kit espositori personalizzati" />
+              </div>
+              <div class="field">
+                <label for="clientName">Cliente</label>
+                <input id="clientName" type="text" placeholder="Es. Rossi Arredamenti" />
+              </div>
+              <div class="field">
+                <label for="quoteDate">Data preventivo</label>
+                <input id="quoteDate" type="date" />
+              </div>
+            </div>
+
+            <div id="section3d" class="section-block">
+              <div class="section-head">
+                <div class="section-title">Lavorazione stampa 3D</div>
+                <span class="badge blue">Sezione 3D</span>
+              </div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="jobPrinter3d">Macchina 3D</label>
+                  <select id="jobPrinter3d"></select>
+                </div>
+                <div class="field">
+                  <label for="jobMaterial3d">Materiale 3D</label>
+                  <select id="jobMaterial3d"></select>
+                </div>
+                <div class="field">
+                  <label for="piecesCount3d">Numero pezzi / copie</label>
+                  <input id="piecesCount3d" type="number" min="1" step="1" value="1" />
+                </div>
+                <div class="field">
+                  <label for="platesCount3d">Numero piatti</label>
+                  <input id="platesCount3d" type="number" min="1" step="1" value="1" />
+                </div>
+                <div class="field">
+                  <label for="jobGrams3d">Materiale per piatto (g)</label>
+                  <input id="jobGrams3d" type="number" min="0" step="0.01" placeholder="0.00" />
+                </div>
+                <div class="field">
+                  <label for="jobHours3d">Ore di stampa per piatto</label>
+                  <input id="jobHours3d" type="number" min="0" step="0.01" placeholder="0.00" />
+                </div>
+              </div>
+            </div>
+
+            <div id="sectionLaser" class="section-block hidden">
+              <div class="section-head">
+                <div class="section-title">Lavorazione incisore laser</div>
+                <span class="badge amber">Sezione laser</span>
+              </div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="jobMachineLaser">Macchina laser</label>
+                  <select id="jobMachineLaser"></select>
+                </div>
+                <div class="field">
+                  <label for="jobMaterialLaser">Materiale laser</label>
+                  <select id="jobMaterialLaser"></select>
+                </div>
+                <div class="field">
+                  <label for="piecesCountLaser">Numero pezzi / copie</label>
+                  <input id="piecesCountLaser" type="number" min="1" step="1" value="1" />
+                </div>
+                <div class="field">
+                  <label for="laserMaterialQty">Quantità materiale laser</label>
+                  <input id="laserMaterialQty" type="number" min="0" step="0.01" placeholder="0.00" />
+                </div>
+                <div class="field full">
+                  <label for="jobHoursLaser">Ore lavorazione laser</label>
+                  <input id="jobHoursLaser" type="number" min="0" step="0.01" placeholder="0.00" />
+                </div>
+              </div>
+            </div>
+
+            <div class="section-block">
+              <div class="section-head">
+                <div class="section-title">Preparazione e post-produzione</div>
+                <span class="badge green">Manodopera</span>
+              </div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="manualHours">Ore lavoro manuale</label>
+                  <input id="manualHours" type="number" min="0" step="0.01" value="0" />
+                </div>
+                <div class="field">
+                  <label for="laborRate">Costo orario manodopera (€)</label>
+                  <input id="laborRate" type="number" min="0" step="0.01" value="0" />
+                </div>
+              </div>
+            </div>
+
+            <div class="section-block">
+              <div class="section-head">
+                <div class="section-title">Aspetti commerciali</div>
+                <span class="badge green">Calcolo finale</span>
+              </div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="failureMargin">Margine fallimento (%)</label>
+                  <input id="failureMargin" type="number" min="0" step="0.01" value="8" required />
+                </div>
+                <div class="field">
+                  <label for="profitMargin">Rincaro / guadagno (%)</label>
+                  <input id="profitMargin" type="number" min="0" step="0.01" value="100" required />
+                </div>
+                <div class="field">
+                  <label for="discountAmount">Sconto cliente (€)</label>
+                  <input id="discountAmount" type="number" min="0" step="0.01" value="0" required />
+                </div>
+                <div class="field">
+                  <label for="minimumPrice">Prezzo minimo (€)</label>
+                  <input id="minimumPrice" type="number" min="0" step="0.01" value="0" required />
+                </div>
+                <div class="field">
+                  <label for="vatPercent">IVA (%)</label>
+                  <input id="vatPercent" type="number" min="0" step="0.01" value="22" required />
+                </div>
+                <div class="field">
+                  <label>Applicazione IVA</label>
+                  <div class="checkbox-wrap">
+                    <input id="includeVat" type="checkbox" checked />
+                    <span>Includi IVA nel calcolo finale</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="primary" type="submit">Calcola riepilogo</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card zone-resources">
+          <span class="zone-tag">📦 Risorse: materiali</span>
+          <h3>Aggiungi materiale</h3>
+          <p class="subtitle">Puoi salvare materiali per stampa 3D e materiali per laser. Per il laser puoi scegliere l’unità di costo.</p>
+          <form id="materialForm">
+            <div class="form-grid">
+              <div class="field">
+                <label for="materialType">Tipo materiale</label>
+                <select id="materialType" required>
+                  <option value="3d">Materiale stampa 3D</option>
+                  <option value="laser">Materiale laser</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="materialUnit">Unità costo</label>
+                <select id="materialUnit" required>
+                  <option value="kg">kg</option>
+                  <option value="pezzo">pezzo</option>
+                  <option value="foglio">foglio</option>
+                  <option value="lastra">lastra</option>
+                  <option value="metro">metro</option>
+                </select>
+              </div>
+              <div class="field full">
+                <label for="materialName">Nome materiale</label>
+                <input id="materialName" type="text" placeholder="Es. PLA / Compensato 3 mm" required />
+              </div>
+              <div class="field full">
+                <label id="materialCostLabel" for="materialCost">Costo per kg (€)</label>
+                <input id="materialCost" type="number" min="0" step="0.01" placeholder="0.00" required />
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary" type="submit">Salva materiale</button>
+              <button class="secondary" type="button" id="resetMaterials">Azzera materiali</button>
+            </div>
+            <div class="ok" id="materialSaved">Materiale salvato correttamente.</div>
+          </form>
+          <div style="height: 14px"></div>
+          <div id="materialList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-riepilogo" class="tab-panel">
+      <div class="grid">
+        <div class="card">
+          <span class="zone-tag quote">🧾 Preventivo</span>
+          <h2>Riepilogo preventivo</h2>
+          <p class="subtitle">Il riepilogo mostra i costi separati per stampa 3D e laser, la manodopera manuale e il totale combinato finale.</p>
+          <div class="actions" style="margin-bottom:14px;">
+            <button class="primary" type="button" id="exportPdfBtn">Esporta PDF per il cliente</button>
+          </div>
+          <div id="quoteSummary" class="summary"></div>
+        </div>
+        <div class="card">
+          <h3>Formula prezzo</h3>
+          <div class="summary">
+            <div class="summary-line"><span>Subtotale 3D</span><strong>materiale + energia + manutenzione</strong></div>
+            <div class="summary-line"><span>Subtotale laser</span><strong>materiale + energia + manutenzione</strong></div>
+            <div class="summary-line"><span>Manodopera</span><strong>ore manuali × costo orario</strong></div>
+            <div class="summary-line"><span>Totale tecnico</span><strong>3D + laser + manodopera</strong></div>
+            <div class="summary-line"><span>Costo con fallimento</span><strong>totale base × (1 + fallimento %)</strong></div>
+            <div class="summary-line"><span>Prezzo finale</span><strong>rincaro, sconto, minimo e IVA opzionale</strong></div>
+          </div>
+          <div class="total-box">
+            <div class="label">Prezzo finale consigliato</div>
+            <div class="value" id="recommendedPriceBox">--</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="printArea">
+    <div class="doc-header">
+      <div>
+        <h1>Preventivo</h1>
+        <div class="doc-sub">Documento riepilogativo per il cliente</div>
+      </div>
+      <div class="doc-number">
+        <strong id="printQuoteName">-</strong>
+        Data: <span id="printQuoteDate">-</span>
+      </div>
+    </div>
+
+    <div class="doc-section">
+      <h2>Dati cliente</h2>
+      <div class="doc-grid">
+        <div class="doc-row"><span>Cliente</span><span id="printClientName">-</span></div>
+        <div class="doc-row"><span>Tipo preventivo</span><span id="printJobType">-</span></div>
+      </div>
+    </div>
+
+    <div class="doc-section">
+      <h2>Riepilogo economico</h2>
+      <div class="price-table">
+        <div class="doc-row"><span>Imponibile</span><span id="printSubtotal">-</span></div>
+        <div class="doc-row" id="printDiscountRow"><span>Sconto applicato</span><span id="printDiscount">-</span></div>
+        <div class="doc-row" id="printVatRow"><span>IVA</span><span id="printVat">-</span></div>
+      </div>
+      <div class="price-total">
+        <span class="label" id="printTotalLabel">Totale preventivo</span>
+        <span class="value" id="printTotalValue">-</span>
+      </div>
+    </div>
+
+    <div class="doc-footer">Documento generato il <span id="printGeneratedOn"></span> — valido salvo conferma.</div>
+  </div>
+
+  <script>
+    const STORAGE_KEYS = {
+      machines: 'preventivi3d_machines',
+      materials: 'preventivi3d_materials',
+      currentJob: 'preventivi3d_current_job'
+    };
+
+    const UNIT_LABELS = {
+      kg: 'kg',
+      pezzo: 'pezzo',
+      foglio: 'foglio',
+      lastra: 'lastra',
+      metro: 'metro'
+    };
+
+    const defaults = {
+      machines: [
+        { id: crypto.randomUUID(), type: '3d', name: 'Stampante esempio', machineCost: 1200, energyCost: 0.28, powerConsumption: 0.35, maintenanceCost: 120 },
+        { id: crypto.randomUUID(), type: 'laser', name: 'Laser CO2 esempio', machineCost: 2200, energyCost: 0.32, powerConsumption: 1.2, maintenanceCost: 180 }
+      ],
+      materials: [
+        { id: crypto.randomUUID(), type: '3d', unit: 'kg', name: 'PLA', unitCost: 22 },
+        { id: crypto.randomUUID(), type: 'laser', unit: 'foglio', name: 'Compensato 3 mm', unitCost: 5.5 }
+      ]
+    };
+
+    const currency = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+    const num = new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const machineForm = document.getElementById('machineForm');
+    const materialForm = document.getElementById('materialForm');
+    const jobForm = document.getElementById('jobForm');
+    const machineList = document.getElementById('machineList');
+    const materialList = document.getElementById('materialList');
+    const quoteSummary = document.getElementById('quoteSummary');
+    const recommendedPriceBox = document.getElementById('recommendedPriceBox');
+    const quoteDateInput = document.getElementById('quoteDate');
+    const jobMode = document.getElementById('jobMode');
+    const section3d = document.getElementById('section3d');
+    const sectionLaser = document.getElementById('sectionLaser');
+    const materialType = document.getElementById('materialType');
+    const materialUnit = document.getElementById('materialUnit');
+    const materialCostLabel = document.getElementById('materialCostLabel');
+
+    function todayString() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function loadData(key, fallback = []) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveData(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    function normalizeMachine(m) {
+      return {
+        id: m.id || crypto.randomUUID(),
+        type: m.type || '3d',
+        name: m.name || 'Macchina',
+        machineCost: Number(m.machineCost ?? m.printerCost ?? 0),
+        energyCost: Number(m.energyCost ?? 0),
+        powerConsumption: Number(m.powerConsumption ?? m.powerKw ?? 0),
+        maintenanceCost: Number(m.maintenanceCost ?? 0)
+      };
+    }
+
+    function normalizeMaterial(m) {
+      const type = m.type || '3d';
+      return {
+        id: m.id || crypto.randomUUID(),
+        type,
+        unit: m.unit || (type === '3d' ? 'kg' : 'pezzo'),
+        name: m.name || 'Materiale',
+        unitCost: Number(m.unitCost ?? m.costPerKg ?? 0)
+      };
+    }
+
+    function getMachines() {
+      const base = loadData(STORAGE_KEYS.machines, []);
+      let machines = [];
+      if (Array.isArray(base) && base.length) {
+        machines = base.map(normalizeMachine);
+      } else {
+        const legacyPrinters = loadData('preventivi3d_printers', []);
+        machines = legacyPrinters.map(normalizeMachine);
+        if (!machines.length) machines = defaults.machines.map(normalizeMachine);
+        if (!machines.some(x => x.type === 'laser')) machines.push(normalizeMachine(defaults.machines[1]));
+      }
+      saveData(STORAGE_KEYS.machines, machines);
+      return machines;
+    }
+
+    function getMaterials() {
+      const base = loadData(STORAGE_KEYS.materials, defaults.materials);
+      const materials = (Array.isArray(base) && base.length ? base : defaults.materials).map(normalizeMaterial);
+      saveData(STORAGE_KEYS.materials, materials);
+      return materials;
+    }
+
+    function badgeForType(type) {
+      return type === 'laser'
+        ? '<span class="badge amber">Incisore laser</span>'
+        : '<span class="badge blue">Stampa 3D</span>';
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function showSaved(id) {
+      const el = document.getElementById(id);
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 1800);
+    }
+
+    function renderMachines() {
+      const machines = getMachines();
+      if (!machines.length) {
+        machineList.innerHTML = '<div class="empty">Nessuna macchina salvata.</div>';
+      } else {
+        machineList.innerHTML = machines.map(m => `
+          <div class="item">
+            <div class="item-head">
+              <div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">${badgeForType(m.type)}<span class="item-title">${escapeHtml(m.name)}</span></div>
+                <div class="muted">Costo macchina: ${currency.format(Number(m.machineCost || 0))}</div>
+              </div>
+              <button class="danger" type="button" onclick="removeMachine('${m.id}')">Elimina</button>
+            </div>
+            <div class="stats">
+              <div class="stat"><div class="k">Energia</div><div class="v">${currency.format(Number(m.energyCost || 0))}/kWh</div></div>
+              <div class="stat"><div class="k">Consumo</div><div class="v">${num.format(Number(m.powerConsumption || 0))} kW/h</div></div>
+              <div class="stat"><div class="k">Costo energia/h</div><div class="v">${currency.format(Number(m.powerConsumption || 0) * Number(m.energyCost || 0))}</div></div>
+              <div class="stat"><div class="k">Manut. 1000h</div><div class="v">${currency.format(Number(m.maintenanceCost || 0))}</div></div>
+            </div>
+          </div>
+        `).join('');
+      }
+      renderMachineOptions();
+    }
+
+    function renderMaterials() {
+      const materials = getMaterials();
+      if (!materials.length) {
+        materialList.innerHTML = '<div class="empty">Nessun materiale salvato.</div>';
+      } else {
+        materialList.innerHTML = materials.map(m => `
+          <div class="item">
+            <div class="item-head">
+              <div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">${badgeForType(m.type)}<span class="item-title">${escapeHtml(m.name)}</span></div>
+                <div class="muted">Costo per ${escapeHtml(UNIT_LABELS[m.unit] || m.unit)}: ${currency.format(Number(m.unitCost || 0))}</div>
+              </div>
+              <button class="danger" type="button" onclick="removeMaterial('${m.id}')">Elimina</button>
+            </div>
+          </div>
+        `).join('');
+      }
+      renderMaterialOptions();
+    }
+
+    function fillSelect(selectId, items, placeholder, labelFn) {
+      const el = document.getElementById(selectId);
+      if (!items.length) {
+        el.innerHTML = `<option value="">${placeholder}</option>`;
+        return;
+      }
+      el.innerHTML = items.map(item => `<option value="${item.id}">${escapeHtml(labelFn(item))}</option>`).join('');
+    }
+
+    function renderMachineOptions() {
+      const machines = getMachines();
+      fillSelect('jobPrinter3d', machines.filter(m => m.type === '3d'), 'Aggiungi una macchina 3D', m => m.name);
+      fillSelect('jobMachineLaser', machines.filter(m => m.type === 'laser'), 'Aggiungi una macchina laser', m => m.name);
+      restoreCurrentJobSelections();
+    }
+
+    function renderMaterialOptions() {
+      const materials = getMaterials();
+      fillSelect('jobMaterial3d', materials.filter(m => m.type === '3d'), 'Aggiungi un materiale 3D', m => `${m.name} (${UNIT_LABELS[m.unit] || m.unit})`);
+      fillSelect('jobMaterialLaser', materials.filter(m => m.type === 'laser'), 'Aggiungi un materiale laser', m => `${m.name} (${UNIT_LABELS[m.unit] || m.unit})`);
+      restoreCurrentJobSelections();
+    }
+
+    function updateJobModeUI() {
+      const mode = jobMode.value;
+      section3d.classList.toggle('hidden', mode === 'laser');
+      sectionLaser.classList.toggle('hidden', mode === '3d');
+    }
+
+    function updateMaterialFormUI() {
+      const type = materialType.value;
+      if (type === '3d') {
+        materialUnit.value = 'kg';
+        materialUnit.disabled = true;
+        materialCostLabel.textContent = 'Costo per kg (€)';
+      } else {
+        materialUnit.disabled = false;
+        materialCostLabel.textContent = `Costo per ${UNIT_LABELS[materialUnit.value] || materialUnit.value} (€)`;
+      }
+    }
+
+    function restoreCurrentJobSelections() {
+      const saved = loadData(STORAGE_KEYS.currentJob, null);
+      if (!saved || saved.version !== 'hybrid-v3') {
+        if (!quoteDateInput.value) quoteDateInput.value = todayString();
+        return;
+      }
+      const safeSet = (id, value, fallback='') => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.type === 'checkbox') {
+          el.checked = value !== undefined && value !== null ? Boolean(value) : Boolean(fallback);
+          return;
+        }
+        if (value !== undefined && value !== null && value !== '') el.value = value;
+        else if (fallback !== '') el.value = fallback;
+      };
+      safeSet('jobMode', saved.jobMode, '3d');
+      safeSet('jobName', saved.jobName || '');
+      safeSet('clientName', saved.clientName || '');
+      safeSet('quoteDate', saved.quoteDate || todayString());
+      safeSet('jobPrinter3d', saved.jobPrinter3d || '');
+      safeSet('jobMaterial3d', saved.jobMaterial3d || '');
+      safeSet('piecesCount3d', saved.piecesCount3d, 1);
+      safeSet('platesCount3d', saved.platesCount3d, 1);
+      safeSet('jobGrams3d', saved.jobGrams3d || '');
+      safeSet('jobHours3d', saved.jobHours3d || '');
+      safeSet('jobMachineLaser', saved.jobMachineLaser || '');
+      safeSet('jobMaterialLaser', saved.jobMaterialLaser || '');
+      safeSet('piecesCountLaser', saved.piecesCountLaser, 1);
+      safeSet('laserMaterialQty', saved.laserMaterialQty || '');
+      safeSet('jobHoursLaser', saved.jobHoursLaser || '');
+      safeSet('manualHours', saved.manualHours, 0);
+      safeSet('laborRate', saved.laborRate, 0);
+      safeSet('failureMargin', saved.failureMargin, 8);
+      safeSet('profitMargin', saved.profitMargin, 100);
+      safeSet('discountAmount', saved.discountAmount, 0);
+      safeSet('minimumPrice', saved.minimumPrice, 0);
+      safeSet('vatPercent', saved.vatPercent, 22);
+      safeSet('includeVat', saved.includeVat, true);
+      updateJobModeUI();
+      if (saved.result) renderSummary(saved.result);
+    }
+
+    function renderSummary(result) {
+      window.__lastQuoteResult = (result && result.version === 'hybrid-v3') ? result : null;
+      if (!result || result.version !== 'hybrid-v3') {
+        quoteSummary.innerHTML = '<div class="empty">Compila il tab Lavoro per vedere il riepilogo di stampa 3D, laser o lavorazione combinata.</div>';
+        recommendedPriceBox.textContent = '--';
+        return;
+      }
+      const modeBadge = result.jobMode === 'combined'
+        ? '<span class="badge green">3D + laser</span>'
+        : result.jobMode === 'laser'
+          ? '<span class="badge amber">Solo laser</span>'
+          : '<span class="badge blue">Solo 3D</span>';
+      const vatBadge = result.includeVat
+        ? '<span class="badge green">IVA inclusa</span>'
+        : '<span class="badge red">IVA esclusa</span>';
+      let html = `
+        <div class="summary-line"><span>Tipo preventivo</span><strong>${modeBadge}</strong></div>
+        <div class="summary-line"><span>Preventivo</span><strong>${escapeHtml(result.jobName || 'Senza nome')}</strong></div>
+        <div class="summary-line"><span>Cliente</span><strong>${escapeHtml(result.clientName || 'Non indicato')}</strong></div>
+        <div class="summary-line"><span>Data preventivo</span><strong>${escapeHtml(result.quoteDate || '-')}</strong></div>
+      `;
+      if (result.use3d) {
+        html += `
+          <div class="summary-line"><span>Macchina 3D</span><strong>${escapeHtml(result.printer3dName)}</strong></div>
+          <div class="summary-line"><span>Materiale 3D</span><strong>${escapeHtml(result.material3dName)}</strong></div>
+          <div class="summary-line"><span>Pezzi 3D</span><strong>${num.format(result.piecesCount3d)}</strong></div>
+          <div class="summary-line"><span>Piatti 3D</span><strong>${num.format(result.platesCount3d)}</strong></div>
+          <div class="summary-line"><span>Materiale totale 3D</span><strong>${num.format(result.totalGrams3d)} g</strong></div>
+          <div class="summary-line"><span>Ore totali 3D</span><strong>${num.format(result.totalHours3d)} h</strong></div>
+          <div class="summary-line"><span>Subtotale 3D</span><strong>${currency.format(result.subtotal3d)}</strong></div>
+        `;
+      }
+      if (result.useLaser) {
+        html += `
+          <div class="summary-line"><span>Macchina laser</span><strong>${escapeHtml(result.machineLaserName)}</strong></div>
+          <div class="summary-line"><span>Materiale laser</span><strong>${escapeHtml(result.materialLaserName)}</strong></div>
+          <div class="summary-line"><span>Pezzi laser</span><strong>${num.format(result.piecesCountLaser)}</strong></div>
+          <div class="summary-line"><span>Quantità materiale laser</span><strong>${num.format(result.laserMaterialQty)} ${escapeHtml(result.materialLaserUnitLabel)}</strong></div>
+          <div class="summary-line"><span>Ore totali laser</span><strong>${num.format(result.totalHoursLaser)} h</strong></div>
+          <div class="summary-line"><span>Subtotale laser</span><strong>${currency.format(result.subtotalLaser)}</strong></div>
+        `;
+      }
+      html += `
+        <div class="summary-line"><span>Ore lavoro manuale</span><strong>${num.format(result.manualHours)} h</strong></div>
+        <div class="summary-line"><span>Costo orario manodopera</span><strong>${currency.format(result.laborRate)}</strong></div>
+        <div class="summary-line"><span>Costo manodopera</span><strong>${currency.format(result.manualLaborCost)}</strong></div>
+        <div class="summary-line"><span>Margine fallimento</span><strong>${num.format(result.failureMargin)}%</strong></div>
+        <div class="summary-line"><span>Rincaro guadagno</span><strong>${num.format(result.profitMargin)}%</strong></div>
+        <div class="summary-line"><span>Sconto cliente</span><strong>${currency.format(result.discountValue)}</strong></div>
+        <div class="summary-line"><span>Prezzo minimo</span><strong>${currency.format(result.minimumPrice)}</strong></div>
+        <div class="summary-line"><span>IVA</span><strong>${num.format(result.vatPercent)}% — ${vatBadge}</strong></div>
+        <div class="summary-line"><span>Costo materiale totale</span><strong>${currency.format(result.materialCostTotal)}</strong></div>
+        <div class="summary-line"><span>Costo energia totale</span><strong>${currency.format(result.energyCostTotal)}</strong></div>
+        <div class="summary-line"><span>Quota manutenzione totale</span><strong>${currency.format(result.maintenanceCostTotal)}</strong></div>
+        <div class="summary-line"><span>Totale base tecnico</span><strong>${currency.format(result.baseTechnicalTotal)}</strong></div>
+        <div class="summary-line"><span>Totale base con manodopera</span><strong>${currency.format(result.baseTotal)}</strong></div>
+        <div class="summary-line"><span>Incidenza fallimento</span><strong>${currency.format(result.failureCost)}</strong></div>
+        <div class="summary-line"><span>Costo corretto</span><strong>${currency.format(result.adjustedTotal)}</strong></div>
+        <div class="summary-line"><span>Guadagno applicato</span><strong>${currency.format(result.profitValue)}</strong></div>
+        <div class="summary-line"><span>Prezzo con rincaro</span><strong>${currency.format(result.priceBeforeDiscount)}</strong></div>
+        <div class="summary-line"><span>Valore sconto</span><strong>${currency.format(result.discountValue)}</strong></div>
+        <div class="summary-line"><span>Prezzo dopo sconto</span><strong>${currency.format(result.priceAfterDiscount)}</strong></div>
+        <div class="summary-line"><span>Prezzo minimo applicato</span><strong>${currency.format(result.priceAfterMinimum)}</strong></div>
+        <div class="summary-line"><span>Valore IVA</span><strong>${currency.format(result.vatValue)}</strong></div>
+        <div class="summary-line"><span>Prezzo finale consigliato</span><strong>${currency.format(result.finalRecommendedPrice)}</strong></div>
+      `;
+      quoteSummary.innerHTML = html;
+      recommendedPriceBox.textContent = currency.format(result.finalRecommendedPrice);
+    }
+
+    function jobTypeLabel(result) {
+      if (result.jobMode === 'combined') return 'Stampa 3D + Laser';
+      if (result.jobMode === 'laser') return 'Solo lavorazione laser';
+      return 'Solo stampa 3D';
+    }
+
+    document.getElementById('exportPdfBtn').addEventListener('click', () => {
+      const result = window.__lastQuoteResult;
+      if (!result) {
+        alert('Prima calcola un preventivo nel tab Lavoro per poterlo esportare in PDF.');
+        return;
+      }
+      document.getElementById('printQuoteName').textContent = result.jobName || 'Preventivo senza nome';
+      document.getElementById('printQuoteDate').textContent = result.quoteDate || '-';
+      document.getElementById('printClientName').textContent = result.clientName || 'Non indicato';
+      document.getElementById('printJobType').textContent = jobTypeLabel(result);
+      document.getElementById('printSubtotal').textContent = currency.format(result.priceAfterMinimum);
+
+      const discountRow = document.getElementById('printDiscountRow');
+      if (result.discountValue > 0) {
+        discountRow.style.display = 'flex';
+        document.getElementById('printDiscount').textContent = `-${currency.format(result.discountValue)}`;
+      } else {
+        discountRow.style.display = 'none';
+      }
+
+      const vatRow = document.getElementById('printVatRow');
+      if (result.includeVat) {
+        vatRow.style.display = 'flex';
+        document.getElementById('printVat').textContent = `${num.format(result.vatPercent)}% (${currency.format(result.vatValue)})`;
+        document.getElementById('printTotalLabel').textContent = 'Totale preventivo (IVA inclusa)';
+      } else {
+        vatRow.style.display = 'flex';
+        document.getElementById('printVat').textContent = 'Esclusa';
+        document.getElementById('printTotalLabel').textContent = 'Totale preventivo (IVA esclusa)';
+      }
+
+      document.getElementById('printTotalValue').textContent = currency.format(result.finalRecommendedPrice);
+      document.getElementById('printGeneratedOn').textContent = new Date().toLocaleDateString('it-IT');
+
+      window.print();
+    });
+
+    machineForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const machines = getMachines();
+      machines.push({
+        id: crypto.randomUUID(),
+        type: document.getElementById('machineType').value,
+        name: document.getElementById('machineName').value.trim(),
+        machineCost: Number(document.getElementById('machineCost').value),
+        energyCost: Number(document.getElementById('energyCost').value),
+        powerConsumption: Number(document.getElementById('powerConsumption').value),
+        maintenanceCost: Number(document.getElementById('maintenanceCost').value)
+      });
+      saveData(STORAGE_KEYS.machines, machines);
+      machineForm.reset();
+      document.getElementById('machineType').value = '3d';
+      renderMachines();
+      showSaved('machineSaved');
+    });
+
+    materialForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const materials = getMaterials();
+      const type = document.getElementById('materialType').value;
+      materials.push({
+        id: crypto.randomUUID(),
+        type,
+        unit: type === '3d' ? 'kg' : document.getElementById('materialUnit').value,
+        name: document.getElementById('materialName').value.trim(),
+        unitCost: Number(document.getElementById('materialCost').value)
+      });
+      saveData(STORAGE_KEYS.materials, materials);
+      materialForm.reset();
+      document.getElementById('materialType').value = '3d';
+      updateMaterialFormUI();
+      renderMaterials();
+      showSaved('materialSaved');
+    });
+
+    jobForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const machines = getMachines();
+      const materials = getMaterials();
+      const currentMode = document.getElementById('jobMode').value;
+      const use3d = currentMode === '3d' || currentMode === 'combined';
+      const useLaser = currentMode === 'laser' || currentMode === 'combined';
+
+      let printer3d = null;
+      let material3d = null;
+      let machineLaser = null;
+      let materialLaser = null;
+
+      if (use3d) {
+        printer3d = machines.find(m => m.id === document.getElementById('jobPrinter3d').value && m.type === '3d');
+        material3d = materials.find(m => m.id === document.getElementById('jobMaterial3d').value && m.type === '3d');
+        if (!printer3d || !material3d) {
+          alert('Per la sezione stampa 3D devi selezionare una macchina 3D e un materiale 3D validi.');
+          return;
+        }
+      }
+      if (useLaser) {
+        machineLaser = machines.find(m => m.id === document.getElementById('jobMachineLaser').value && m.type === 'laser');
+        materialLaser = materials.find(m => m.id === document.getElementById('jobMaterialLaser').value && m.type === 'laser');
+        if (!machineLaser || !materialLaser) {
+          alert('Per la sezione laser devi selezionare una macchina laser e un materiale laser validi.');
+          return;
+        }
+      }
+
+      const piecesCount3d = Number(document.getElementById('piecesCount3d').value || 1);
+      const platesCount3d = Number(document.getElementById('platesCount3d').value || 1);
+      const gramsPerPlate3d = Number(document.getElementById('jobGrams3d').value || 0);
+      const hoursPerPlate3d = Number(document.getElementById('jobHours3d').value || 0);
+      const piecesCountLaser = Number(document.getElementById('piecesCountLaser').value || 1);
+      const laserMaterialQty = Number(document.getElementById('laserMaterialQty').value || 0);
+      const totalHoursLaser = Number(document.getElementById('jobHoursLaser').value || 0);
+      const manualHours = Number(document.getElementById('manualHours').value || 0);
+      const laborRate = Number(document.getElementById('laborRate').value || 0);
+      const failureMargin = Number(document.getElementById('failureMargin').value || 0);
+      const profitMargin = Number(document.getElementById('profitMargin').value || 0);
+      const discountAmount = Number(document.getElementById('discountAmount').value || 0);
+      const minimumPrice = Number(document.getElementById('minimumPrice').value || 0);
+      const vatPercent = Number(document.getElementById('vatPercent').value || 0);
+      const includeVat = document.getElementById('includeVat').checked;
+
+      const totalGrams3d = use3d ? gramsPerPlate3d * platesCount3d : 0;
+      const totalHours3d = use3d ? hoursPerPlate3d * platesCount3d : 0;
+      const materialCost3d = use3d ? (totalGrams3d / 1000) * Number(material3d.unitCost || 0) : 0;
+      const energyCost3d = use3d ? totalHours3d * Number(printer3d.powerConsumption || 0) * Number(printer3d.energyCost || 0) : 0;
+      const maintenanceCost3d = use3d ? (totalHours3d / 1000) * Number(printer3d.maintenanceCost || 0) : 0;
+      const subtotal3d = materialCost3d + energyCost3d + maintenanceCost3d;
+
+      const materialCostLaser = useLaser ? laserMaterialQty * Number(materialLaser.unitCost || 0) : 0;
+      const energyCostLaser = useLaser ? totalHoursLaser * Number(machineLaser.powerConsumption || 0) * Number(machineLaser.energyCost || 0) : 0;
+      const maintenanceCostLaser = useLaser ? (totalHoursLaser / 1000) * Number(machineLaser.maintenanceCost || 0) : 0;
+      const subtotalLaser = materialCostLaser + energyCostLaser + maintenanceCostLaser;
+
+      const materialCostTotal = materialCost3d + materialCostLaser;
+      const energyCostTotal = energyCost3d + energyCostLaser;
+      const maintenanceCostTotal = maintenanceCost3d + maintenanceCostLaser;
+      const manualLaborCost = manualHours * laborRate;
+      const baseTechnicalTotal = subtotal3d + subtotalLaser;
+      const baseTotal = baseTechnicalTotal + manualLaborCost;
+      const failureCost = baseTotal * (failureMargin / 100);
+      const adjustedTotal = baseTotal + failureCost;
+      const profitValue = adjustedTotal * (profitMargin / 100);
+      const priceBeforeDiscount = adjustedTotal + profitValue;
+      const discountValue = Math.min(discountAmount, priceBeforeDiscount);
+      const priceAfterDiscount = priceBeforeDiscount - discountValue;
+      const priceAfterMinimum = Math.max(priceAfterDiscount, minimumPrice);
+      const vatValue = includeVat ? priceAfterMinimum * (vatPercent / 100) : 0;
+      const finalRecommendedPrice = priceAfterMinimum + vatValue;
+
+      const result = {
+        version: 'hybrid-v3',
+        jobMode: currentMode,
+        use3d,
+        useLaser,
+        jobName: document.getElementById('jobName').value.trim(),
+        clientName: document.getElementById('clientName').value.trim(),
+        quoteDate: document.getElementById('quoteDate').value || todayString(),
+        printer3dName: use3d ? printer3d.name : '',
+        material3dName: use3d ? material3d.name : '',
+        piecesCount3d,
+        platesCount3d,
+        gramsPerPlate3d,
+        totalGrams3d,
+        hoursPerPlate3d,
+        totalHours3d,
+        machineLaserName: useLaser ? machineLaser.name : '',
+        materialLaserName: useLaser ? materialLaser.name : '',
+        materialLaserUnitLabel: useLaser ? (UNIT_LABELS[materialLaser.unit] || materialLaser.unit) : '',
+        piecesCountLaser,
+        laserMaterialQty,
+        totalHoursLaser,
+        manualHours,
+        laborRate,
+        manualLaborCost,
+        failureMargin,
+        profitMargin,
+        discountAmount,
+        minimumPrice,
+        vatPercent,
+        includeVat,
+        materialCostTotal,
+        energyCostTotal,
+        maintenanceCostTotal,
+        subtotal3d,
+        subtotalLaser,
+        baseTechnicalTotal,
+        baseTotal,
+        failureCost,
+        adjustedTotal,
+        profitValue,
+        priceBeforeDiscount,
+        discountValue,
+        priceAfterDiscount,
+        priceAfterMinimum,
+        vatValue,
+        finalRecommendedPrice
+      };
+
+      saveData(STORAGE_KEYS.currentJob, {
+        version: 'hybrid-v3',
+        jobMode: currentMode,
+        jobName: document.getElementById('jobName').value.trim(),
+        clientName: document.getElementById('clientName').value.trim(),
+        quoteDate: document.getElementById('quoteDate').value || todayString(),
+        jobPrinter3d: document.getElementById('jobPrinter3d').value,
+        jobMaterial3d: document.getElementById('jobMaterial3d').value,
+        piecesCount3d,
+        platesCount3d,
+        jobGrams3d: gramsPerPlate3d,
+        jobHours3d: hoursPerPlate3d,
+        jobMachineLaser: document.getElementById('jobMachineLaser').value,
+        jobMaterialLaser: document.getElementById('jobMaterialLaser').value,
+        piecesCountLaser,
+        laserMaterialQty,
+        jobHoursLaser: totalHoursLaser,
+        manualHours,
+        laborRate,
+        failureMargin,
+        profitMargin,
+        discountAmount,
+        minimumPrice,
+        vatPercent,
+        includeVat,
+        result
+      });
+      renderSummary(result);
+      activateTab('tab-riepilogo');
+    });
+
+    document.getElementById('resetMachines').addEventListener('click', () => {
+      if (!confirm('Vuoi cancellare tutte le macchine salvate?')) return;
+      saveData(STORAGE_KEYS.machines, []);
+      renderMachines();
+    });
+
+    document.getElementById('resetMaterials').addEventListener('click', () => {
+      if (!confirm('Vuoi cancellare tutti i materiali salvati?')) return;
+      saveData(STORAGE_KEYS.materials, []);
+      renderMaterials();
+    });
+
+    function removeMachine(id) {
+      const updated = getMachines().filter(m => m.id !== id);
+      saveData(STORAGE_KEYS.machines, updated);
+      renderMachines();
+    }
+
+    function removeMaterial(id) {
+      const updated = getMaterials().filter(m => m.id !== id);
+      saveData(STORAGE_KEYS.materials, updated);
+      renderMaterials();
+    }
+
+    window.removeMachine = removeMachine;
+    window.removeMaterial = removeMaterial;
+
+    function activateTab(id) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === id));
+      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.toggle('active', panel.id === id));
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+    });
+
+    jobMode.addEventListener('change', updateJobModeUI);
+    materialType.addEventListener('change', updateMaterialFormUI);
+    materialUnit.addEventListener('change', updateMaterialFormUI);
+
+    if (!quoteDateInput.value) quoteDateInput.value = todayString();
+    updateMaterialFormUI();
+    updateJobModeUI();
+    renderMachines();
+    renderMaterials();
+    restoreCurrentJobSelections();
+    renderSummary(loadData(STORAGE_KEYS.currentJob, {}).result || null);
+  </script>
+</body>
+</html>
