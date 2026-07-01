@@ -192,6 +192,55 @@
       color: var(--muted);
       line-height: 1.4;
     }
+    .job-card {
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      border: 1px solid transparent;
+      position: relative;
+    }
+    .job-card.type-3d {
+      background: rgba(56,189,248,.07);
+      border-color: rgba(56,189,248,.28);
+    }
+    .job-card.type-laser {
+      background: rgba(245,158,11,.07);
+      border-color: rgba(245,158,11,.28);
+    }
+    .job-card-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .job-card-num {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+    }
+    .job-card-head .badge { margin-left: auto; }
+    .job-card-remove {
+      background: none;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 13px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      opacity: .7;
+      transition: opacity .15s;
+    }
+    .job-card-remove:hover { opacity: 1; background: rgba(239,68,68,.12); }
+    .job-card .form-grid { gap: 10px; }
+    .job-card .field { margin-bottom: 4px; }
+    .jobs-empty {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13.5px;
+      padding: 20px 0 10px;
+    }
     .subtitle { color: var(--muted); margin-top: -4px; margin-bottom: 16px; line-height: 1.45; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
@@ -276,6 +325,7 @@
       margin-top: 10px;
       display: none;
     }
+    .ok.visible { display: block; }
     .section-block {
       border: 1px solid rgba(255,255,255,.08);
       border-radius: 14px;
@@ -479,14 +529,6 @@
           <form id="jobForm">
             <div class="form-grid">
               <div class="field full">
-                <label for="jobMode">Tipo preventivo</label>
-                <select id="jobMode" required>
-                  <option value="3d">Solo stampa 3D</option>
-                  <option value="laser">Solo incisore laser</option>
-                  <option value="combined">Stampa 3D + incisore laser</option>
-                </select>
-              </div>
-              <div class="field full">
                 <label for="jobName">Nome preventivo</label>
                 <input id="jobName" type="text" placeholder="Es. Kit espositori personalizzati" />
               </div>
@@ -504,86 +546,16 @@
               </div>
             </div>
 
-            <div id="section3d" class="section-block">
+            <div class="section-block">
               <div class="section-head">
-                <div class="section-title">Lavorazione stampa 3D</div>
-                <span class="badge blue">Sezione 3D</span>
+                <div class="section-title">Lavorazioni</div>
+                <span class="badge blue">Stampa 3D &amp; Laser</span>
               </div>
-              <p class="subtitle" style="margin-top:-6px;">Inserisci i grammi e le ore relativi a un piatto intero (con tutti i pezzi ottimizzati sopra). "Pezzi per piatto" serve solo a calcolare il costo unitario; "Numero piatti" è invece il moltiplicatore reale se ripeti la stessa stampa più volte.</p>
-
-              <div class="form-grid">
-                <div class="field">
-                  <label for="jobPrinter3d">Macchina 3D</label>
-                  <select id="jobPrinter3d"></select>
-                </div>
-                <div class="field">
-                  <label for="jobMaterial3d">Materiale 3D</label>
-                  <select id="jobMaterial3d"></select>
-                </div>
-                <div class="field">
-                  <label for="piecesCount3d">Pezzi per piatto</label>
-                  <input id="piecesCount3d" type="number" min="1" step="1" value="1" />
-                </div>
-                <div class="field">
-                  <label for="platesCount3d">Numero piatti (ripetizioni)</label>
-                  <input id="platesCount3d" type="number" min="1" step="1" value="1" />
-                </div>
-                <div class="field">
-                  <label for="jobGrams3d">Materiale per piatto (g)</label>
-                  <input id="jobGrams3d" type="number" min="0" step="0.01" placeholder="0.00" />
-                </div>
-                <div class="field full">
-                  <label>Durata stampa per piatto</label>
-                  <div class="inline-fields">
-                    <input id="jobDays3d" type="number" min="0" step="1" value="0" style="width:60px;" />
-                    <span class="inline-label">g</span>
-                    <input id="jobH3d" type="number" min="0" max="23" step="1" value="0" style="width:60px;" />
-                    <span class="inline-label">h</span>
-                    <input id="jobMin3d" type="number" min="0" max="59" step="1" value="0" style="width:60px;" />
-                    <span class="inline-label">min</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div id="sectionLaser" class="section-block hidden">
-              <div class="section-head">
-                <div class="section-title">Lavorazione incisore laser</div>
-                <span class="badge amber">Sezione laser</span>
-              </div>
-              <p class="subtitle" style="margin-top:-6px;">Inserisci materiale e ore relativi a una lavorazione/lastra intera. "Pezzi per lavorazione" serve solo per il costo unitario; "Numero lavorazioni" moltiplica il costo se la ripeti più volte.</p>
-              <div class="form-grid">
-                <div class="field">
-                  <label for="jobMachineLaser">Macchina laser</label>
-                  <select id="jobMachineLaser"></select>
-                </div>
-                <div class="field">
-                  <label for="jobMaterialLaser">Materiale laser</label>
-                  <select id="jobMaterialLaser"></select>
-                </div>
-                <div class="field">
-                  <label for="piecesCountLaser">Pezzi per lavorazione</label>
-                  <input id="piecesCountLaser" type="number" min="1" step="1" value="1" />
-                </div>
-                <div class="field">
-                  <label for="batchCountLaser">Numero lavorazioni (ripetizioni)</label>
-                  <input id="batchCountLaser" type="number" min="1" step="1" value="1" />
-                </div>
-                <div class="field">
-                  <label for="laserMaterialQty">Quantità materiale per lavorazione</label>
-                  <input id="laserMaterialQty" type="number" min="0" step="0.01" placeholder="0.00" />
-                </div>
-                <div class="field full">
-                  <label>Durata per lavorazione</label>
-                  <div class="inline-fields">
-                    <input id="jobDaysLaser" type="number" min="0" step="1" value="0" style="width:60px;" />
-                    <span class="inline-label">g</span>
-                    <input id="jobHLaser" type="number" min="0" max="23" step="1" value="0" style="width:60px;" />
-                    <span class="inline-label">h</span>
-                    <input id="jobMinLaser" type="number" min="0" max="59" step="1" value="0" style="width:60px;" />
-                    <span class="inline-label">min</span>
-                  </div>
-                </div>
+              <p class="subtitle" style="margin-top:-6px;">Aggiungi una o più lavorazioni: ogni riga può essere 3D o laser, con macchina e materiale propri. "Pezzi per piatto/lavorazione" è informativo (usato per il costo unitario); il moltiplicatore di costo reale è "Numero piatti/lavorazioni".</p>
+              <div id="jobsList"></div>
+              <div class="actions" style="margin-top:10px; flex-wrap:wrap; gap:8px;">
+                <button class="secondary" type="button" id="addJob3d">＋ Aggiungi lavorazione 3D</button>
+                <button class="secondary" type="button" id="addJobLaser">＋ Aggiungi lavorazione laser</button>
               </div>
             </div>
 
@@ -761,7 +733,8 @@
     const STORAGE_KEYS = {
       machines: 'preventivi3d_machines',
       materials: 'preventivi3d_materials',
-      currentJob: 'preventivi3d_current_job'
+      currentJob: 'preventivi3d_current_job',
+      jobs: 'preventivi3d_jobs'
     };
 
     const UNIT_LABELS = {
@@ -786,93 +759,8 @@
     const currency = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
     const num = new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    const machineForm = document.getElementById('machineForm');
-    const materialForm = document.getElementById('materialForm');
-    const jobForm = document.getElementById('jobForm');
-    const machineList = document.getElementById('machineList');
-    const materialList = document.getElementById('materialList');
-    const quoteSummary = document.getElementById('quoteSummary');
-    const recommendedPriceBox = document.getElementById('recommendedPriceBox');
-    const quoteDateInput = document.getElementById('quoteDate');
-    const jobMode = document.getElementById('jobMode');
-    const section3d = document.getElementById('section3d');
-    const sectionLaser = document.getElementById('sectionLaser');
-    const materialType = document.getElementById('materialType');
-    const materialUnit = document.getElementById('materialUnit');
-    const materialCostLabel = document.getElementById('materialCostLabel');
-
-    function todayString() {
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    }
-
-    function loadData(key, fallback = []) {
-      try {
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-      } catch {
-        return fallback;
-      }
-    }
-
-    function saveData(key, data) {
-      localStorage.setItem(key, JSON.stringify(data));
-    }
-
-    function normalizeMachine(m) {
-      return {
-        id: m.id || crypto.randomUUID(),
-        type: m.type || '3d',
-        name: m.name || 'Macchina',
-        machineCost: Number(m.machineCost ?? m.printerCost ?? 0),
-        lifetimeHours: Number(m.lifetimeHours ?? 0),
-        energyCost: Number(m.energyCost ?? 0),
-        powerKwh: Number(m.powerKwh ?? m.powerConsumption ?? 0),
-        powerEveryH: Number(m.powerEveryH ?? 1),
-        maintenanceCost: Number(m.maintenanceCost ?? 0)
-      };
-    }
-
-    function normalizeMaterial(m) {
-      const type = m.type || '3d';
-      return {
-        id: m.id || crypto.randomUUID(),
-        type,
-        unit: m.unit || (type === '3d' ? 'kg' : 'pezzo'),
-        name: m.name || 'Materiale',
-        unitCost: Number(m.unitCost ?? m.costPerKg ?? 0)
-      };
-    }
-
-    function getMachines() {
-      const base = loadData(STORAGE_KEYS.machines, []);
-      let machines = [];
-      if (Array.isArray(base) && base.length) {
-        machines = base.map(normalizeMachine);
-      } else {
-        const legacyPrinters = loadData('preventivi3d_printers', []);
-        machines = legacyPrinters.map(normalizeMachine);
-        if (!machines.length) machines = defaults.machines.map(normalizeMachine);
-        if (!machines.some(x => x.type === 'laser')) machines.push(normalizeMachine(defaults.machines[1]));
-      }
-      saveData(STORAGE_KEYS.machines, machines);
-      return machines;
-    }
-
-    function getMaterials() {
-      const base = loadData(STORAGE_KEYS.materials, defaults.materials);
-      const materials = (Array.isArray(base) && base.length ? base : defaults.materials).map(normalizeMaterial);
-      saveData(STORAGE_KEYS.materials, materials);
-      return materials;
-    }
-
-    function badgeForType(type) {
-      return type === 'laser'
-        ? '<span class="badge amber">Incisore laser</span>'
-        : '<span class="badge blue">Stampa 3D</span>';
+    function escapeHtml(text) {
+      return String(text ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
     function formatHours(h) {
@@ -888,313 +776,430 @@
       return parts.join(' ') || '0 min';
     }
 
-    function escapeHtml(text) {
-      return String(text)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
-    }
-
     function showSaved(id) {
       const el = document.getElementById(id);
-      el.style.display = 'block';
-      setTimeout(() => el.style.display = 'none', 1800);
+      if (!el) return;
+      el.classList.add('visible');
+      setTimeout(() => el.classList.remove('visible'), 2500);
     }
 
-    function renderMachines() {
-      const machines = getMachines();
-      if (!machines.length) {
-        machineList.innerHTML = '<div class="empty">Nessuna macchina salvata.</div>';
-      } else {
-        machineList.innerHTML = machines.map(m => `
-          <div class="item">
-            <div class="item-head">
-              <div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">${badgeForType(m.type)}<span class="item-title">${escapeHtml(m.name)}</span></div>
-                <div class="muted">Costo macchina: ${currency.format(Number(m.machineCost || 0))} — vita utile: ${num.format(Number(m.lifetimeHours || 0))} h</div>
-              </div>
-              <button class="danger" type="button" onclick="removeMachine('${m.id}')">Elimina</button>
+    const machineForm = document.getElementById('machineForm');
+    const materialForm = document.getElementById('materialForm');
+    const jobForm = document.getElementById('jobForm');
+    const machineList = document.getElementById('machineList');
+    const materialList = document.getElementById('materialList');
+    const quoteSummary = document.getElementById('quoteSummary');
+    const recommendedPriceBox = document.getElementById('recommendedPriceBox');
+    const quoteDateInput = document.getElementById('quoteDate');
+    const materialType = document.getElementById('materialType');
+    const materialUnit = document.getElementById('materialUnit');
+    const materialCostLabel = document.getElementById('materialCostLabel');
+
+    function todayString() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function loadData(key, fallback=[]) {
+      try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : fallback; } catch { return fallback; }
+    }
+    function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+
+    function normalizeMachine(m) {
+      return { id: m.id||crypto.randomUUID(), type: m.type||'3d', name: m.name||'Macchina',
+        machineCost: Number(m.machineCost??m.printerCost??0), lifetimeHours: Number(m.lifetimeHours??0),
+        energyCost: Number(m.energyCost??0), powerKwh: Number(m.powerKwh??m.powerConsumption??0),
+        powerEveryH: Number(m.powerEveryH??1), maintenanceCost: Number(m.maintenanceCost??0) };
+    }
+    function normalizeMaterial(m) {
+      const type = m.type||'3d';
+      return { id: m.id||crypto.randomUUID(), type, unit: m.unit||(type==='3d'?'kg':'pezzo'),
+        name: m.name||'Materiale', unitCost: Number(m.unitCost??m.costPerKg??0) };
+    }
+
+    function getMachines() {
+      const base = loadData(STORAGE_KEYS.machines, []);
+      if (Array.isArray(base) && base.length) return base.map(normalizeMachine);
+      const legacy = loadData('preventivi3d_printers', []).map(normalizeMachine);
+      return legacy.length ? legacy : defaults.machines.map(normalizeMachine);
+    }
+    function getMaterials() {
+      const base = loadData(STORAGE_KEYS.materials, []);
+      if (Array.isArray(base) && base.length) return base.map(normalizeMaterial);
+      return defaults.materials.map(normalizeMaterial);
+    }
+
+    // ── JOBS LIST STATE ──────────────────────────────────────────────
+    function getJobs() {
+      return loadData(STORAGE_KEYS.jobs, []);
+    }
+    function saveJobs(jobs) {
+      saveData(STORAGE_KEYS.jobs, jobs);
+    }
+    function newJob(type) {
+      return { id: crypto.randomUUID(), type, machineId:'', materialId:'',
+        piecesPerUnit:1, unitCount:1, gramsPerUnit:0, materialQtyPerUnit:0,
+        days:0, hours:0, minutes:0, label:'',
+        extraMaterialLabel:'', extraMaterialCost:0 };
+    }
+
+    function buildJobCard(job, index, machines, materials) {
+      const is3d = job.type === '3d';
+      const typeMachines = machines.filter(m => m.type === job.type);
+      const typeMaterials = materials.filter(m => m.type === job.type);
+      const machineOptions = typeMachines.map(m =>
+        `<option value="${m.id}" ${m.id===job.machineId?'selected':''}>${escapeHtml(m.name)}</option>`).join('');
+      const materialOptions = typeMaterials.map(m =>
+        `<option value="${m.id}" ${m.id===job.materialId?'selected':''}>${escapeHtml(m.name)}${m.type==='laser'?' ('+( UNIT_LABELS[m.unit]||m.unit)+')':''}</option>`).join('');
+      const unitLabel = is3d ? 'piatto' : 'lavorazione';
+      const badge = is3d
+        ? '<span class="badge blue">Stampa 3D</span>'
+        : '<span class="badge amber">Laser</span>';
+      return `
+        <div class="job-card type-${job.type}" data-job-id="${job.id}">
+          <div class="job-card-head">
+            <span class="job-card-num">Lavorazione ${index+1}</span>
+            ${badge}
+            <button class="job-card-remove" type="button" data-remove="${job.id}" title="Rimuovi">✕ Rimuovi</button>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Descrizione (opzionale)</label>
+              <input type="text" data-field="label" data-id="${job.id}" value="${escapeHtml(job.label||'')}" placeholder="Es. Piatti PLA neri, Lastre MDF..." />
             </div>
-            <div class="stats">
-              <div class="stat"><div class="k">Ammortamento/h</div><div class="v">${currency.format(Number(m.lifetimeHours) > 0 ? Number(m.machineCost || 0) / Number(m.lifetimeHours) : 0)}</div></div>
-              <div class="stat"><div class="k">Energia</div><div class="v">${currency.format(Number(m.energyCost || 0))}/kWh</div></div>
-              <div class="stat"><div class="k">Consumo</div><div class="v">${num.format(Number(m.powerKwh || 0))} kWh ogni ${num.format(Number(m.powerEveryH || 1))} h</div></div>
-              <div class="stat"><div class="k">Costo energia/h</div><div class="v">${currency.format((Number(m.powerKwh || 0) / Math.max(Number(m.powerEveryH || 1), 0.001)) * Number(m.energyCost || 0))}</div></div>
-              <div class="stat"><div class="k">Manut. 1000h</div><div class="v">${currency.format(Number(m.maintenanceCost || 0))}</div></div>
+            <div class="field"></div>
+            <div class="field">
+              <label>Macchina ${is3d?'3D':'laser'}</label>
+              <select data-field="machineId" data-id="${job.id}">
+                <option value="">— Seleziona —</option>${machineOptions}
+              </select>
+            </div>
+            <div class="field">
+              <label>Materiale ${is3d?'3D':'laser'}</label>
+              <select data-field="materialId" data-id="${job.id}">
+                <option value="">— Seleziona —</option>${materialOptions}
+              </select>
+            </div>
+            <div class="field">
+              <label>Pezzi per ${unitLabel}</label>
+              <input type="number" min="1" step="1" data-field="piecesPerUnit" data-id="${job.id}" value="${job.piecesPerUnit||1}" />
+            </div>
+            <div class="field">
+              <label>Numero ${unitLabel === 'piatto' ? 'piatti' : 'lavorazioni'} (ripetizioni)</label>
+              <input type="number" min="1" step="1" data-field="unitCount" data-id="${job.id}" value="${job.unitCount||1}" />
+            </div>
+            ${is3d ? `
+            <div class="field">
+              <label>Materiale per piatto (g)</label>
+              <input type="number" min="0" step="0.01" data-field="gramsPerUnit" data-id="${job.id}" value="${job.gramsPerUnit||0}" placeholder="0.00" />
+            </div>` : `
+            <div class="field">
+              <label>Quantità materiale per lavorazione</label>
+              <input type="number" min="0" step="0.01" data-field="materialQtyPerUnit" data-id="${job.id}" value="${job.materialQtyPerUnit||0}" placeholder="0.00" />
+            </div>`}
+            <div class="field full">
+              <label>Durata per ${unitLabel}</label>
+              <div class="inline-fields">
+                <input type="number" min="0" step="1" style="width:60px;" data-field="days" data-id="${job.id}" value="${job.days||0}" />
+                <span class="inline-label">g</span>
+                <input type="number" min="0" max="23" step="1" style="width:60px;" data-field="hours" data-id="${job.id}" value="${job.hours||0}" />
+                <span class="inline-label">h</span>
+                <input type="number" min="0" max="59" step="1" style="width:60px;" data-field="minutes" data-id="${job.id}" value="${job.minutes||0}" />
+                <span class="inline-label">min</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Materiale/componente extra (opzionale)</label>
+              <input type="text" data-field="extraMaterialLabel" data-id="${job.id}" value="${escapeHtml(job.extraMaterialLabel||'')}" placeholder="Es. Meccanismo orologio, Vite M3, Magnete..." />
+            </div>
+            <div class="field">
+              <label>Costo componente extra (€ tot.)</label>
+              <input type="number" min="0" step="0.01" data-field="extraMaterialCost" data-id="${job.id}" value="${job.extraMaterialCost||0}" placeholder="0.00" />
             </div>
           </div>
-        `).join('');
+        </div>`;
+    }
+
+    function renderJobs() {
+      const jobs = getJobs();
+      const machines = getMachines();
+      const materials = getMaterials();
+      const container = document.getElementById('jobsList');
+      if (!jobs.length) {
+        container.innerHTML = '<div class="jobs-empty">Nessuna lavorazione aggiunta. Usa i pulsanti qui sotto per aggiungerne una.</div>';
+        return;
       }
-      renderMachineOptions();
+      container.innerHTML = jobs.map((j,i) => buildJobCard(j, i, machines, materials)).join('');
+    }
+
+    function computeJobCost(job, machines, materials) {
+      const machine = machines.find(m => m.id === job.machineId);
+      const material = materials.find(m => m.id === job.materialId);
+      if (!machine || !material) return null;
+
+      const hoursPerUnit = (job.days||0)*24 + (job.hours||0) + (job.minutes||0)/60;
+      const unitCount = Number(job.unitCount)||1;
+      const totalHours = hoursPerUnit * unitCount;
+      const totalPieces = (Number(job.piecesPerUnit)||1) * unitCount;
+
+      let materialCost = 0;
+      if (job.type === '3d') {
+        const totalGrams = (Number(job.gramsPerUnit)||0) * unitCount;
+        materialCost = (totalGrams / 1000) * Number(material.unitCost||0);
+      } else {
+        const totalQty = (Number(job.materialQtyPerUnit)||0) * unitCount;
+        materialCost = totalQty * Number(material.unitCost||0);
+      }
+
+      const powerRate = Number(machine.powerEveryH)>0 ? Number(machine.powerKwh||0)/Number(machine.powerEveryH) : 0;
+      const energyCost = totalHours * powerRate * Number(machine.energyCost||0);
+      const maintenanceCost = (totalHours/1000) * Number(machine.maintenanceCost||0);
+      const amortRate = Number(machine.lifetimeHours)>0 ? Number(machine.machineCost||0)/Number(machine.lifetimeHours) : 0;
+      const amortCost = totalHours * amortRate;
+      const extraCost = Number(job.extraMaterialCost||0) * unitCount;
+      const subtotal = materialCost + energyCost + maintenanceCost + amortCost + extraCost;
+
+      return { job, machine, material, hoursPerUnit, totalHours, totalPieces,
+        materialCost, energyCost, maintenanceCost, amortCost, extraCost, subtotal,
+        totalGrams: job.type==='3d' ? (Number(job.gramsPerUnit)||0)*unitCount : 0,
+        totalQty: job.type==='laser' ? (Number(job.materialQtyPerUnit)||0)*unitCount : 0 };
+    }
+
+    // ── POPULATE SELECTS ─────────────────────────────────────────────
+    function renderMachines() {
+      const machines = getMachines();
+      machineList.innerHTML = machines.length
+        ? machines.map(m => {
+            const amortH = Number(m.lifetimeHours)>0 ? Number(m.machineCost||0)/Number(m.lifetimeHours) : 0;
+            const energyH = (Number(m.powerKwh||0)/Math.max(Number(m.powerEveryH||1),0.001))*Number(m.energyCost||0);
+            return `<div class="item">
+              <div class="item-head">
+                <div>
+                  <div class="item-name">${escapeHtml(m.name)} <span class="badge ${m.type==='3d'?'blue':'amber'}">${m.type==='3d'?'Stampa 3D':'Laser'}</span></div>
+                  <div class="muted">Costo macchina: ${currency.format(Number(m.machineCost||0))} — vita utile: ${num.format(Number(m.lifetimeHours||0))} h</div>
+                </div>
+                <button class="danger" type="button" onclick="removeMachine('${m.id}')">Elimina</button>
+              </div>
+              <div class="stats">
+                <div class="stat"><div class="k">Ammortamento/h</div><div class="v">${currency.format(amortH)}</div></div>
+                <div class="stat"><div class="k">Consumo</div><div class="v">${num.format(Number(m.powerKwh||0))} kWh ogni ${num.format(Number(m.powerEveryH||1))} h</div></div>
+                <div class="stat"><div class="k">Costo energia/h</div><div class="v">${currency.format(energyH)}</div></div>
+                <div class="stat"><div class="k">Manut. 1000h</div><div class="v">${currency.format(Number(m.maintenanceCost||0))}</div></div>
+              </div>
+            </div>`;
+          }).join('')
+        : '<div class="empty">Nessuna macchina salvata.</div>';
+      renderJobs();
     }
 
     function renderMaterials() {
       const materials = getMaterials();
-      if (!materials.length) {
-        materialList.innerHTML = '<div class="empty">Nessun materiale salvato.</div>';
-      } else {
-        materialList.innerHTML = materials.map(m => `
-          <div class="item">
+      materialList.innerHTML = materials.length
+        ? materials.map(m => `<div class="item">
             <div class="item-head">
               <div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px;">${badgeForType(m.type)}<span class="item-title">${escapeHtml(m.name)}</span></div>
-                <div class="muted">Costo per ${escapeHtml(UNIT_LABELS[m.unit] || m.unit)}: ${currency.format(Number(m.unitCost || 0))}</div>
+                <div class="item-name">${escapeHtml(m.name)} <span class="badge ${m.type==='3d'?'blue':'amber'}">${m.type==='3d'?'3D':'Laser'}</span></div>
+                <div class="muted">${currency.format(Number(m.unitCost||0))} / ${UNIT_LABELS[m.unit]||m.unit}</div>
               </div>
               <button class="danger" type="button" onclick="removeMaterial('${m.id}')">Elimina</button>
             </div>
-          </div>
-        `).join('');
-      }
-      renderMaterialOptions();
+          </div>`).join('')
+        : '<div class="empty">Nessun materiale salvato.</div>';
+      renderJobs();
     }
 
-    function fillSelect(selectId, items, placeholder, labelFn) {
-      const el = document.getElementById(selectId);
-      if (!items.length) {
-        el.innerHTML = `<option value="">${placeholder}</option>`;
-        return;
-      }
-      el.innerHTML = items.map(item => `<option value="${item.id}">${escapeHtml(labelFn(item))}</option>`).join('');
-    }
+    // ── JOB FORM SUBMIT ──────────────────────────────────────────────
+    jobForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const jobs = getJobs();
+      if (!jobs.length) { alert('Aggiungi almeno una lavorazione prima di calcolare.'); return; }
 
-    function renderMachineOptions() {
       const machines = getMachines();
-      fillSelect('jobPrinter3d', machines.filter(m => m.type === '3d'), 'Aggiungi una macchina 3D', m => m.name);
-      fillSelect('jobMachineLaser', machines.filter(m => m.type === 'laser'), 'Aggiungi una macchina laser', m => m.name);
-      restoreCurrentJobSelections();
-    }
-
-    function renderMaterialOptions() {
       const materials = getMaterials();
-      fillSelect('jobMaterial3d', materials.filter(m => m.type === '3d'), 'Aggiungi un materiale 3D', m => `${m.name} (${UNIT_LABELS[m.unit] || m.unit})`);
-      fillSelect('jobMaterialLaser', materials.filter(m => m.type === 'laser'), 'Aggiungi un materiale laser', m => `${m.name} (${UNIT_LABELS[m.unit] || m.unit})`);
-      restoreCurrentJobSelections();
-    }
 
-    function updateJobModeUI() {
-      const mode = jobMode.value;
-      section3d.classList.toggle('hidden', mode === 'laser');
-      sectionLaser.classList.toggle('hidden', mode === '3d');
-    }
-
-    function updateMaterialFormUI() {
-      const type = materialType.value;
-      if (type === '3d') {
-        materialUnit.value = 'kg';
-        materialUnit.disabled = true;
-        materialCostLabel.textContent = 'Costo per kg (€)';
-      } else {
-        materialUnit.disabled = false;
-        materialCostLabel.textContent = `Costo per ${UNIT_LABELS[materialUnit.value] || materialUnit.value} (€)`;
-      }
-    }
-
-    function restoreCurrentJobSelections() {
-      const saved = loadData(STORAGE_KEYS.currentJob, null);
-      if (!saved || saved.version !== 'hybrid-v3') {
-        if (!quoteDateInput.value) quoteDateInput.value = todayString();
+      const jobResults = jobs.map(j => computeJobCost(j, machines, materials));
+      const invalid = jobResults.findIndex(r => r === null);
+      if (invalid !== -1) {
+        const j = jobs[invalid];
+        alert(`Lavorazione ${invalid+1}${j.label?' ('+j.label+')':''}: seleziona una macchina e un materiale validi.`);
         return;
       }
-      const safeSet = (id, value, fallback='') => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (el.type === 'checkbox') {
-          el.checked = value !== undefined && value !== null ? Boolean(value) : Boolean(fallback);
-          return;
-        }
-        if (value !== undefined && value !== null && value !== '') el.value = value;
-        else if (fallback !== '') el.value = fallback;
+
+      const manualHours = Number(document.getElementById('manualHours').value||0);
+      const laborRate = Number(document.getElementById('laborRate').value||0);
+      const failureMargin = Number(document.getElementById('failureMargin').value||0);
+      const profitMargin = Number(document.getElementById('profitMargin').value||0);
+      const discountAmount = Number(document.getElementById('discountAmount').value||0);
+      const minimumPrice = Number(document.getElementById('minimumPrice').value||0);
+      const vatPercent = Number(document.getElementById('vatPercent').value||0);
+      const includeVat = document.getElementById('includeVat').checked;
+
+      const baseTechnicalTotal = jobResults.reduce((s,r) => s+r.subtotal, 0);
+      const manualLaborCost = manualHours * laborRate;
+      const baseTotal = baseTechnicalTotal + manualLaborCost;
+      const failureCost = baseTotal * (failureMargin/100);
+      const adjustedTotal = baseTotal + failureCost;
+      const profitValue = adjustedTotal * (profitMargin/100);
+      const priceBeforeDiscount = adjustedTotal + profitValue;
+      const discountValue = Math.min(discountAmount, priceBeforeDiscount);
+      const priceAfterDiscount = priceBeforeDiscount - discountValue;
+      const priceAfterMinimum = Math.max(priceAfterDiscount, minimumPrice);
+      const vatValue = includeVat ? priceAfterMinimum*(vatPercent/100) : 0;
+      const finalRecommendedPrice = priceAfterMinimum + vatValue;
+      const totalPiecesAll = jobResults.reduce((s,r) => s+r.totalPieces, 0);
+      const unitPriceClient = totalPiecesAll>0 ? finalRecommendedPrice/totalPiecesAll : null;
+      const materialCostTotal = jobResults.reduce((s,r) => s+r.materialCost, 0);
+      const energyCostTotal = jobResults.reduce((s,r) => s+r.energyCost, 0);
+      const maintenanceCostTotal = jobResults.reduce((s,r) => s+r.maintenanceCost, 0);
+      const machineAmortCostTotal = jobResults.reduce((s,r) => s+r.amortCost, 0);
+
+      const result = {
+        version: 'hybrid-v3',
+        jobName: document.getElementById('jobName').value.trim(),
+        clientName: document.getElementById('clientName').value.trim(),
+        clientContact: document.getElementById('clientContact').value.trim(),
+        quoteDate: document.getElementById('quoteDate').value||todayString(),
+        jobResults, totalPiecesAll, unitPriceClient,
+        manualHours, laborRate, manualLaborCost,
+        failureMargin, profitMargin, discountAmount, minimumPrice, vatPercent, includeVat,
+        materialCostTotal, energyCostTotal, maintenanceCostTotal, machineAmortCostTotal,
+        baseTechnicalTotal, baseTotal, failureCost, adjustedTotal, profitValue,
+        priceBeforeDiscount, discountValue, priceAfterDiscount, priceAfterMinimum, vatValue,
+        finalRecommendedPrice
       };
-      safeSet('jobMode', saved.jobMode, '3d');
-      safeSet('jobName', saved.jobName || '');
-      safeSet('clientName', saved.clientName || '');
-      safeSet('clientContact', saved.clientContact || '');
-      safeSet('quoteDate', saved.quoteDate || todayString());
-      safeSet('jobPrinter3d', saved.jobPrinter3d || '');
-      safeSet('jobMaterial3d', saved.jobMaterial3d || '');
-      safeSet('piecesCount3d', saved.piecesCount3d, 1);
-      safeSet('platesCount3d', saved.platesCount3d, 1);
-      safeSet('jobGrams3d', saved.jobGrams3d || '');
-      safeSet('jobDays3d', saved.jobDays3d, 0);
-      safeSet('jobH3d', saved.jobH3d, 0);
-      safeSet('jobMin3d', saved.jobMin3d, 0);
-      safeSet('jobMachineLaser', saved.jobMachineLaser || '');
-      safeSet('jobMaterialLaser', saved.jobMaterialLaser || '');
-      safeSet('piecesCountLaser', saved.piecesCountLaser, 1);
-      safeSet('batchCountLaser', saved.batchCountLaser, 1);
-      safeSet('laserMaterialQty', saved.laserMaterialQty || '');
-      safeSet('jobDaysLaser', saved.jobDaysLaser, 0);
-      safeSet('jobHLaser', saved.jobHLaser, 0);
-      safeSet('jobMinLaser', saved.jobMinLaser, 0);
-      safeSet('manualHours', saved.manualHours, 0);
-      safeSet('laborRate', saved.laborRate, 0);
-      safeSet('failureMargin', saved.failureMargin, 8);
-      safeSet('profitMargin', saved.profitMargin, 100);
-      safeSet('discountAmount', saved.discountAmount, 0);
-      safeSet('minimumPrice', saved.minimumPrice, 0);
-      safeSet('vatPercent', saved.vatPercent, 22);
-      safeSet('includeVat', saved.includeVat, true);
-      updateJobModeUI();
-      if (saved.result) renderSummary(saved.result);
+
+      saveData(STORAGE_KEYS.currentJob, {
+        version: 'hybrid-v3',
+        jobName: result.jobName, clientName: result.clientName,
+        clientContact: result.clientContact, quoteDate: result.quoteDate,
+        manualHours, laborRate, failureMargin, profitMargin,
+        discountAmount, minimumPrice, vatPercent, includeVat, result
+      });
+      renderSummary(result);
+      activateTab('tab-riepilogo');
+    });
+
+    // ── ADD / REMOVE JOBS ────────────────────────────────────────────
+    document.getElementById('addJob3d').addEventListener('click', () => {
+      const jobs = getJobs();
+      jobs.push(newJob('3d'));
+      saveJobs(jobs);
+      renderJobs();
+    });
+    document.getElementById('addJobLaser').addEventListener('click', () => {
+      const jobs = getJobs();
+      jobs.push(newJob('laser'));
+      saveJobs(jobs);
+      renderJobs();
+    });
+
+    function handleJobFieldChange(e) {
+      const el = e.target;
+      const id = el.dataset.id;
+      const field = el.dataset.field;
+      if (!id || !field) return;
+      const jobs = getJobs();
+      const job = jobs.find(j => j.id === id);
+      if (!job) return;
+      if (el.type === 'number') job[field] = Number(el.value) || 0;
+      else if (el.type === 'checkbox') job[field] = el.checked;
+      else job[field] = el.value;
+      saveJobs(jobs);
     }
 
+    document.getElementById('jobsList').addEventListener('click', (e) => {
+      const removeBtn = e.target.closest('[data-remove]');
+      if (!removeBtn) return;
+      const id = removeBtn.dataset.remove;
+      const jobs = getJobs().filter(j => j.id !== id);
+      saveJobs(jobs);
+      renderJobs();
+    });
+
+    document.getElementById('jobsList').addEventListener('input', handleJobFieldChange);
+    document.getElementById('jobsList').addEventListener('change', handleJobFieldChange);
+
+    // ── SUMMARY ──────────────────────────────────────────────────────
     function renderSummary(result) {
-      window.__lastQuoteResult = (result && result.version === 'hybrid-v3') ? result : null;
-      if (!result || result.version !== 'hybrid-v3') {
-        quoteSummary.innerHTML = '<div class="empty">Compila il tab Lavoro per vedere il riepilogo di stampa 3D, laser o lavorazione combinata.</div>';
+      window.__lastQuoteResult = (result&&result.version==='hybrid-v3') ? result : null;
+      if (!result||result.version!=='hybrid-v3') {
+        quoteSummary.innerHTML = '<div class="empty">Compila il tab Lavoro e clicca "Calcola riepilogo" per vedere i risultati.</div>';
         recommendedPriceBox.textContent = '--';
         return;
       }
-      const modeBadge = result.jobMode === 'combined'
-        ? '<span class="badge green">3D + laser</span>'
-        : result.jobMode === 'laser'
-          ? '<span class="badge amber">Solo laser</span>'
-          : '<span class="badge blue">Solo 3D</span>';
       const vatBadge = result.includeVat
         ? '<span class="badge green">IVA inclusa</span>'
         : '<span class="badge red">IVA esclusa</span>';
-
       const minimumApplied = result.priceAfterMinimum > result.priceAfterDiscount + 0.005;
       const netMargin = result.priceAfterMinimum - result.adjustedTotal;
-      const netMarginPercent = result.adjustedTotal > 0 ? (netMargin / result.adjustedTotal) * 100 : 0;
+      const netMarginPct = result.adjustedTotal>0 ? (netMargin/result.adjustedTotal)*100 : 0;
 
       let html = `
         <div class="summary-meta">
-          <div class="meta-item"><div class="k">Preventivo</div><div class="v">${escapeHtml(result.jobName || 'Senza nome')}</div></div>
-          <div class="meta-item"><div class="k">Cliente</div><div class="v">${escapeHtml(result.clientName || 'Non indicato')}</div></div>
-          <div class="meta-item"><div class="k">Mail/telefono cliente</div><div class="v">${escapeHtml(result.clientContact || 'Non indicato')}</div></div>
-          <div class="meta-item"><div class="k">Data</div><div class="v">${escapeHtml(result.quoteDate || '-')}</div></div>
-          <div class="meta-item"><div class="k">Tipo</div><div class="v">${modeBadge}</div></div>
-        </div>
+          <div class="meta-item"><div class="k">Preventivo</div><div class="v">${escapeHtml(result.jobName||'Senza nome')}</div></div>
+          <div class="meta-item"><div class="k">Cliente</div><div class="v">${escapeHtml(result.clientName||'Non indicato')}</div></div>
+          <div class="meta-item"><div class="k">Mail/telefono</div><div class="v">${escapeHtml(result.clientContact||'Non indicato')}</div></div>
+          <div class="meta-item"><div class="k">Data</div><div class="v">${escapeHtml(result.quoteDate||'-')}</div></div>
+        </div>`;
 
-        <div class="summary-block cost-real">
-          <div class="summary-block-head"><span class="icon">🛠️</span><span class="title">Costo reale di produzione</span></div>
-          <p class="desc">Tutte le spese che affronti tu per realizzare il lavoro: materiale, energia, manutenzione, manodopera ed eventuale margine di fallimento.</p>
-      `;
-      if (result.use3d) {
-        html += `<div class="summary-line sub"><span>Subtotale stampa 3D</span><strong>${currency.format(result.subtotal3d)}</strong></div>`;
-      }
-      if (result.useLaser) {
-        html += `<div class="summary-line sub"><span>Subtotale laser</span><strong>${currency.format(result.subtotalLaser)}</strong></div>`;
-      }
-      html += `
-          <div class="summary-line sub"><span>— di cui materiale</span><strong>${currency.format(result.materialCostTotal)}</strong></div>
-          <div class="summary-line sub"><span>— di cui energia</span><strong>${currency.format(result.energyCostTotal)}</strong></div>
-          <div class="summary-line sub"><span>— di cui manutenzione</span><strong>${currency.format(result.maintenanceCostTotal)}</strong></div>
-          <div class="summary-line sub"><span>— di cui ammortamento macchina</span><strong>${currency.format(result.machineAmortCostTotal)}</strong></div>
-          <div class="summary-line"><span>Manodopera (${num.format(result.manualHours)} h × ${currency.format(result.laborRate)})</span><strong>${currency.format(result.manualLaborCost)}</strong></div>
-          <div class="summary-line"><span>Totale base (tecnico + manodopera)</span><strong>${currency.format(result.baseTotal)}</strong></div>
-          <div class="summary-line"><span>Margine fallimento (${num.format(result.failureMargin)}%)</span><strong>+ ${currency.format(result.failureCost)}</strong></div>
-          <div class="block-total">
-            <span>Totale costo reale</span>
-            <span class="block-total-value">${currency.format(result.adjustedTotal)}</span>
-          </div>
-        </div>
+      // ── Blocco lavorazioni ──
+      html += `<div class="summary-block cost-real">
+        <div class="summary-block-head"><span class="icon">🛠️</span><span class="title">Costo reale di produzione</span></div>
+        <p class="desc">Dettaglio per ogni lavorazione, poi totale con manodopera e margine fallimento.</p>`;
 
-        <div class="summary-block cost-client">
-          <div class="summary-block-head"><span class="icon">💶</span><span class="title">Prezzo per il cliente</span></div>
-          <p class="desc">Parte dal costo reale e aggiunge ciò che riguarda il cliente: rincaro/guadagno, sconto, prezzo minimo ed IVA.</p>
-          <div class="summary-line sub"><span>Costo reale di produzione</span><strong>${currency.format(result.adjustedTotal)}</strong></div>
-          <div class="summary-line"><span>Rincaro / guadagno (${num.format(result.profitMargin)}%)</span><strong>+ ${currency.format(result.profitValue)}</strong></div>
-          <div class="summary-line"><span>Prezzo con rincaro</span><strong>${currency.format(result.priceBeforeDiscount)}</strong></div>
-          <div class="summary-line deduct"><span>Sconto cliente</span><strong>− ${currency.format(result.discountValue)}</strong></div>
-          ${minimumApplied ? `<div class="summary-line"><span>Prezzo minimo applicato (${currency.format(result.minimumPrice)})</span><strong>${currency.format(result.priceAfterMinimum)}</strong></div>` : ''}
-          <div class="summary-line"><span>IVA (${num.format(result.vatPercent)}%) ${vatBadge}</span><strong>${result.includeVat ? '+ ' + currency.format(result.vatValue) : currency.format(0)}</strong></div>
-          <div class="block-total">
-            <span>Totale finale cliente</span>
-            <span class="block-total-value">${currency.format(result.finalRecommendedPrice)}</span>
-          </div>
-          <div class="margin-chip">📈 Margine netto stimato: ${currency.format(netMargin)} (${num.format(netMarginPercent)}%)</div>
-        </div>
-
-        <details class="detail-block">
-          <summary>Dettaglio lavorazioni e parametri tecnici</summary>
-      `;
-      if (result.use3d) {
+      result.jobResults.forEach((r, i) => {
+        const is3d = r.job.type === '3d';
+        const badge = is3d ? '<span class="badge blue" style="font-size:10px;">3D</span>' : '<span class="badge amber" style="font-size:10px;">Laser</span>';
+        const label = r.job.label ? ` — ${escapeHtml(r.job.label)}` : '';
         html += `
-          <div class="summary-line"><span>Macchina 3D</span><strong>${escapeHtml(result.printer3dName)}</strong></div>
-          <div class="summary-line"><span>Materiale 3D</span><strong>${escapeHtml(result.material3dName)}</strong></div>
-          <div class="summary-line"><span>Pezzi per piatto</span><strong>${num.format(result.piecesPerPlate3d)}</strong></div>
-          <div class="summary-line"><span>Numero piatti</span><strong>${num.format(result.platesCount3d)}</strong></div>
-          <div class="summary-line"><span>Materiale per piatto</span><strong>${num.format(result.gramsPerPlate3d)} g</strong></div>
-          <div class="summary-line"><span>Durata per piatto</span><strong>${formatHours(result.hoursPerPlate3d)}</strong></div>
-          <div class="summary-line"><span>Materiale totale 3D</span><strong>${num.format(result.totalGrams3d)} g</strong></div>
-          <div class="summary-line"><span>Durata totale 3D</span><strong>${formatHours(result.totalHours3d)}</strong></div>
-          <div class="summary-line"><span>Pezzi totali 3D</span><strong>${num.format(result.totalPieces3d)}</strong></div>
-        `;
-      }
-      if (result.useLaser) {
-        html += `
-          <div class="summary-line"><span>Macchina laser</span><strong>${escapeHtml(result.machineLaserName)}</strong></div>
-          <div class="summary-line"><span>Materiale laser</span><strong>${escapeHtml(result.materialLaserName)}</strong></div>
-          <div class="summary-line"><span>Pezzi per lavorazione</span><strong>${num.format(result.piecesPerBatchLaser)}</strong></div>
-          <div class="summary-line"><span>Numero lavorazioni</span><strong>${num.format(result.batchCountLaser)}</strong></div>
-          <div class="summary-line"><span>Quantità materiale per lavorazione</span><strong>${num.format(result.materialQtyPerBatchLaser)} ${escapeHtml(result.materialLaserUnitLabel)}</strong></div>
-          <div class="summary-line"><span>Quantità materiale totale</span><strong>${num.format(result.totalMaterialQtyLaser)} ${escapeHtml(result.materialLaserUnitLabel)}</strong></div>
-          <div class="summary-line"><span>Durata totale laser</span><strong>${formatHours(result.totalHoursLaser)}</strong></div>
-          <div class="summary-line"><span>Pezzi totali laser</span><strong>${num.format(result.totalPiecesLaser)}</strong></div>
-        `;
-      }
-      if (result.unitPriceClient !== null && result.totalPiecesAll > 1) {
-        html += `<div class="summary-line"><span>Prezzo unitario stimato (${num.format(result.totalPiecesAll)} pezzi totali)</span><strong>${currency.format(result.unitPriceClient)} / pezzo</strong></div>`;
-      }
+          <details class="detail-block" style="margin-bottom:8px;" open>
+            <summary>${badge} Lavorazione ${i+1}${label} <strong style="float:right;">${currency.format(r.subtotal)}</strong></summary>
+            <div class="summary-line sub"><span>Macchina</span><strong>${escapeHtml(r.machine.name)}</strong></div>
+            <div class="summary-line sub"><span>Materiale</span><strong>${escapeHtml(r.material.name)}</strong></div>
+            <div class="summary-line sub"><span>Pezzi per ${is3d?'piatto':'lavorazione'}</span><strong>${r.job.piecesPerUnit}</strong></div>
+            <div class="summary-line sub"><span>N° ${is3d?'piatti':'lavorazioni'}</span><strong>${r.job.unitCount}</strong></div>
+            <div class="summary-line sub"><span>Durata per ${is3d?'piatto':'lavorazione'}</span><strong>${formatHours(r.hoursPerUnit)}</strong></div>
+            <div class="summary-line sub"><span>Durata totale</span><strong>${formatHours(r.totalHours)}</strong></div>
+            ${is3d ? `<div class="summary-line sub"><span>Materiale totale</span><strong>${num.format(r.totalGrams)} g</strong></div>` : ''}
+            <div class="summary-line sub"><span>— Costo materiale</span><strong>${currency.format(r.materialCost)}</strong></div>
+            <div class="summary-line sub"><span>— Energia</span><strong>${currency.format(r.energyCost)}</strong></div>
+            <div class="summary-line sub"><span>— Manutenzione</span><strong>${currency.format(r.maintenanceCost)}</strong></div>
+            <div class="summary-line sub"><span>— Ammortamento macchina</span><strong>${currency.format(r.amortCost)}</strong></div>
+            ${r.extraCost > 0 ? `<div class="summary-line sub"><span>— ${escapeHtml(r.job.extraMaterialLabel||'Componente extra')} (×${r.job.unitCount})</span><strong>${currency.format(r.extraCost)}</strong></div>` : ''}
+          </details>`;
+      });
+
       html += `
-        </details>
-      `;
+        <div class="summary-line" style="margin-top:4px;"><span>Subtotale lavorazioni</span><strong>${currency.format(result.baseTechnicalTotal)}</strong></div>
+        <div class="summary-line"><span>Manodopera (${num.format(result.manualHours)} h × ${currency.format(result.laborRate)})</span><strong>${currency.format(result.manualLaborCost)}</strong></div>
+        <div class="summary-line"><span>Totale base</span><strong>${currency.format(result.baseTotal)}</strong></div>
+        <div class="summary-line"><span>Margine fallimento (${num.format(result.failureMargin)}%)</span><strong>+ ${currency.format(result.failureCost)}</strong></div>
+        <div class="block-total"><span>Totale costo reale</span><span class="block-total-value">${currency.format(result.adjustedTotal)}</span></div>
+      </div>`;
+
+      html += `<div class="summary-block cost-client">
+        <div class="summary-block-head"><span class="icon">💶</span><span class="title">Prezzo per il cliente</span></div>
+        <p class="desc">Dal costo reale al prezzo finale con rincaro, sconto, minimo e IVA.</p>
+        <div class="summary-line sub"><span>Costo reale di produzione</span><strong>${currency.format(result.adjustedTotal)}</strong></div>
+        <div class="summary-line"><span>Rincaro / guadagno (${num.format(result.profitMargin)}%)</span><strong>+ ${currency.format(result.profitValue)}</strong></div>
+        <div class="summary-line"><span>Prezzo con rincaro</span><strong>${currency.format(result.priceBeforeDiscount)}</strong></div>
+        <div class="summary-line deduct"><span>Sconto cliente</span><strong>− ${currency.format(result.discountValue)}</strong></div>
+        ${minimumApplied ? `<div class="summary-line"><span>Prezzo minimo applicato (${currency.format(result.minimumPrice)})</span><strong>${currency.format(result.priceAfterMinimum)}</strong></div>` : ''}
+        <div class="summary-line"><span>IVA (${num.format(result.vatPercent)}%) ${vatBadge}</span><strong>${result.includeVat ? '+ '+currency.format(result.vatValue) : currency.format(0)}</strong></div>
+        <div class="block-total"><span>Totale finale cliente</span><span class="block-total-value">${currency.format(result.finalRecommendedPrice)}</span></div>
+        <div class="margin-chip">📈 Margine netto stimato: ${currency.format(netMargin)} (${num.format(netMarginPct)}%)</div>
+        ${result.unitPriceClient!==null&&result.totalPiecesAll>1 ? `<div class="margin-chip" style="margin-left:8px;">🔢 Prezzo/pezzo: ${currency.format(result.unitPriceClient)} su ${result.totalPiecesAll} pezzi</div>` : ''}
+      </div>`;
+
       quoteSummary.innerHTML = html;
       recommendedPriceBox.textContent = currency.format(result.finalRecommendedPrice);
     }
 
-    function jobTypeLabel(result) {
-      if (result.jobMode === 'combined') return 'Stampa 3D + Laser';
-      if (result.jobMode === 'laser') return 'Solo lavorazione laser';
-      return 'Solo stampa 3D';
-    }
-
-    document.getElementById('exportPdfBtn').addEventListener('click', () => {
-      const result = window.__lastQuoteResult;
-      if (!result) {
-        alert('Prima calcola un preventivo nel tab Lavoro per poterlo esportare in PDF.');
-        return;
-      }
-      document.getElementById('printQuoteName').textContent = result.jobName || 'Preventivo senza nome';
-      document.getElementById('printQuoteDate').textContent = result.quoteDate || '-';
-      document.getElementById('printClientName').textContent = result.clientName || 'Non indicato';
-      document.getElementById('printClientContact').textContent = result.clientContact || 'Non indicato';
-      document.getElementById('printJobType').textContent = jobTypeLabel(result);
-      document.getElementById('printSubtotal').textContent = currency.format(result.priceAfterMinimum);
-
-      const discountRow = document.getElementById('printDiscountRow');
-      if (result.discountValue > 0) {
-        discountRow.style.display = 'flex';
-        document.getElementById('printDiscount').textContent = `-${currency.format(result.discountValue)}`;
-      } else {
-        discountRow.style.display = 'none';
-      }
-
-      const vatRow = document.getElementById('printVatRow');
-      if (result.includeVat) {
-        vatRow.style.display = 'flex';
-        document.getElementById('printVat').textContent = `${num.format(result.vatPercent)}% (${currency.format(result.vatValue)})`;
-        document.getElementById('printTotalLabel').textContent = 'Totale preventivo (IVA inclusa)';
-      } else {
-        vatRow.style.display = 'flex';
-        document.getElementById('printVat').textContent = 'Esclusa';
-        document.getElementById('printTotalLabel').textContent = 'Totale preventivo (IVA esclusa)';
-      }
-
-      document.getElementById('printTotalValue').textContent = currency.format(result.finalRecommendedPrice);
-      document.getElementById('printGeneratedOn').textContent = new Date().toLocaleDateString('it-IT');
-
-      window.print();
-    });
-
+    // ── MACHINES ─────────────────────────────────────────────────────
     machineForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const machines = getMachines();
-      machines.push({
+      machines.push(normalizeMachine({
         id: crypto.randomUUID(),
         type: document.getElementById('machineType').value,
         name: document.getElementById('machineName').value.trim(),
@@ -1202,9 +1207,9 @@
         lifetimeHours: Number(document.getElementById('lifetimeHours').value),
         energyCost: Number(document.getElementById('energyCost').value),
         powerKwh: Number(document.getElementById('powerKwh').value),
-        powerEveryH: Number(document.getElementById('powerEveryH').value) || 1,
+        powerEveryH: Number(document.getElementById('powerEveryH').value)||1,
         maintenanceCost: Number(document.getElementById('maintenanceCost').value)
-      });
+      }));
       saveData(STORAGE_KEYS.machines, machines);
       machineForm.reset();
       document.getElementById('machineType').value = '3d';
@@ -1212,17 +1217,17 @@
       showSaved('machineSaved');
     });
 
+    // ── MATERIALS ────────────────────────────────────────────────────
     materialForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const materials = getMaterials();
-      const type = document.getElementById('materialType').value;
-      materials.push({
+      materials.push(normalizeMaterial({
         id: crypto.randomUUID(),
-        type,
-        unit: type === '3d' ? 'kg' : document.getElementById('materialUnit').value,
+        type: document.getElementById('materialType').value,
+        unit: document.getElementById('materialUnit').value,
         name: document.getElementById('materialName').value.trim(),
         unitCost: Number(document.getElementById('materialCost').value)
-      });
+      }));
       saveData(STORAGE_KEYS.materials, materials);
       materialForm.reset();
       document.getElementById('materialType').value = '3d';
@@ -1231,241 +1236,112 @@
       showSaved('materialSaved');
     });
 
-    jobForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const machines = getMachines();
-      const materials = getMaterials();
-      const currentMode = document.getElementById('jobMode').value;
-      const use3d = currentMode === '3d' || currentMode === 'combined';
-      const useLaser = currentMode === 'laser' || currentMode === 'combined';
-
-      let printer3d = null;
-      let material3d = null;
-      let machineLaser = null;
-      let materialLaser = null;
-
-      if (use3d) {
-        printer3d = machines.find(m => m.id === document.getElementById('jobPrinter3d').value && m.type === '3d');
-        material3d = materials.find(m => m.id === document.getElementById('jobMaterial3d').value && m.type === '3d');
-        if (!printer3d || !material3d) {
-          alert('Per la sezione stampa 3D devi selezionare una macchina 3D e un materiale 3D validi.');
-          return;
-        }
+    function updateMaterialFormUI() {
+      const type = materialType.value;
+      if (type === '3d') {
+        materialUnit.value = 'kg'; materialUnit.disabled = true;
+        materialCostLabel.textContent = 'Costo per kg (€)';
+      } else {
+        materialUnit.disabled = false;
+        materialCostLabel.textContent = `Costo per ${UNIT_LABELS[materialUnit.value]||materialUnit.value} (€)`;
       }
-      if (useLaser) {
-        machineLaser = machines.find(m => m.id === document.getElementById('jobMachineLaser').value && m.type === 'laser');
-        materialLaser = materials.find(m => m.id === document.getElementById('jobMaterialLaser').value && m.type === 'laser');
-        if (!machineLaser || !materialLaser) {
-          alert('Per la sezione laser devi selezionare una macchina laser e un materiale laser validi.');
-          return;
-        }
-      }
-
-      const piecesPerPlate3d = Number(document.getElementById('piecesCount3d').value || 1);
-      const platesCount3d = Number(document.getElementById('platesCount3d').value || 1);
-      const gramsPerPlate3d = Number(document.getElementById('jobGrams3d').value || 0);
-      const days3d = Number(document.getElementById('jobDays3d').value || 0);
-      const h3d = Number(document.getElementById('jobH3d').value || 0);
-      const min3d = Number(document.getElementById('jobMin3d').value || 0);
-      const hoursPerPlate3d = days3d * 24 + h3d + min3d / 60;
-      const piecesPerBatchLaser = Number(document.getElementById('piecesCountLaser').value || 1);
-      const batchCountLaser = Number(document.getElementById('batchCountLaser').value || 1);
-      const materialQtyPerBatchLaser = Number(document.getElementById('laserMaterialQty').value || 0);
-      const daysLaser = Number(document.getElementById('jobDaysLaser').value || 0);
-      const hLaser = Number(document.getElementById('jobHLaser').value || 0);
-      const minLaser = Number(document.getElementById('jobMinLaser').value || 0);
-      const hoursPerBatchLaser = daysLaser * 24 + hLaser + minLaser / 60;
-      const manualHours = Number(document.getElementById('manualHours').value || 0);
-      const laborRate = Number(document.getElementById('laborRate').value || 0);
-      const failureMargin = Number(document.getElementById('failureMargin').value || 0);
-      const profitMargin = Number(document.getElementById('profitMargin').value || 0);
-      const discountAmount = Number(document.getElementById('discountAmount').value || 0);
-      const minimumPrice = Number(document.getElementById('minimumPrice').value || 0);
-      const vatPercent = Number(document.getElementById('vatPercent').value || 0);
-      const includeVat = document.getElementById('includeVat').checked;
-
-      const totalGrams3d = use3d ? gramsPerPlate3d * platesCount3d : 0;
-      const totalHours3d = use3d ? hoursPerPlate3d * platesCount3d : 0;
-      const totalPieces3d = use3d ? piecesPerPlate3d * platesCount3d : 0;
-      const materialCost3d = use3d ? (totalGrams3d / 1000) * Number(material3d.unitCost || 0) : 0;
-      const powerRate3d = use3d && Number(printer3d.powerEveryH) > 0 ? Number(printer3d.powerKwh || 0) / Number(printer3d.powerEveryH) : 0;
-      const energyCost3d = use3d ? totalHours3d * powerRate3d * Number(printer3d.energyCost || 0) : 0;
-      const maintenanceCost3d = use3d ? (totalHours3d / 1000) * Number(printer3d.maintenanceCost || 0) : 0;
-      const machineAmortRate3d = use3d && Number(printer3d.lifetimeHours) > 0 ? Number(printer3d.machineCost || 0) / Number(printer3d.lifetimeHours) : 0;
-      const machineAmortCost3d = use3d ? totalHours3d * machineAmortRate3d : 0;
-      const subtotal3d = materialCost3d + energyCost3d + maintenanceCost3d + machineAmortCost3d;
-
-      const totalMaterialQtyLaser = useLaser ? materialQtyPerBatchLaser * batchCountLaser : 0;
-      const totalHoursLaser = useLaser ? hoursPerBatchLaser * batchCountLaser : 0;
-      const totalPiecesLaser = useLaser ? piecesPerBatchLaser * batchCountLaser : 0;
-      const materialCostLaser = useLaser ? totalMaterialQtyLaser * Number(materialLaser.unitCost || 0) : 0;
-      const powerRateLaser = useLaser && Number(machineLaser.powerEveryH) > 0 ? Number(machineLaser.powerKwh || 0) / Number(machineLaser.powerEveryH) : 0;
-      const energyCostLaser = useLaser ? totalHoursLaser * powerRateLaser * Number(machineLaser.energyCost || 0) : 0;
-      const maintenanceCostLaser = useLaser ? (totalHoursLaser / 1000) * Number(machineLaser.maintenanceCost || 0) : 0;
-      const machineAmortRateLaser = useLaser && Number(machineLaser.lifetimeHours) > 0 ? Number(machineLaser.machineCost || 0) / Number(machineLaser.lifetimeHours) : 0;
-      const machineAmortCostLaser = useLaser ? totalHoursLaser * machineAmortRateLaser : 0;
-      const subtotalLaser = materialCostLaser + energyCostLaser + maintenanceCostLaser + machineAmortCostLaser;
-
-      const totalPiecesAll = totalPieces3d + totalPiecesLaser;
-      const materialCostTotal = materialCost3d + materialCostLaser;
-      const energyCostTotal = energyCost3d + energyCostLaser;
-      const maintenanceCostTotal = maintenanceCost3d + maintenanceCostLaser;
-      const machineAmortCostTotal = machineAmortCost3d + machineAmortCostLaser;
-      const manualLaborCost = manualHours * laborRate;
-      const baseTechnicalTotal = subtotal3d + subtotalLaser;
-      const baseTotal = baseTechnicalTotal + manualLaborCost;
-      const failureCost = baseTotal * (failureMargin / 100);
-      const adjustedTotal = baseTotal + failureCost;
-      const profitValue = adjustedTotal * (profitMargin / 100);
-      const priceBeforeDiscount = adjustedTotal + profitValue;
-      const discountValue = Math.min(discountAmount, priceBeforeDiscount);
-      const priceAfterDiscount = priceBeforeDiscount - discountValue;
-      const priceAfterMinimum = Math.max(priceAfterDiscount, minimumPrice);
-      const vatValue = includeVat ? priceAfterMinimum * (vatPercent / 100) : 0;
-      const finalRecommendedPrice = priceAfterMinimum + vatValue;
-      const unitPriceClient = totalPiecesAll > 0 ? finalRecommendedPrice / totalPiecesAll : null;
-
-      const result = {
-        version: 'hybrid-v3',
-        jobMode: currentMode,
-        use3d,
-        useLaser,
-        jobName: document.getElementById('jobName').value.trim(),
-        clientName: document.getElementById('clientName').value.trim(),
-        clientContact: document.getElementById('clientContact').value.trim(),
-        quoteDate: document.getElementById('quoteDate').value || todayString(),
-        printer3dName: use3d ? printer3d.name : '',
-        material3dName: use3d ? material3d.name : '',
-        piecesPerPlate3d,
-        platesCount3d,
-        gramsPerPlate3d,
-        totalGrams3d,
-        hoursPerPlate3d,
-        totalHours3d,
-        totalPieces3d,
-        machineLaserName: useLaser ? machineLaser.name : '',
-        materialLaserName: useLaser ? materialLaser.name : '',
-        materialLaserUnitLabel: useLaser ? (UNIT_LABELS[materialLaser.unit] || materialLaser.unit) : '',
-        piecesPerBatchLaser,
-        batchCountLaser,
-        materialQtyPerBatchLaser,
-        totalMaterialQtyLaser,
-        totalHoursLaser,
-        totalPiecesLaser,
-        totalPiecesAll,
-        unitPriceClient,
-        manualHours,
-        laborRate,
-        manualLaborCost,
-        failureMargin,
-        profitMargin,
-        discountAmount,
-        minimumPrice,
-        vatPercent,
-        includeVat,
-        materialCostTotal,
-        energyCostTotal,
-        maintenanceCostTotal,
-        machineAmortCostTotal,
-        subtotal3d,
-        subtotalLaser,
-        baseTechnicalTotal,
-        baseTotal,
-        failureCost,
-        adjustedTotal,
-        profitValue,
-        priceBeforeDiscount,
-        discountValue,
-        priceAfterDiscount,
-        priceAfterMinimum,
-        vatValue,
-        finalRecommendedPrice
-      };
-
-      saveData(STORAGE_KEYS.currentJob, {
-        version: 'hybrid-v3',
-        jobMode: currentMode,
-        jobName: document.getElementById('jobName').value.trim(),
-        clientName: document.getElementById('clientName').value.trim(),
-        clientContact: document.getElementById('clientContact').value.trim(),
-        quoteDate: document.getElementById('quoteDate').value || todayString(),
-        jobPrinter3d: document.getElementById('jobPrinter3d').value,
-        jobMaterial3d: document.getElementById('jobMaterial3d').value,
-        piecesCount3d: piecesPerPlate3d,
-        platesCount3d,
-        jobGrams3d: gramsPerPlate3d,
-        jobDays3d: days3d,
-        jobH3d: h3d,
-        jobMin3d: min3d,
-        jobMachineLaser: document.getElementById('jobMachineLaser').value,
-        jobMaterialLaser: document.getElementById('jobMaterialLaser').value,
-        piecesCountLaser: piecesPerBatchLaser,
-        batchCountLaser,
-        laserMaterialQty: materialQtyPerBatchLaser,
-        jobDaysLaser: daysLaser,
-        jobHLaser: hLaser,
-        jobMinLaser: minLaser,
-        manualHours,
-        laborRate,
-        failureMargin,
-        profitMargin,
-        discountAmount,
-        minimumPrice,
-        vatPercent,
-        includeVat,
-        result
-      });
-      renderSummary(result);
-      activateTab('tab-riepilogo');
-    });
-
-    document.getElementById('resetMachines').addEventListener('click', () => {
-      if (!confirm('Vuoi cancellare tutte le macchine salvate?')) return;
-      saveData(STORAGE_KEYS.machines, []);
-      renderMachines();
-    });
-
-    document.getElementById('resetMaterials').addEventListener('click', () => {
-      if (!confirm('Vuoi cancellare tutti i materiali salvati?')) return;
-      saveData(STORAGE_KEYS.materials, []);
-      renderMaterials();
-    });
+    }
 
     function removeMachine(id) {
-      const updated = getMachines().filter(m => m.id !== id);
-      saveData(STORAGE_KEYS.machines, updated);
+      saveData(STORAGE_KEYS.machines, getMachines().filter(m => m.id!==id));
       renderMachines();
     }
-
     function removeMaterial(id) {
-      const updated = getMaterials().filter(m => m.id !== id);
-      saveData(STORAGE_KEYS.materials, updated);
+      saveData(STORAGE_KEYS.materials, getMaterials().filter(m => m.id!==id));
       renderMaterials();
     }
-
     window.removeMachine = removeMachine;
     window.removeMaterial = removeMaterial;
 
-    function activateTab(id) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === id));
-      document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.toggle('active', panel.id === id));
+    document.getElementById('resetMachines').addEventListener('click', () => {
+      if (!confirm('Vuoi cancellare tutte le macchine salvate?')) return;
+      saveData(STORAGE_KEYS.machines, []); renderMachines();
+    });
+    document.getElementById('resetMaterials').addEventListener('click', () => {
+      if (!confirm('Vuoi cancellare tutti i materiali salvati?')) return;
+      saveData(STORAGE_KEYS.materials, []); renderMaterials();
+    });
+
+    // ── PDF EXPORT ───────────────────────────────────────────────────
+    function jobTypeLabel(result) {
+      const types = [...new Set((result.jobResults||[]).map(r => r.job.type))];
+      if (types.includes('3d') && types.includes('laser')) return 'Stampa 3D + Laser';
+      if (types.includes('laser')) return 'Solo lavorazione laser';
+      return 'Solo stampa 3D';
     }
 
+    document.getElementById('exportPdfBtn').addEventListener('click', () => {
+      const result = window.__lastQuoteResult;
+      if (!result) { alert('Prima calcola un preventivo nel tab Lavoro.'); return; }
+      document.getElementById('printQuoteName').textContent = result.jobName||'Preventivo senza nome';
+      document.getElementById('printQuoteDate').textContent = result.quoteDate||'-';
+      document.getElementById('printClientName').textContent = result.clientName||'Non indicato';
+      document.getElementById('printClientContact').textContent = result.clientContact||'Non indicato';
+      document.getElementById('printJobType').textContent = jobTypeLabel(result);
+      document.getElementById('printSubtotal').textContent = currency.format(result.priceAfterMinimum);
+      const discountRow = document.getElementById('printDiscountRow');
+      if (result.discountValue>0) {
+        discountRow.style.display='flex';
+        document.getElementById('printDiscount').textContent = `−${currency.format(result.discountValue)}`;
+      } else { discountRow.style.display='none'; }
+      const vatRow = document.getElementById('printVatRow');
+      vatRow.style.display='flex';
+      document.getElementById('printVat').textContent = result.includeVat ? `${num.format(result.vatPercent)}% (${currency.format(result.vatValue)})` : 'Esclusa';
+      document.getElementById('printTotalLabel').textContent = result.includeVat ? 'Totale preventivo (IVA inclusa)' : 'Totale preventivo (IVA esclusa)';
+      document.getElementById('printTotalValue').textContent = currency.format(result.finalRecommendedPrice);
+      document.getElementById('printGeneratedOn').textContent = new Date().toLocaleDateString('it-IT');
+      window.print();
+    });
+
+    // ── RESTORE & INIT ───────────────────────────────────────────────
+    function restoreCurrentJob() {
+      const saved = loadData(STORAGE_KEYS.currentJob, null);
+      if (!saved || saved.version !== 'hybrid-v3') {
+        if (!quoteDateInput.value) quoteDateInput.value = todayString();
+        return;
+      }
+      const set = (id, v, fb='') => {
+        const el = document.getElementById(id); if (!el) return;
+        if (el.type==='checkbox') { el.checked = v!==undefined&&v!==null ? Boolean(v) : Boolean(fb); return; }
+        if (v!==undefined&&v!==null&&v!=='') el.value=v; else if (fb!=='') el.value=fb;
+      };
+      set('jobName', saved.jobName||'');
+      set('clientName', saved.clientName||'');
+      set('clientContact', saved.clientContact||'');
+      set('quoteDate', saved.quoteDate||todayString());
+      set('manualHours', saved.manualHours, 0);
+      set('laborRate', saved.laborRate, 0);
+      set('failureMargin', saved.failureMargin, 8);
+      set('profitMargin', saved.profitMargin, 100);
+      set('discountAmount', saved.discountAmount, 0);
+      set('minimumPrice', saved.minimumPrice, 0);
+      set('vatPercent', saved.vatPercent, 22);
+      set('includeVat', saved.includeVat, true);
+      if (saved.result) renderSummary(saved.result);
+    }
+
+    function activateTab(id) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===id));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id===id));
+    }
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => activateTab(btn.dataset.tab));
     });
 
-    jobMode.addEventListener('change', updateJobModeUI);
     materialType.addEventListener('change', updateMaterialFormUI);
     materialUnit.addEventListener('change', updateMaterialFormUI);
 
     if (!quoteDateInput.value) quoteDateInput.value = todayString();
     updateMaterialFormUI();
-    updateJobModeUI();
     renderMachines();
     renderMaterials();
-    restoreCurrentJobSelections();
-    renderSummary(loadData(STORAGE_KEYS.currentJob, {}).result || null);
+    restoreCurrentJob();
+    renderSummary(loadData(STORAGE_KEYS.currentJob, {}).result||null);
   </script>
 </body>
 </html>
