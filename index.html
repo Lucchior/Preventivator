@@ -169,42 +169,29 @@
       font-size: 13.5px;
       font-weight: 700;
     }
-    .import-box {
-      background: rgba(56,189,248,.06);
-      border: 1px dashed rgba(56,189,248,.35);
-      border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 16px;
-    }
-    .import-box-head { display: flex; align-items: flex-start; gap: 10px; }
-    .import-box-head .icon { font-size: 22px; line-height: 1.2; }
-    .import-title { font-weight: 800; font-size: 14.5px; color: #bae6fd; }
-    .import-desc { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
-    .file-btn { display: inline-flex; align-items: center; cursor: pointer; }
-    .import-status { font-size: 13px; margin-top: 8px; min-height: 18px; }
-    .import-status.ok-msg { color: #86efac; }
-    .import-status.warn-msg { color: #fde68a; }
-    .import-status.err-msg { color: #fca5a5; }
-    #gcodePreviewWrap img {
-      max-width: 180px;
-      border-radius: 12px;
-      border: 1px solid rgba(56,189,248,.3);
-      display: block;
-    }
-    .thumb-summary {
+    .card h2, .card h3 { margin-top: 0; margin-bottom: 10px; }
+    .inline-fields {
       display: flex;
       align-items: center;
-      gap: 14px;
-      background: rgba(56,189,248,.07);
-      border: 1px solid rgba(56,189,248,.22);
-      border-radius: 14px;
-      padding: 12px;
-      margin-bottom: 14px;
+      gap: 6px;
+      flex-wrap: wrap;
     }
-    .thumb-summary img { width: 84px; height: 84px; object-fit: contain; border-radius: 10px; background: rgba(0,0,0,.2); }
-    .thumb-summary .thumb-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; }
-    .thumb-summary .thumb-name { font-size: 14px; font-weight: 700; }
-    .card h2, .card h3 { margin-top: 0; margin-bottom: 10px; }
+    .inline-fields input {
+      flex: 1;
+      min-width: 60px;
+      max-width: 100px;
+    }
+    .inline-label {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .field-hint {
+      margin-top: 5px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
     .subtitle { color: var(--muted); margin-top: -4px; margin-bottom: 16px; line-height: 1.45; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
@@ -453,9 +440,15 @@
                 <label for="energyCost">Costo energia (€/kWh)</label>
                 <input id="energyCost" type="number" min="0" step="0.0001" placeholder="0.0000" required />
               </div>
-              <div class="field">
-                <label for="powerConsumption">Consumo macchina (kW/h)</label>
-                <input id="powerConsumption" type="number" min="0" step="0.01" placeholder="0.00" required />
+              <div class="field full">
+                <label>Consumo macchina</label>
+                <div class="inline-fields">
+                  <input id="powerKwh" type="number" min="0" step="0.01" placeholder="Es. 1" required />
+                  <span class="inline-label">kWh ogni</span>
+                  <input id="powerEveryH" type="number" min="0.1" step="0.1" placeholder="Es. 6" required />
+                  <span class="inline-label">ore</span>
+                </div>
+                <div class="field-hint">Se la tua macchina consuma 1 kWh ogni 6 ore di funzionamento, scrivi 1 e 6.</div>
               </div>
               <div class="field full">
                 <label for="maintenanceCost">Manutenzione ogni 1000h (€)</label>
@@ -518,25 +511,6 @@
               </div>
               <p class="subtitle" style="margin-top:-6px;">Inserisci i grammi e le ore relativi a un piatto intero (con tutti i pezzi ottimizzati sopra). "Pezzi per piatto" serve solo a calcolare il costo unitario; "Numero piatti" è invece il moltiplicatore reale se ripeti la stessa stampa più volte.</p>
 
-              <div class="import-box">
-                <div class="import-box-head">
-                  <span class="icon">📂</span>
-                  <div>
-                    <div class="import-title">Importa file .gcode o .3mf</div>
-                    <div class="import-desc">Estrae automaticamente grammi, ore di stampa e anteprima oggetto, se presenti nel file.</div>
-                  </div>
-                </div>
-                <div class="actions" style="margin-top:8px;">
-                  <label class="secondary file-btn" for="gcodeFile">Scegli file</label>
-                  <input id="gcodeFile" type="file" accept=".gcode,.gco,.g,.3mf" style="display:none;" />
-                  <span id="gcodeFileName" class="muted" style="font-size:13px;">Nessun file selezionato</span>
-                </div>
-                <div id="gcodeStatus" class="import-status"></div>
-                <div id="gcodePreviewWrap" class="hidden" style="margin-top:10px;">
-                  <img id="gcodePreviewImg" alt="Anteprima oggetto" />
-                </div>
-              </div>
-
               <div class="form-grid">
                 <div class="field">
                   <label for="jobPrinter3d">Macchina 3D</label>
@@ -558,9 +532,16 @@
                   <label for="jobGrams3d">Materiale per piatto (g)</label>
                   <input id="jobGrams3d" type="number" min="0" step="0.01" placeholder="0.00" />
                 </div>
-                <div class="field">
-                  <label for="jobHours3d">Ore di stampa per piatto</label>
-                  <input id="jobHours3d" type="number" min="0" step="0.01" placeholder="0.00" />
+                <div class="field full">
+                  <label>Durata stampa per piatto</label>
+                  <div class="inline-fields">
+                    <input id="jobDays3d" type="number" min="0" step="1" value="0" style="width:60px;" />
+                    <span class="inline-label">g</span>
+                    <input id="jobH3d" type="number" min="0" max="23" step="1" value="0" style="width:60px;" />
+                    <span class="inline-label">h</span>
+                    <input id="jobMin3d" type="number" min="0" max="59" step="1" value="0" style="width:60px;" />
+                    <span class="inline-label">min</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -593,8 +574,15 @@
                   <input id="laserMaterialQty" type="number" min="0" step="0.01" placeholder="0.00" />
                 </div>
                 <div class="field full">
-                  <label for="jobHoursLaser">Ore per lavorazione</label>
-                  <input id="jobHoursLaser" type="number" min="0" step="0.01" placeholder="0.00" />
+                  <label>Durata per lavorazione</label>
+                  <div class="inline-fields">
+                    <input id="jobDaysLaser" type="number" min="0" step="1" value="0" style="width:60px;" />
+                    <span class="inline-label">g</span>
+                    <input id="jobHLaser" type="number" min="0" max="23" step="1" value="0" style="width:60px;" />
+                    <span class="inline-label">h</span>
+                    <input id="jobMinLaser" type="number" min="0" max="59" step="1" value="0" style="width:60px;" />
+                    <span class="inline-label">min</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -769,7 +757,6 @@
     <div class="doc-footer">Documento generato il <span id="printGeneratedOn"></span> — valido salvo conferma.</div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script>
     const STORAGE_KEYS = {
       machines: 'preventivi3d_machines',
@@ -787,8 +774,8 @@
 
     const defaults = {
       machines: [
-        { id: crypto.randomUUID(), type: '3d', name: 'Stampante esempio', machineCost: 1200, lifetimeHours: 8000, energyCost: 0.28, powerConsumption: 0.35, maintenanceCost: 120 },
-        { id: crypto.randomUUID(), type: 'laser', name: 'Laser CO2 esempio', machineCost: 2200, lifetimeHours: 10000, energyCost: 0.32, powerConsumption: 1.2, maintenanceCost: 180 }
+        { id: crypto.randomUUID(), type: '3d', name: 'Stampante esempio', machineCost: 1200, lifetimeHours: 8000, energyCost: 0.28, powerKwh: 1, powerEveryH: 3, maintenanceCost: 120 },
+        { id: crypto.randomUUID(), type: 'laser', name: 'Laser CO2 esempio', machineCost: 2200, lifetimeHours: 10000, energyCost: 0.32, powerKwh: 1, powerEveryH: 1, maintenanceCost: 180 }
       ],
       materials: [
         { id: crypto.randomUUID(), type: '3d', unit: 'kg', name: 'PLA', unitCost: 22 },
@@ -843,7 +830,8 @@
         machineCost: Number(m.machineCost ?? m.printerCost ?? 0),
         lifetimeHours: Number(m.lifetimeHours ?? 0),
         energyCost: Number(m.energyCost ?? 0),
-        powerConsumption: Number(m.powerConsumption ?? m.powerKw ?? 0),
+        powerKwh: Number(m.powerKwh ?? m.powerConsumption ?? 0),
+        powerEveryH: Number(m.powerEveryH ?? 1),
         maintenanceCost: Number(m.maintenanceCost ?? 0)
       };
     }
@@ -887,6 +875,19 @@
         : '<span class="badge blue">Stampa 3D</span>';
     }
 
+    function formatHours(h) {
+      if (!h || h <= 0) return '0 min';
+      const totalMin = Math.round(h * 60);
+      const d = Math.floor(totalMin / 1440);
+      const hh = Math.floor((totalMin % 1440) / 60);
+      const mm = totalMin % 60;
+      const parts = [];
+      if (d > 0) parts.push(`${d}g`);
+      if (hh > 0) parts.push(`${hh}h`);
+      if (mm > 0) parts.push(`${mm}min`);
+      return parts.join(' ') || '0 min';
+    }
+
     function escapeHtml(text) {
       return String(text)
         .replaceAll('&', '&amp;')
@@ -919,8 +920,8 @@
             <div class="stats">
               <div class="stat"><div class="k">Ammortamento/h</div><div class="v">${currency.format(Number(m.lifetimeHours) > 0 ? Number(m.machineCost || 0) / Number(m.lifetimeHours) : 0)}</div></div>
               <div class="stat"><div class="k">Energia</div><div class="v">${currency.format(Number(m.energyCost || 0))}/kWh</div></div>
-              <div class="stat"><div class="k">Consumo</div><div class="v">${num.format(Number(m.powerConsumption || 0))} kW/h</div></div>
-              <div class="stat"><div class="k">Costo energia/h</div><div class="v">${currency.format(Number(m.powerConsumption || 0) * Number(m.energyCost || 0))}</div></div>
+              <div class="stat"><div class="k">Consumo</div><div class="v">${num.format(Number(m.powerKwh || 0))} kWh ogni ${num.format(Number(m.powerEveryH || 1))} h</div></div>
+              <div class="stat"><div class="k">Costo energia/h</div><div class="v">${currency.format((Number(m.powerKwh || 0) / Math.max(Number(m.powerEveryH || 1), 0.001)) * Number(m.energyCost || 0))}</div></div>
               <div class="stat"><div class="k">Manut. 1000h</div><div class="v">${currency.format(Number(m.maintenanceCost || 0))}</div></div>
             </div>
           </div>
@@ -1016,13 +1017,17 @@
       safeSet('piecesCount3d', saved.piecesCount3d, 1);
       safeSet('platesCount3d', saved.platesCount3d, 1);
       safeSet('jobGrams3d', saved.jobGrams3d || '');
-      safeSet('jobHours3d', saved.jobHours3d || '');
+      safeSet('jobDays3d', saved.jobDays3d, 0);
+      safeSet('jobH3d', saved.jobH3d, 0);
+      safeSet('jobMin3d', saved.jobMin3d, 0);
       safeSet('jobMachineLaser', saved.jobMachineLaser || '');
       safeSet('jobMaterialLaser', saved.jobMaterialLaser || '');
       safeSet('piecesCountLaser', saved.piecesCountLaser, 1);
       safeSet('batchCountLaser', saved.batchCountLaser, 1);
       safeSet('laserMaterialQty', saved.laserMaterialQty || '');
-      safeSet('jobHoursLaser', saved.jobHoursLaser || '');
+      safeSet('jobDaysLaser', saved.jobDaysLaser, 0);
+      safeSet('jobHLaser', saved.jobHLaser, 0);
+      safeSet('jobMinLaser', saved.jobMinLaser, 0);
       safeSet('manualHours', saved.manualHours, 0);
       safeSet('laborRate', saved.laborRate, 0);
       safeSet('failureMargin', saved.failureMargin, 8);
@@ -1055,18 +1060,7 @@
       const netMargin = result.priceAfterMinimum - result.adjustedTotal;
       const netMarginPercent = result.adjustedTotal > 0 ? (netMargin / result.adjustedTotal) * 100 : 0;
 
-      let html = '';
-      if (result.thumbnailDataUrl) {
-        html += `
-        <div class="thumb-summary">
-          <img src="${result.thumbnailDataUrl}" alt="Anteprima oggetto" />
-          <div>
-            <div class="thumb-label">Forma finale dell'oggetto</div>
-            <div class="thumb-name">${escapeHtml(result.printer3dName || 'Anteprima da file importato')}</div>
-          </div>
-        </div>`;
-      }
-      html += `
+      let html = `
         <div class="summary-meta">
           <div class="meta-item"><div class="k">Preventivo</div><div class="v">${escapeHtml(result.jobName || 'Senza nome')}</div></div>
           <div class="meta-item"><div class="k">Cliente</div><div class="v">${escapeHtml(result.clientName || 'Non indicato')}</div></div>
@@ -1125,9 +1119,9 @@
           <div class="summary-line"><span>Pezzi per piatto</span><strong>${num.format(result.piecesPerPlate3d)}</strong></div>
           <div class="summary-line"><span>Numero piatti</span><strong>${num.format(result.platesCount3d)}</strong></div>
           <div class="summary-line"><span>Materiale per piatto</span><strong>${num.format(result.gramsPerPlate3d)} g</strong></div>
-          <div class="summary-line"><span>Ore per piatto</span><strong>${num.format(result.hoursPerPlate3d)} h</strong></div>
+          <div class="summary-line"><span>Durata per piatto</span><strong>${formatHours(result.hoursPerPlate3d)}</strong></div>
           <div class="summary-line"><span>Materiale totale 3D</span><strong>${num.format(result.totalGrams3d)} g</strong></div>
-          <div class="summary-line"><span>Ore totali 3D</span><strong>${num.format(result.totalHours3d)} h</strong></div>
+          <div class="summary-line"><span>Durata totale 3D</span><strong>${formatHours(result.totalHours3d)}</strong></div>
           <div class="summary-line"><span>Pezzi totali 3D</span><strong>${num.format(result.totalPieces3d)}</strong></div>
         `;
       }
@@ -1139,7 +1133,7 @@
           <div class="summary-line"><span>Numero lavorazioni</span><strong>${num.format(result.batchCountLaser)}</strong></div>
           <div class="summary-line"><span>Quantità materiale per lavorazione</span><strong>${num.format(result.materialQtyPerBatchLaser)} ${escapeHtml(result.materialLaserUnitLabel)}</strong></div>
           <div class="summary-line"><span>Quantità materiale totale</span><strong>${num.format(result.totalMaterialQtyLaser)} ${escapeHtml(result.materialLaserUnitLabel)}</strong></div>
-          <div class="summary-line"><span>Ore totali laser</span><strong>${num.format(result.totalHoursLaser)} h</strong></div>
+          <div class="summary-line"><span>Durata totale laser</span><strong>${formatHours(result.totalHoursLaser)}</strong></div>
           <div class="summary-line"><span>Pezzi totali laser</span><strong>${num.format(result.totalPiecesLaser)}</strong></div>
         `;
       }
@@ -1207,7 +1201,8 @@
         machineCost: Number(document.getElementById('machineCost').value),
         lifetimeHours: Number(document.getElementById('lifetimeHours').value),
         energyCost: Number(document.getElementById('energyCost').value),
-        powerConsumption: Number(document.getElementById('powerConsumption').value),
+        powerKwh: Number(document.getElementById('powerKwh').value),
+        powerEveryH: Number(document.getElementById('powerEveryH').value) || 1,
         maintenanceCost: Number(document.getElementById('maintenanceCost').value)
       });
       saveData(STORAGE_KEYS.machines, machines);
@@ -1269,11 +1264,17 @@
       const piecesPerPlate3d = Number(document.getElementById('piecesCount3d').value || 1);
       const platesCount3d = Number(document.getElementById('platesCount3d').value || 1);
       const gramsPerPlate3d = Number(document.getElementById('jobGrams3d').value || 0);
-      const hoursPerPlate3d = Number(document.getElementById('jobHours3d').value || 0);
+      const days3d = Number(document.getElementById('jobDays3d').value || 0);
+      const h3d = Number(document.getElementById('jobH3d').value || 0);
+      const min3d = Number(document.getElementById('jobMin3d').value || 0);
+      const hoursPerPlate3d = days3d * 24 + h3d + min3d / 60;
       const piecesPerBatchLaser = Number(document.getElementById('piecesCountLaser').value || 1);
       const batchCountLaser = Number(document.getElementById('batchCountLaser').value || 1);
       const materialQtyPerBatchLaser = Number(document.getElementById('laserMaterialQty').value || 0);
-      const hoursPerBatchLaser = Number(document.getElementById('jobHoursLaser').value || 0);
+      const daysLaser = Number(document.getElementById('jobDaysLaser').value || 0);
+      const hLaser = Number(document.getElementById('jobHLaser').value || 0);
+      const minLaser = Number(document.getElementById('jobMinLaser').value || 0);
+      const hoursPerBatchLaser = daysLaser * 24 + hLaser + minLaser / 60;
       const manualHours = Number(document.getElementById('manualHours').value || 0);
       const laborRate = Number(document.getElementById('laborRate').value || 0);
       const failureMargin = Number(document.getElementById('failureMargin').value || 0);
@@ -1287,7 +1288,8 @@
       const totalHours3d = use3d ? hoursPerPlate3d * platesCount3d : 0;
       const totalPieces3d = use3d ? piecesPerPlate3d * platesCount3d : 0;
       const materialCost3d = use3d ? (totalGrams3d / 1000) * Number(material3d.unitCost || 0) : 0;
-      const energyCost3d = use3d ? totalHours3d * Number(printer3d.powerConsumption || 0) * Number(printer3d.energyCost || 0) : 0;
+      const powerRate3d = use3d && Number(printer3d.powerEveryH) > 0 ? Number(printer3d.powerKwh || 0) / Number(printer3d.powerEveryH) : 0;
+      const energyCost3d = use3d ? totalHours3d * powerRate3d * Number(printer3d.energyCost || 0) : 0;
       const maintenanceCost3d = use3d ? (totalHours3d / 1000) * Number(printer3d.maintenanceCost || 0) : 0;
       const machineAmortRate3d = use3d && Number(printer3d.lifetimeHours) > 0 ? Number(printer3d.machineCost || 0) / Number(printer3d.lifetimeHours) : 0;
       const machineAmortCost3d = use3d ? totalHours3d * machineAmortRate3d : 0;
@@ -1297,7 +1299,8 @@
       const totalHoursLaser = useLaser ? hoursPerBatchLaser * batchCountLaser : 0;
       const totalPiecesLaser = useLaser ? piecesPerBatchLaser * batchCountLaser : 0;
       const materialCostLaser = useLaser ? totalMaterialQtyLaser * Number(materialLaser.unitCost || 0) : 0;
-      const energyCostLaser = useLaser ? totalHoursLaser * Number(machineLaser.powerConsumption || 0) * Number(machineLaser.energyCost || 0) : 0;
+      const powerRateLaser = useLaser && Number(machineLaser.powerEveryH) > 0 ? Number(machineLaser.powerKwh || 0) / Number(machineLaser.powerEveryH) : 0;
+      const energyCostLaser = useLaser ? totalHoursLaser * powerRateLaser * Number(machineLaser.energyCost || 0) : 0;
       const maintenanceCostLaser = useLaser ? (totalHoursLaser / 1000) * Number(machineLaser.maintenanceCost || 0) : 0;
       const machineAmortRateLaser = useLaser && Number(machineLaser.lifetimeHours) > 0 ? Number(machineLaser.machineCost || 0) / Number(machineLaser.lifetimeHours) : 0;
       const machineAmortCostLaser = useLaser ? totalHoursLaser * machineAmortRateLaser : 0;
@@ -1330,7 +1333,6 @@
         jobName: document.getElementById('jobName').value.trim(),
         clientName: document.getElementById('clientName').value.trim(),
         clientContact: document.getElementById('clientContact').value.trim(),
-        thumbnailDataUrl: use3d ? currentThumbnail : null,
         quoteDate: document.getElementById('quoteDate').value || todayString(),
         printer3dName: use3d ? printer3d.name : '',
         material3dName: use3d ? material3d.name : '',
@@ -1392,13 +1394,17 @@
         piecesCount3d: piecesPerPlate3d,
         platesCount3d,
         jobGrams3d: gramsPerPlate3d,
-        jobHours3d: hoursPerPlate3d,
+        jobDays3d: days3d,
+        jobH3d: h3d,
+        jobMin3d: min3d,
         jobMachineLaser: document.getElementById('jobMachineLaser').value,
         jobMaterialLaser: document.getElementById('jobMaterialLaser').value,
         piecesCountLaser: piecesPerBatchLaser,
         batchCountLaser,
         laserMaterialQty: materialQtyPerBatchLaser,
-        jobHoursLaser: hoursPerBatchLaser,
+        jobDaysLaser: daysLaser,
+        jobHLaser: hLaser,
+        jobMinLaser: minLaser,
         manualHours,
         laborRate,
         failureMargin,
@@ -1447,192 +1453,6 @@
 
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => activateTab(btn.dataset.tab));
-    });
-
-    let currentThumbnail = null;
-
-    function setImportStatus(message, kind) {
-      const el = document.getElementById('gcodeStatus');
-      el.textContent = message || '';
-      el.className = 'import-status' + (kind ? ' ' + kind + '-msg' : '');
-    }
-
-    function parseDurationToHours(raw) {
-      if (!raw) return null;
-      const text = raw.trim();
-      // Pure seconds, e.g. Cura ";TIME:12345"
-      if (/^\d+$/.test(text)) return Number(text) / 3600;
-      let totalSeconds = 0;
-      const dMatch = text.match(/(\d+(?:\.\d+)?)\s*d/i);
-      const hMatch = text.match(/(\d+(?:\.\d+)?)\s*h/i);
-      const mMatch = text.match(/(\d+(?:\.\d+)?)\s*m(?!s)/i);
-      const sMatch = text.match(/(\d+(?:\.\d+)?)\s*s/i);
-      if (dMatch) totalSeconds += Number(dMatch[1]) * 86400;
-      if (hMatch) totalSeconds += Number(hMatch[1]) * 3600;
-      if (mMatch) totalSeconds += Number(mMatch[1]) * 60;
-      if (sMatch) totalSeconds += Number(sMatch[1]);
-      if (totalSeconds === 0) {
-        const numeric = text.match(/[\d.]+/);
-        if (numeric) return Number(numeric[0]);
-        return null;
-      }
-      return totalSeconds / 3600;
-    }
-
-    function extractGramsFromGcodeText(text) {
-      const patterns = [
-        /total\s+filament\s+weight\s*\[g\]\s*[:=]\s*([\d.]+)/i,
-        /filament\s+used\s*\[g\]\s*[:=]\s*([\d.]+)/i,
-        /filament\s+weight\s*\[g\]\s*[:=]\s*([\d.]+)/i,
-        /;\s*filament\s+used\s*\(g\)\s*[:=]\s*([\d.]+)/i
-      ];
-      for (const p of patterns) {
-        const m = text.match(p);
-        if (m) return Number(m[1]);
-      }
-      return null;
-    }
-
-    function extractHoursFromGcodeText(text) {
-      const patterns = [
-        /model\s+printing\s+time[^:=]*[:=]\s*([^\n;]+)/i,
-        /estimated\s+printing\s+time[^=]*=\s*([^\n;]+)/i,
-        /;\s*TIME\s*:\s*(\d+)/i
-      ];
-      for (const p of patterns) {
-        const m = text.match(p);
-        if (m) {
-          const hours = parseDurationToHours(m[1]);
-          if (hours !== null) return hours;
-        }
-      }
-      return null;
-    }
-
-    function extractThumbnailFromGcodeText(text) {
-      const blocks = [...text.matchAll(/;\s*thumbnail(?:_QOI)?\s+begin\s+(\d+)x(\d+)\s+\d+([\s\S]*?);\s*thumbnail(?:_QOI)?\s+end/gi)];
-      if (!blocks.length) return null;
-      let best = null;
-      let bestArea = 0;
-      for (const b of blocks) {
-        const w = Number(b[1]);
-        const h = Number(b[2]);
-        const area = w * h;
-        const base64 = b[3].replace(/;/g, '').replace(/\s+/g, '');
-        if (area > bestArea && base64.length > 50) {
-          bestArea = area;
-          best = base64;
-        }
-      }
-      return best ? `data:image/png;base64,${best}` : null;
-    }
-
-    async function parseGcodeFile(file) {
-      const text = await file.text();
-      const grams = extractGramsFromGcodeText(text);
-      const hours = extractHoursFromGcodeText(text);
-      const thumbnail = extractThumbnailFromGcodeText(text);
-      return { grams, hours, thumbnail };
-    }
-
-    async function parse3mfFile(file) {
-      if (typeof JSZip === 'undefined') {
-        throw new Error('Libreria di lettura .3mf non disponibile (verifica la connessione internet).');
-      }
-      const buffer = await file.arrayBuffer();
-      const zip = await JSZip.loadAsync(buffer);
-      let grams = null;
-      let hours = null;
-      let thumbnail = null;
-
-      const fileNames = Object.keys(zip.files);
-
-      // 1) Look for an embedded plate gcode (Bambu/Orca project files)
-      const gcodeEntry = fileNames.find(n => /\.gcode$/i.test(n));
-      if (gcodeEntry) {
-        const text = await zip.files[gcodeEntry].async('text');
-        grams = extractGramsFromGcodeText(text);
-        hours = extractHoursFromGcodeText(text);
-        thumbnail = extractThumbnailFromGcodeText(text);
-      }
-
-      // 2) Look for slicing metadata config (Bambu slice_info.config) as fallback
-      if ((grams === null || hours === null)) {
-        const configEntry = fileNames.find(n => /slice_info\.config$/i.test(n));
-        if (configEntry) {
-          const configText = await zip.files[configEntry].async('text');
-          if (grams === null) {
-            const wMatch = configText.match(/weight="([\d.]+)"/i);
-            if (wMatch) grams = Number(wMatch[1]);
-          }
-          if (hours === null) {
-            const tMatch = configText.match(/prediction="([\d.]+)"/i);
-            if (tMatch) hours = Number(tMatch[1]) / 3600;
-          }
-        }
-      }
-
-      // 3) Look for an embedded thumbnail/plate image as preview
-      if (!thumbnail) {
-        const imgEntry = fileNames.find(n => /(plate_1|thumbnail|top_1)\.(png|jpg|jpeg)$/i.test(n))
-          || fileNames.find(n => /\.(png|jpg|jpeg)$/i.test(n));
-        if (imgEntry) {
-          const base64 = await zip.files[imgEntry].async('base64');
-          const ext = imgEntry.toLowerCase().endsWith('.png') ? 'png' : 'jpeg';
-          thumbnail = `data:image/${ext};base64,${base64}`;
-        }
-      }
-
-      return { grams, hours, thumbnail };
-    }
-
-    async function handleGcodeFile(file) {
-      document.getElementById('gcodeFileName').textContent = file.name;
-      setImportStatus('Analisi del file in corso…', '');
-      document.getElementById('gcodePreviewWrap').classList.add('hidden');
-
-      try {
-        const ext = file.name.toLowerCase().split('.').pop();
-        let parsed;
-        if (ext === '3mf') {
-          parsed = await parse3mfFile(file);
-        } else {
-          parsed = await parseGcodeFile(file);
-        }
-
-        const { grams, hours, thumbnail } = parsed;
-
-        if (thumbnail) {
-          currentThumbnail = thumbnail;
-          const img = document.getElementById('gcodePreviewImg');
-          img.src = thumbnail;
-          document.getElementById('gcodePreviewWrap').classList.remove('hidden');
-        } else {
-          currentThumbnail = null;
-        }
-
-        if (grams !== null) document.getElementById('jobGrams3d').value = Math.round(grams * 100) / 100;
-        if (hours !== null) document.getElementById('jobHours3d').value = Math.round(hours * 100) / 100;
-        document.getElementById('platesCount3d').value = 1;
-
-        if (grams !== null && hours !== null) {
-          setImportStatus('✅ Grammi e ore del piatto compilati (ricordati di impostare "Numero piatti" e "Pezzi per piatto").', 'ok-msg');
-        } else if (grams !== null || hours !== null) {
-          setImportStatus('⚠️ Trovato solo uno dei due dati (grammi/ore): completa manualmente i campi mancanti.', 'warn-msg');
-        } else {
-          setImportStatus('⚠️ Nessun dato di slicing trovato nel file (probabilmente non è stato sezionato/esportato dallo slicer). Inserisci grammi e ore manualmente.', 'warn-msg');
-        }
-      } catch (err) {
-        console.error(err);
-        currentThumbnail = null;
-        setImportStatus('❌ Impossibile leggere il file: ' + err.message, 'err-msg');
-      }
-    }
-
-    document.getElementById('gcodeFile').addEventListener('change', (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      handleGcodeFile(file);
     });
 
     jobMode.addEventListener('change', updateJobModeUI);
