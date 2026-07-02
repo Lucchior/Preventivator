@@ -757,6 +757,64 @@
               </div>
             </div>
 
+            <div class="section-block" id="shippingSection">
+              <div class="section-head">
+                <div class="section-title">Spedizione</div>
+                <span class="badge blue">Opzionale</span>
+              </div>
+              <div class="form-grid">
+                <div class="field full">
+                  <label>Includi spedizione nel preventivo</label>
+                  <div class="checkbox-wrap">
+                    <input id="includeShipping" type="checkbox" />
+                    <span>Aggiungi costi di spedizione al totale</span>
+                  </div>
+                </div>
+              </div>
+              <div id="shippingFields" class="hidden">
+                <div class="field-hint" style="margin:-4px 0 12px;padding:10px 12px;background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);border-radius:10px;color:#bae6fd;">
+                  ⚠️ I tempi e i costi di spedizione indicati sono <strong>stime</strong>. Le spedizioni sono gestite da terzi e possono variare.
+                </div>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="shippingCost">Costo spedizione base (€)</label>
+                    <input id="shippingCost" type="number" min="0" step="0.01" value="0" placeholder="0.00" />
+                  </div>
+                  <div class="field">
+                    <label for="shippingType">Tipologia spedizione</label>
+                    <select id="shippingType">
+                      <option value="standard">Standard</option>
+                      <option value="express">Espresso</option>
+                      <option value="economy">Economy</option>
+                    </select>
+                  </div>
+                  <div class="field full">
+                    <label>Spedizione assicurata</label>
+                    <div class="checkbox-wrap">
+                      <input id="includeInsurance" type="checkbox" />
+                      <span>Aggiungi assicurazione sulla spedizione</span>
+                    </div>
+                  </div>
+                  <div class="field" id="insuranceCostWrap" style="display:none;">
+                    <label for="insuranceCost">Costo assicurazione (€)</label>
+                    <input id="insuranceCost" type="number" min="0" step="0.01" value="0" placeholder="0.00" />
+                  </div>
+                  <div class="field">
+                    <label for="deliveryDaysMin">Tempi consegna stimati — da (gg lavorativi)</label>
+                    <input id="deliveryDaysMin" type="number" min="1" step="1" value="3" />
+                  </div>
+                  <div class="field">
+                    <label for="deliveryDaysMax">a (gg lavorativi)</label>
+                    <input id="deliveryDaysMax" type="number" min="1" step="1" value="5" />
+                  </div>
+                  <div class="field full">
+                    <label for="shippingNotes">Note spedizione (opzionale)</label>
+                    <input id="shippingNotes" type="text" placeholder="Es. Corriere GLS, imballaggio robusto incluso" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="actions">
               <button class="primary" type="submit">Calcola riepilogo</button>
             </div>
@@ -867,9 +925,11 @@
     <div class="doc-section">
       <h2>Riepilogo economico</h2>
       <div class="price-table">
-        <div class="doc-row"><span>Imponibile</span><span id="printSubtotal">-</span></div>
+        <div class="doc-row"><span>Imponibile (prodotto)</span><span id="printSubtotal">-</span></div>
         <div class="doc-row" id="printDiscountRow"><span>Sconto applicato</span><span id="printDiscount">-</span></div>
         <div class="doc-row" id="printVatRow"><span>IVA</span><span id="printVat">-</span></div>
+        <div class="doc-row" id="printShippingRow"><span>Spedizione</span><span id="printShipping">-</span></div>
+        <div class="doc-row" id="printDeliveryRow"><span>Tempi consegna stimati*</span><span id="printDelivery">-</span></div>
       </div>
       <div class="price-total">
         <span class="label" id="printTotalLabel">Totale preventivo</span>
@@ -877,7 +937,7 @@
       </div>
     </div>
 
-    <div class="doc-footer">Documento generato il <span id="printGeneratedOn"></span> — valido salvo conferma.</div>
+    <div class="doc-footer">Documento generato il <span id="printGeneratedOn"></span> — valido salvo conferma.<br>* I tempi di consegna indicati sono stime. Le spedizioni sono gestite da corrieri terzi e possono variare.</div>
   </div>
 
   <script>
@@ -1186,20 +1246,43 @@
       const vatPercent = Number(document.getElementById('vatPercent').value||0);
       const includeVat = document.getElementById('includeVat').checked;
 
+      // Spedizione — aggiunta DOPO IVA: è un costo pass-through, non entra nei margini
+      const includeShipping = document.getElementById('includeShipping').checked;
+      const shippingCost = includeShipping ? Number(document.getElementById('shippingCost').value||0) : 0;
+      const shippingType = includeShipping ? document.getElementById('shippingType').value : '';
+      const includeInsurance = includeShipping && document.getElementById('includeInsurance').checked;
+      const insuranceCost = includeInsurance ? Number(document.getElementById('insuranceCost').value||0) : 0;
+      const deliveryDaysMin = includeShipping ? Number(document.getElementById('deliveryDaysMin').value||1) : 0;
+      const deliveryDaysMax = includeShipping ? Number(document.getElementById('deliveryDaysMax').value||1) : 0;
+      const shippingNotes = includeShipping ? document.getElementById('shippingNotes').value.trim() : '';
+      const shippingTotal = shippingCost + insuranceCost;
+
+      // ── Calcolo in sequenza corretta ──────────────────────────────
+      // 1. Costo reale: materiali + energia + manutenzione + ammortamento per ogni lavorazione
       const baseTechnicalTotal = jobResults.reduce((s,r) => s+r.subtotal, 0);
+      // 2. + Manodopera manuale
       const manualLaborCost = manualHours * laborRate;
       const baseTotal = baseTechnicalTotal + manualLaborCost;
+      // 3. + Margine fallimento (% sul totale base: copre il rischio di stampe fallite)
       const failureCost = baseTotal * (failureMargin/100);
       const adjustedTotal = baseTotal + failureCost;
+      // 4. + Rincaro/guadagno (% sul costo totale corretto)
       const profitValue = adjustedTotal * (profitMargin/100);
       const priceBeforeDiscount = adjustedTotal + profitValue;
+      // 5. - Sconto cliente (importo fisso, max = prezzo prima sconto)
       const discountValue = Math.min(discountAmount, priceBeforeDiscount);
       const priceAfterDiscount = priceBeforeDiscount - discountValue;
+      // 6. Prezzo minimo (floor: se il risultato è sotto, si porta al minimo)
       const priceAfterMinimum = Math.max(priceAfterDiscount, minimumPrice);
+      // 7. + IVA (calcolata sul netto prodotto, prima della spedizione)
       const vatValue = includeVat ? priceAfterMinimum*(vatPercent/100) : 0;
-      const finalRecommendedPrice = priceAfterMinimum + vatValue;
+      const priceWithVat = priceAfterMinimum + vatValue;
+      // 8. + Spedizione (aggiunta FUORI dai margini: non ci guadagniamo, è solo un rimborso)
+      const finalRecommendedPrice = priceWithVat + shippingTotal;
+
       const totalPiecesAll = jobResults.reduce((s,r) => s+r.totalPieces, 0);
-      const unitPriceClient = totalPiecesAll>0 ? finalRecommendedPrice/totalPiecesAll : null;
+      // Prezzo unitario: calcolato SENZA spedizione (ha senso per pezzo, non la spedizione)
+      const unitPriceClient = totalPiecesAll>0 ? priceWithVat/totalPiecesAll : null;
       const materialCostTotal = jobResults.reduce((s,r) => s+r.materialCost, 0);
       const energyCostTotal = jobResults.reduce((s,r) => s+r.energyCost, 0);
       const maintenanceCostTotal = jobResults.reduce((s,r) => s+r.maintenanceCost, 0);
@@ -1214,10 +1297,12 @@
         jobResults, totalPiecesAll, unitPriceClient,
         manualHours, laborRate, manualLaborCost,
         failureMargin, profitMargin, discountAmount, minimumPrice, vatPercent, includeVat,
+        includeShipping, shippingCost, shippingType, includeInsurance, insuranceCost,
+        shippingTotal, deliveryDaysMin, deliveryDaysMax, shippingNotes,
         materialCostTotal, energyCostTotal, maintenanceCostTotal, machineAmortCostTotal,
         baseTechnicalTotal, baseTotal, failureCost, adjustedTotal, profitValue,
-        priceBeforeDiscount, discountValue, priceAfterDiscount, priceAfterMinimum, vatValue,
-        finalRecommendedPrice
+        priceBeforeDiscount, discountValue, priceAfterDiscount, priceAfterMinimum,
+        vatValue, priceWithVat, finalRecommendedPrice
       };
 
       saveData(STORAGE_KEYS.currentJob, {
@@ -1225,7 +1310,9 @@
         jobName: result.jobName, clientName: result.clientName,
         clientContact: result.clientContact, quoteDate: result.quoteDate,
         manualHours, laborRate, failureMargin, profitMargin,
-        discountAmount, minimumPrice, vatPercent, includeVat, result
+        discountAmount, minimumPrice, vatPercent, includeVat,
+        includeShipping, shippingCost, shippingType, includeInsurance, insuranceCost,
+        deliveryDaysMin, deliveryDaysMax, shippingNotes, result
       });
       renderSummary(result);
       activateTab('tab-riepilogo');
@@ -1329,18 +1416,28 @@
         <div class="block-total"><span>Totale costo reale</span><span class="block-total-value">${currency.format(result.adjustedTotal)}</span></div>
       </div>`;
 
+      const shippingTypeLabels = { standard:'Standard', express:'Espresso', economy:'Economy' };
+
       html += `<div class="summary-block cost-client">
         <div class="summary-block-head"><span class="icon">💶</span><span class="title">Prezzo per il cliente</span></div>
-        <p class="desc">Dal costo reale al prezzo finale con rincaro, sconto, minimo e IVA.</p>
+        <p class="desc">Dal costo reale al prezzo finale con rincaro, sconto, minimo, IVA e spedizione.</p>
         <div class="summary-line sub"><span>Costo reale di produzione</span><strong>${currency.format(result.adjustedTotal)}</strong></div>
         <div class="summary-line"><span>Rincaro / guadagno (${num.format(result.profitMargin)}%)</span><strong>+ ${currency.format(result.profitValue)}</strong></div>
         <div class="summary-line"><span>Prezzo con rincaro</span><strong>${currency.format(result.priceBeforeDiscount)}</strong></div>
         <div class="summary-line deduct"><span>Sconto cliente</span><strong>− ${currency.format(result.discountValue)}</strong></div>
         ${minimumApplied ? `<div class="summary-line"><span>Prezzo minimo applicato (${currency.format(result.minimumPrice)})</span><strong>${currency.format(result.priceAfterMinimum)}</strong></div>` : ''}
-        <div class="summary-line"><span>IVA (${num.format(result.vatPercent)}%) ${vatBadge}</span><strong>${result.includeVat ? '+ '+currency.format(result.vatValue) : currency.format(0)}</strong></div>
-        <div class="block-total"><span>Totale finale cliente</span><span class="block-total-value">${currency.format(result.finalRecommendedPrice)}</span></div>
-        <div class="margin-chip">📈 Margine netto stimato: ${currency.format(netMargin)} (${num.format(netMarginPct)}%)</div>
-        ${result.unitPriceClient!==null&&result.totalPiecesAll>1 ? `<div class="margin-chip" style="margin-left:8px;">🔢 Prezzo/pezzo: ${currency.format(result.unitPriceClient)} su ${result.totalPiecesAll} pezzi</div>` : ''}
+        <div class="summary-line"><span>IVA (${num.format(result.vatPercent)}%) ${vatBadge}</span><strong>${result.includeVat ? '+ '+currency.format(result.vatValue) : '—'}</strong></div>
+        <div class="summary-line"><span>Subtotale prodotto</span><strong>${currency.format(result.priceWithVat)}</strong></div>
+        ${result.includeShipping ? `
+        <div class="summary-line" style="margin-top:6px;"><span>Spedizione ${escapeHtml(shippingTypeLabels[result.shippingType]||result.shippingType)}</span><strong>+ ${currency.format(result.shippingCost)}</strong></div>
+        ${result.includeInsurance ? `<div class="summary-line"><span>Assicurazione spedizione</span><strong>+ ${currency.format(result.insuranceCost)}</strong></div>` : ''}
+        <div class="summary-line sub"><span>Tempi consegna stimati*</span><strong>${result.deliveryDaysMin}–${result.deliveryDaysMax} gg lavorativi</strong></div>
+        ${result.shippingNotes ? `<div class="summary-line sub"><span>Note spedizione</span><strong>${escapeHtml(result.shippingNotes)}</strong></div>` : ''}
+        ` : ''}
+        <div class="block-total"><span>Totale finale${result.includeShipping?' (spedizione inclusa)':''}</span><span class="block-total-value">${currency.format(result.finalRecommendedPrice)}</span></div>
+        <div class="margin-chip">📈 Margine netto (senza spedizione): ${currency.format(netMargin)} (${num.format(netMarginPct)}%)</div>
+        ${result.unitPriceClient!==null&&result.totalPiecesAll>1 ? `<div class="margin-chip" style="margin-top:6px;">🔢 Prezzo/pezzo: ${currency.format(result.unitPriceClient)} su ${result.totalPiecesAll} pezzi</div>` : ''}
+        ${result.includeShipping ? `<div style="margin-top:10px;font-size:11.5px;color:var(--muted);">* I tempi di consegna sono stime indicative. Le spedizioni sono gestite da corrieri terzi e possono variare.</div>` : ''}
       </div>`;
 
       quoteSummary.innerHTML = html;
@@ -1555,7 +1652,7 @@
       document.getElementById('printClientName').textContent = result.clientName || 'Non indicato';
       document.getElementById('printClientContact').textContent = result.clientContact || 'Non indicato';
       document.getElementById('printJobType').textContent = jobTypeLabel(result);
-      document.getElementById('printSubtotal').textContent = currency.format(result.priceAfterMinimum);
+      document.getElementById('printSubtotal').textContent = currency.format(result.priceWithVat);
 
       const discountRow = document.getElementById('printDiscountRow');
       if (result.discountValue > 0) {
@@ -1569,6 +1666,27 @@
       document.getElementById('printVat').textContent = result.includeVat
         ? `${num.format(result.vatPercent)}% (${currency.format(result.vatValue)})`
         : 'Esclusa';
+
+      // Shipping row in PDF
+      const shippingRow = document.getElementById('printShippingRow');
+      if (result.includeShipping && result.shippingTotal > 0) {
+        shippingRow.style.display = 'flex';
+        const stLabels = { standard:'Standard', express:'Espresso', economy:'Economy' };
+        let shTxt = `${stLabels[result.shippingType]||result.shippingType}: ${currency.format(result.shippingCost)}`;
+        if (result.includeInsurance) shTxt += ` + ass. ${currency.format(result.insuranceCost)}`;
+        document.getElementById('printShipping').textContent = shTxt;
+        const delRow = document.getElementById('printDeliveryRow');
+        if (delRow) {
+          delRow.style.display = 'flex';
+          document.getElementById('printDelivery').textContent =
+            `${result.deliveryDaysMin}–${result.deliveryDaysMax} gg lavorativi (stima)`;
+        }
+      } else {
+        shippingRow.style.display = 'none';
+        const delRow = document.getElementById('printDeliveryRow');
+        if (delRow) delRow.style.display = 'none';
+      }
+
       document.getElementById('printTotalLabel').textContent = result.includeVat
         ? 'Totale preventivo (IVA inclusa)'
         : 'Totale preventivo (IVA esclusa)';
@@ -1602,8 +1720,27 @@
       set('minimumPrice', saved.minimumPrice, 0);
       set('vatPercent', saved.vatPercent, 22);
       set('includeVat', saved.includeVat, true);
+      set('includeShipping', saved.includeShipping, false);
+      set('shippingCost', saved.shippingCost, 0);
+      set('shippingType', saved.shippingType, 'standard');
+      set('includeInsurance', saved.includeInsurance, false);
+      set('insuranceCost', saved.insuranceCost, 0);
+      set('deliveryDaysMin', saved.deliveryDaysMin, 3);
+      set('deliveryDaysMax', saved.deliveryDaysMax, 5);
+      set('shippingNotes', saved.shippingNotes, '');
+      updateShippingUI();
       if (saved.result) renderSummary(saved.result);
     }
+
+    function updateShippingUI() {
+      const on = document.getElementById('includeShipping').checked;
+      document.getElementById('shippingFields').classList.toggle('hidden', !on);
+      const insured = on && document.getElementById('includeInsurance').checked;
+      document.getElementById('insuranceCostWrap').style.display = insured ? 'block' : 'none';
+    }
+
+    document.getElementById('includeShipping').addEventListener('change', updateShippingUI);
+    document.getElementById('includeInsurance').addEventListener('change', updateShippingUI);
 
     function activateTab(id) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===id));
@@ -1618,6 +1755,7 @@
 
     if (!quoteDateInput.value) quoteDateInput.value = todayString();
     updateMaterialFormUI();
+    updateShippingUI();
     renderMachines();
     renderMaterials();
     renderJobs();
