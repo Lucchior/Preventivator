@@ -62,7 +62,45 @@
       transition: .2s ease;
     }
     .tab-btn.active, .tab-btn:hover { background: var(--accent); color: #052e16; border-color: transparent; }
+    .tab-btn[data-tab="tab-profilo"].active, .tab-btn[data-tab="tab-profilo"]:hover { background: var(--blue); color: #0c1a2e; }
     .tab-btn[data-tab="tab-macchine"].active, .tab-btn[data-tab="tab-macchine"]:hover { background: var(--violet); color: #2e1065; }
+    .radio-opt {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.04);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background .15s, border-color .15s;
+    }
+    .radio-opt:has(input:checked) {
+      background: rgba(56,189,248,.14);
+      border-color: rgba(56,189,248,.4);
+      color: #bae6fd;
+    }
+    .radio-opt input[type=radio] { accent-color: var(--blue); width: 16px; height: 16px; }
+    .profile-piva-only, .profile-privato-only { transition: opacity .2s; }
+    .hidden-field { display: none !important; }
+    .profile-preview-box {
+      background: rgba(11,18,32,.5);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      padding: 20px;
+      margin-top: 4px;
+      min-height: 120px;
+    }
+    .pp-empty { color: var(--muted); font-size: 13px; }
+    .pp-name { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+    .pp-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 3px 10px; border-radius: 999px; margin-bottom: 10px; }
+    .pp-badge.privato { background: rgba(56,189,248,.16); color: #bae6fd; }
+    .pp-badge.piva { background: rgba(167,139,250,.16); color: #c4b5fd; }
+    .pp-row { font-size: 13px; color: var(--muted); margin: 2px 0; }
+    .pp-row strong { color: var(--text); }
+    .pp-divider { border: none; border-top: 1px solid rgba(255,255,255,.08); margin: 10px 0; }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
     .grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 16px; align-items: start; }
@@ -398,8 +436,8 @@
       padding-bottom: 16px;
       margin-bottom: 24px;
     }
-    #printArea .doc-header h1 { margin: 0; font-size: 24px; color: #0f172a; }
-    #printArea .doc-header .doc-sub { color: #475569; font-size: 13px; margin-top: 4px; }
+    #printArea .doc-header h1 { margin: 0; font-size: 22px; color: #0f172a; }
+    #printArea .doc-header .doc-sub { color: #475569; font-size: 12px; margin-top: 3px; line-height: 1.4; }
     #printArea .doc-number { text-align: right; color: #475569; font-size: 13px; }
     #printArea .doc-number strong { display: block; color: #0f172a; font-size: 15px; }
     #printArea .doc-section { margin-bottom: 22px; }
@@ -454,12 +492,119 @@
     </section>
 
     <nav class="tabs" aria-label="Navigazione sezioni">
-      <button class="tab-btn active" data-tab="tab-macchine">Macchine</button>
+      <button class="tab-btn active" data-tab="tab-profilo">Profilo</button>
+      <button class="tab-btn" data-tab="tab-macchine">Macchine</button>
       <button class="tab-btn" data-tab="tab-lavoro">Lavoro</button>
       <button class="tab-btn" data-tab="tab-riepilogo">Riepilogo</button>
     </nav>
 
-    <section id="tab-macchine" class="tab-panel active">
+    <section id="tab-profilo" class="tab-panel active">
+      <div class="grid">
+        <div class="card">
+          <span class="zone-tag quote">👤 Il mio profilo</span>
+          <h2>Dati del fornitore</h2>
+          <p class="subtitle">Questi dati vengono usati nell'intestazione del PDF inviato al cliente. Seleziona il tipo di soggetto per mostrare i campi pertinenti.</p>
+
+          <div class="form-grid">
+            <div class="field full">
+              <label>Tipo soggetto</label>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <label class="radio-opt" id="radioPrivato">
+                  <input type="radio" name="profileType" value="privato" id="profilePrivato" />
+                  <span>Privato</span>
+                </label>
+                <label class="radio-opt" id="radioPartita">
+                  <input type="radio" name="profileType" value="piva" id="profilePiva" />
+                  <span>Partita IVA / Azienda</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="field profile-piva-only" id="profileRagioneSocialeWrap">
+              <label for="profileRagioneSociale">Ragione sociale / Nome commerciale</label>
+              <input id="profileRagioneSociale" type="text" placeholder="Es. Mario Rossi Stampe 3D" />
+            </div>
+            <div class="field profile-privato-only">
+              <label for="profileNome">Nome</label>
+              <input id="profileNome" type="text" placeholder="Es. Mario" />
+            </div>
+            <div class="field profile-privato-only">
+              <label for="profileCognome">Cognome</label>
+              <input id="profileCognome" type="text" placeholder="Es. Rossi" />
+            </div>
+            <div class="field profile-piva-only">
+              <label for="profilePartitaIva">Partita IVA</label>
+              <input id="profilePartitaIva" type="text" placeholder="Es. IT12345678901" />
+            </div>
+            <div class="field">
+              <label for="profileCodiceFiscale">Codice Fiscale</label>
+              <input id="profileCodiceFiscale" type="text" placeholder="Es. RSSMRA80A01H501Z" />
+            </div>
+            <div class="field profile-piva-only">
+              <label for="profileRegimeFiscale">Regime fiscale</label>
+              <select id="profileRegimeFiscale">
+                <option value="">— Seleziona —</option>
+                <option value="forfettario">Regime forfettario</option>
+                <option value="ordinario">Regime ordinario</option>
+                <option value="semplificato">Regime semplificato</option>
+                <option value="minimi">Regime dei minimi</option>
+              </select>
+            </div>
+            <div class="field profile-piva-only">
+              <label for="profileSdi">Codice SDI</label>
+              <input id="profileSdi" type="text" placeholder="Es. XXXXXXX" />
+            </div>
+            <div class="field profile-piva-only">
+              <label for="profilePec">PEC</label>
+              <input id="profilePec" type="email" placeholder="Es. mario.rossi@pec.it" />
+            </div>
+            <div class="field">
+              <label for="profileEmail">Email</label>
+              <input id="profileEmail" type="email" placeholder="Es. mario.rossi@email.it" />
+            </div>
+            <div class="field">
+              <label for="profileTelefono">Telefono</label>
+              <input id="profileTelefono" type="tel" placeholder="Es. +39 333 1234567" />
+            </div>
+            <div class="field full">
+              <label for="profileIndirizzo">Indirizzo</label>
+              <input id="profileIndirizzo" type="text" placeholder="Es. Via Roma 1" />
+            </div>
+            <div class="field">
+              <label for="profileCitta">Città</label>
+              <input id="profileCitta" type="text" placeholder="Es. Milano" />
+            </div>
+            <div class="field">
+              <label for="profileCap">CAP</label>
+              <input id="profileCap" type="text" placeholder="Es. 20100" />
+            </div>
+            <div class="field">
+              <label for="profileProvincia">Provincia</label>
+              <input id="profileProvincia" type="text" placeholder="Es. MI" maxlength="2" style="text-transform:uppercase;" />
+            </div>
+            <div class="field profile-piva-only">
+              <label for="profileSito">Sito web (opzionale)</label>
+              <input id="profileSito" type="url" placeholder="Es. https://www.miosito.it" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="primary" type="button" id="saveProfileBtn">Salva profilo</button>
+          </div>
+          <div class="ok" id="profileSaved">Profilo salvato correttamente.</div>
+        </div>
+
+        <div class="card">
+          <span class="zone-tag quote">👁️ Anteprima profilo</span>
+          <h3>Come apparirà nel PDF</h3>
+          <div id="profilePreview" class="profile-preview-box">
+            <div class="pp-empty">Compila i dati e clicca "Salva profilo" per vedere l'anteprima.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-macchine" class="tab-panel">
       <div class="grid">
         <div class="card zone-resources">
           <span class="zone-tag">📦 Risorse: parco macchine</span>
@@ -695,13 +840,19 @@
   <div id="printArea">
     <div class="doc-header">
       <div>
-        <h1>Preventivo</h1>
-        <div class="doc-sub">Documento riepilogativo per il cliente</div>
+        <h1 id="printSenderName">Preventivo</h1>
+        <div class="doc-sub" id="printSenderSub"></div>
+        <div class="doc-sub" id="printSenderContacts"></div>
       </div>
       <div class="doc-number">
         <strong id="printQuoteName">-</strong>
         Data: <span id="printQuoteDate">-</span>
       </div>
+    </div>
+
+    <div class="doc-section" id="printSenderSection" style="display:none;">
+      <h2>Dati fornitore</h2>
+      <div class="doc-grid" id="printSenderDetails"></div>
     </div>
 
     <div class="doc-section">
@@ -734,7 +885,8 @@
       machines: 'preventivi3d_machines',
       materials: 'preventivi3d_materials',
       currentJob: 'preventivi3d_current_job',
-      jobs: 'preventivi3d_jobs'
+      jobs: 'preventivi3d_jobs',
+      profile: 'preventivi3d_profile'
     };
 
     const UNIT_LABELS = {
@@ -1195,6 +1347,87 @@
       recommendedPriceBox.textContent = currency.format(result.finalRecommendedPrice);
     }
 
+    // ── PROFILE ──────────────────────────────────────────────────────
+    function getProfile() {
+      return loadData(STORAGE_KEYS.profile, { type: 'privato' });
+    }
+
+    function profileFieldIds() {
+      return ['profileNome','profileCognome','profileRagioneSociale','profilePartitaIva',
+        'profileCodiceFiscale','profileRegimeFiscale','profileSdi','profilePec',
+        'profileEmail','profileTelefono','profileIndirizzo','profileCitta',
+        'profileCap','profileProvincia','profileSito'];
+    }
+
+    function readProfileForm() {
+      const type = document.querySelector('input[name="profileType"]:checked')?.value || 'privato';
+      const p = { type };
+      profileFieldIds().forEach(id => {
+        const el = document.getElementById(id);
+        if (el) p[id.replace('profile','')] = el.value.trim();
+      });
+      return p;
+    }
+
+    function applyProfileVisibility(type) {
+      document.querySelectorAll('.profile-piva-only').forEach(el =>
+        el.classList.toggle('hidden-field', type !== 'piva'));
+      document.querySelectorAll('.profile-privato-only').forEach(el =>
+        el.classList.toggle('hidden-field', type !== 'privato'));
+    }
+
+    function renderProfilePreview(p) {
+      const box = document.getElementById('profilePreview');
+      if (!p || (!p.Nome && !p.RagioneSociale && !p.Cognome)) {
+        box.innerHTML = '<div class="pp-empty">Compila i dati e clicca "Salva profilo" per vedere l\'anteprima.</div>';
+        return;
+      }
+      const isPiva = p.type === 'piva';
+      const name = isPiva ? (p.RagioneSociale||'') : `${p.Nome||''} ${p.Cognome||''}`.trim();
+      const addr = [p.Indirizzo, p.Cap && p.Citta ? `${p.Cap} ${p.Citta}` : (p.Citta||p.Cap||''), p.Provincia ? `(${p.Provincia.toUpperCase()})` : ''].filter(Boolean).join(', ');
+      let html = `<div class="pp-name">${escapeHtml(name)}</div>`;
+      html += `<div class="pp-badge ${isPiva?'piva':'privato'}">${isPiva?'Partita IVA':'Privato'}</div>`;
+      if (isPiva && p.PartitaIva) html += `<div class="pp-row">P.IVA: <strong>${escapeHtml(p.PartitaIva)}</strong></div>`;
+      if (p.CodiceFiscale) html += `<div class="pp-row">C.F.: <strong>${escapeHtml(p.CodiceFiscale)}</strong></div>`;
+      if (isPiva && p.RegimeFiscale) {
+        const labels = {forfettario:'Regime forfettario',ordinario:'Regime ordinario',semplificato:'Regime semplificato',minimi:'Regime dei minimi'};
+        html += `<div class="pp-row">${escapeHtml(labels[p.RegimeFiscale]||p.RegimeFiscale)}</div>`;
+      }
+      html += '<hr class="pp-divider">';
+      if (addr) html += `<div class="pp-row">📍 ${escapeHtml(addr)}</div>`;
+      if (p.Email) html += `<div class="pp-row">✉️ ${escapeHtml(p.Email)}</div>`;
+      if (p.Telefono) html += `<div class="pp-row">📞 ${escapeHtml(p.Telefono)}</div>`;
+      if (isPiva && p.Pec) html += `<div class="pp-row">📨 PEC: ${escapeHtml(p.Pec)}</div>`;
+      if (isPiva && p.Sdi) html += `<div class="pp-row">SDI: ${escapeHtml(p.Sdi)}</div>`;
+      if (isPiva && p.Sito) html += `<div class="pp-row">🌐 ${escapeHtml(p.Sito)}</div>`;
+      box.innerHTML = html;
+    }
+
+    function restoreProfile() {
+      const p = getProfile();
+      const typeVal = p.type || 'privato';
+      const radio = document.querySelector(`input[name="profileType"][value="${typeVal}"]`);
+      if (radio) radio.checked = true;
+      applyProfileVisibility(typeVal);
+      profileFieldIds().forEach(id => {
+        const el = document.getElementById(id);
+        const key = id.replace('profile','');
+        if (el && p[key] !== undefined) el.value = p[key];
+      });
+      renderProfilePreview(p);
+    }
+
+    document.querySelectorAll('input[name="profileType"]').forEach(radio => {
+      radio.addEventListener('change', () => applyProfileVisibility(radio.value));
+    });
+
+    document.getElementById('saveProfileBtn').addEventListener('click', () => {
+      const p = readProfileForm();
+      saveData(STORAGE_KEYS.profile, p);
+      renderProfilePreview(p);
+      showSaved('profileSaved');
+    });
+
     // ── MACHINES ─────────────────────────────────────────────────────
     machineForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -1275,26 +1508,73 @@
       return 'Solo stampa 3D';
     }
 
+    function populatePdfProfile() {
+      const p = getProfile();
+      const isPiva = p.type === 'piva';
+      const name = isPiva
+        ? (p.RagioneSociale || 'Fornitore')
+        : `${p.Nome||''} ${p.Cognome||''}`.trim() || 'Fornitore';
+      const addr = [p.Indirizzo, p.Cap && p.Citta ? `${p.Cap} ${p.Citta}` : (p.Citta||p.Cap||''), p.Provincia ? `(${p.Provincia.toUpperCase()})` : ''].filter(Boolean).join(', ');
+      const contacts = [p.Email, p.Telefono].filter(Boolean).join(' · ');
+
+      document.getElementById('printSenderName').textContent = name;
+      document.getElementById('printSenderSub').textContent = isPiva
+        ? ['P.IVA: ' + (p.PartitaIva||'—'), p.CodiceFiscale ? 'C.F.: '+p.CodiceFiscale : ''].filter(Boolean).join(' | ')
+        : p.CodiceFiscale ? 'C.F.: '+p.CodiceFiscale : '';
+      document.getElementById('printSenderContacts').textContent = [addr, contacts].filter(Boolean).join(' · ');
+
+      // extended detail section (only for piva or if there are extra fields)
+      const detailsBox = document.getElementById('printSenderSection');
+      const detailsGrid = document.getElementById('printSenderDetails');
+      const rows = [];
+      if (isPiva && p.RegimeFiscale) {
+        const labels = {forfettario:'Regime forfettario',ordinario:'Regime ordinario',semplificato:'Regime semplificato',minimi:'Regime dei minimi'};
+        rows.push(`<div class="doc-row"><span>Regime fiscale</span><span>${escapeHtml(labels[p.RegimeFiscale]||p.RegimeFiscale)}</span></div>`);
+      }
+      if (isPiva && p.Sdi) rows.push(`<div class="doc-row"><span>Codice SDI</span><span>${escapeHtml(p.Sdi)}</span></div>`);
+      if (isPiva && p.Pec) rows.push(`<div class="doc-row"><span>PEC</span><span>${escapeHtml(p.Pec)}</span></div>`);
+      if (isPiva && p.Sito) rows.push(`<div class="doc-row"><span>Sito web</span><span>${escapeHtml(p.Sito)}</span></div>`);
+      if (rows.length) {
+        detailsGrid.innerHTML = rows.join('');
+        detailsBox.style.display = 'block';
+      } else {
+        detailsBox.style.display = 'none';
+      }
+    }
+
     document.getElementById('exportPdfBtn').addEventListener('click', () => {
       const result = window.__lastQuoteResult;
       if (!result) { alert('Prima calcola un preventivo nel tab Lavoro.'); return; }
-      document.getElementById('printQuoteName').textContent = result.jobName||'Preventivo senza nome';
-      document.getElementById('printQuoteDate').textContent = result.quoteDate||'-';
-      document.getElementById('printClientName').textContent = result.clientName||'Non indicato';
-      document.getElementById('printClientContact').textContent = result.clientContact||'Non indicato';
+
+      // Profilo fornitore
+      populatePdfProfile();
+
+      // Preventivo
+      document.getElementById('printQuoteName').textContent = result.jobName || 'Preventivo senza nome';
+      document.getElementById('printQuoteDate').textContent = result.quoteDate || '-';
+      document.getElementById('printClientName').textContent = result.clientName || 'Non indicato';
+      document.getElementById('printClientContact').textContent = result.clientContact || 'Non indicato';
       document.getElementById('printJobType').textContent = jobTypeLabel(result);
       document.getElementById('printSubtotal').textContent = currency.format(result.priceAfterMinimum);
+
       const discountRow = document.getElementById('printDiscountRow');
-      if (result.discountValue>0) {
-        discountRow.style.display='flex';
+      if (result.discountValue > 0) {
+        discountRow.style.display = 'flex';
         document.getElementById('printDiscount').textContent = `−${currency.format(result.discountValue)}`;
-      } else { discountRow.style.display='none'; }
-      const vatRow = document.getElementById('printVatRow');
-      vatRow.style.display='flex';
-      document.getElementById('printVat').textContent = result.includeVat ? `${num.format(result.vatPercent)}% (${currency.format(result.vatValue)})` : 'Esclusa';
-      document.getElementById('printTotalLabel').textContent = result.includeVat ? 'Totale preventivo (IVA inclusa)' : 'Totale preventivo (IVA esclusa)';
+      } else {
+        discountRow.style.display = 'none';
+      }
+
+      document.getElementById('printVatRow').style.display = 'flex';
+      document.getElementById('printVat').textContent = result.includeVat
+        ? `${num.format(result.vatPercent)}% (${currency.format(result.vatValue)})`
+        : 'Esclusa';
+      document.getElementById('printTotalLabel').textContent = result.includeVat
+        ? 'Totale preventivo (IVA inclusa)'
+        : 'Totale preventivo (IVA esclusa)';
       document.getElementById('printTotalValue').textContent = currency.format(result.finalRecommendedPrice);
       document.getElementById('printGeneratedOn').textContent = new Date().toLocaleDateString('it-IT');
+
       window.print();
     });
 
@@ -1340,6 +1620,8 @@
     updateMaterialFormUI();
     renderMachines();
     renderMaterials();
+    renderJobs();
+    restoreProfile();
     restoreCurrentJob();
     renderSummary(loadData(STORAGE_KEYS.currentJob, {}).result||null);
   </script>
