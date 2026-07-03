@@ -410,70 +410,85 @@
     @media print {
       body * { visibility: hidden; }
       #printArea, #printArea * { visibility: visible; }
-      #printArea {
-        display: block !important;
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background: #fff;
-        color: #111827;
-      }
-      @page { margin: 16mm; }
+      #printArea { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
+      @page { margin: 0; size: A4; }
+      .print-page { page-break-after: always; }
+      .print-page:last-child { page-break-after: avoid; }
     }
-    #printArea {
-      display: none;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      color: #111827;
-      background: #fff;
-      padding: 0;
-    }
-    #printArea .doc-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      border-bottom: 3px solid #16a34a;
-      padding-bottom: 16px;
-      margin-bottom: 24px;
-    }
-    #printArea .doc-header h1 { margin: 0; font-size: 22px; color: #0f172a; }
-    #printArea .doc-header .doc-sub { color: #475569; font-size: 12px; margin-top: 3px; line-height: 1.4; }
-    #printArea .doc-number { text-align: right; color: #475569; font-size: 13px; }
-    #printArea .doc-number strong { display: block; color: #0f172a; font-size: 15px; }
-    #printArea .doc-section { margin-bottom: 22px; }
-    #printArea .doc-section h2 {
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      color: #16a34a;
-      margin: 0 0 10px;
-      border-bottom: 1px solid #e2e8f0;
-      padding-bottom: 6px;
-    }
-    #printArea .doc-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px 24px;
-    }
-    #printArea .doc-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dashed #e2e8f0; font-size: 14px; }
-    #printArea .doc-row span:first-child { color: #64748b; }
-    #printArea .doc-row span:last-child { font-weight: 700; color: #0f172a; text-align: right; }
-    #printArea .price-table { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
-    #printArea .price-table .doc-row { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; margin: 0; }
-    #printArea .price-table .doc-row:last-child { border-bottom: none; }
-    #printArea .price-total {
-      background: #f0fdf4;
-      padding: 16px;
-      border-radius: 10px;
-      margin-top: 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border: 1px solid #bbf7d0;
-    }
-    #printArea .price-total .label { font-size: 14px; color: #166534; font-weight: 700; }
-    #printArea .price-total .value { font-size: 26px; font-weight: 900; color: #14532d; }
-    #printArea .doc-footer { margin-top: 36px; padding-top: 14px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
+    #printArea { display: none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #fff; }
+    .print-page { width: 210mm; min-height: 297mm; box-sizing: border-box; position: relative; overflow: hidden; background: #fff; }
+    /* PAGE 1 CLIENT */
+    .p1-header { background: linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#166534 100%); padding: 36px 44px 28px; color: #fff; display: flex; justify-content: space-between; align-items: flex-start; }
+    .p1-hl .sn { font-size: 22px; font-weight: 900; letter-spacing: -.3px; margin-bottom: 2px; }
+    .p1-hl .ss { font-size: 10.5px; color: #93c5fd; margin-top: 3px; line-height: 1.5; }
+    .p1-hr { text-align: right; }
+    .p1-hr .ql { font-size: 9px; text-transform: uppercase; letter-spacing: .12em; color: #86efac; margin-bottom: 4px; }
+    .p1-hr .qn { font-size: 17px; font-weight: 800; }
+    .p1-hr .qd { font-size: 10.5px; color: #cbd5e1; margin-top: 4px; }
+    .p1-body { padding: 26px 44px 90px; }
+    .p1-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+    .p1-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; }
+    .p1-box h4 { margin: 0 0 7px; font-size: 8.5px; text-transform: uppercase; letter-spacing: .1em; color: #64748b; }
+    .p1-row { display: flex; justify-content: space-between; font-size: 11px; margin: 3px 0; gap: 8px; }
+    .p1-row .k { color: #64748b; flex-shrink: 0; }
+    .p1-row .v { font-weight: 600; color: #0f172a; text-align: right; word-break: break-word; }
+    .p1-stitle { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: #fff; background: #1e3a5f; padding: 6px 12px; border-radius: 4px; margin: 18px 0 0; display: inline-block; }
+    .p1-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 11px; }
+    .p1-table thead tr { background: #f1f5f9; }
+    .p1-table th { padding: 7px 10px; text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: #475569; font-weight: 700; border-bottom: 2px solid #e2e8f0; }
+    .p1-table th:last-child,.p1-table td:last-child { text-align: right; }
+    .p1-table td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: top; }
+    .p1-table tr:last-child td { border-bottom: none; }
+    .p1-table .jn { font-weight: 700; color: #0f172a; }
+    .p1-table .jd { font-size: 10px; color: #64748b; margin-top: 2px; }
+    .p1-table .je { font-size: 10px; color: #7c3aed; margin-top: 2px; font-style: italic; }
+    .tb { display: inline-block; font-size: 8px; font-weight: 700; padding: 1px 6px; border-radius: 99px; margin-left: 5px; vertical-align: middle; }
+    .tb3 { background: #dbeafe; color: #1d4ed8; }
+    .tbl { background: #fef3c7; color: #92400e; }
+    .p1-pricing { margin-top: 20px; display: flex; justify-content: flex-end; }
+    .p1-pb { width: 250px; }
+    .p1-pr { display: flex; justify-content: space-between; font-size: 11px; padding: 5px 0; border-bottom: 1px solid #f1f5f9; }
+    .p1-pr .pk { color: #64748b; }
+    .p1-pr .pv { font-weight: 600; color: #0f172a; }
+    .p1-pr.ded .pv { color: #dc2626; }
+    .p1-pr.shp { background: #f0f9ff; padding: 5px 6px; border-radius: 4px; margin: 2px 0; }
+    .p1-ptot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; background: linear-gradient(135deg,#166534,#14532d); color: #fff; padding: 13px 14px; border-radius: 8px; }
+    .p1-ptot .tk { font-size: 10.5px; font-weight: 700; opacity: .9; }
+    .p1-ptot .tv { font-size: 20px; font-weight: 900; }
+    .p1-note { margin-top: 16px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 8px 12px; font-size: 9.5px; color: #78350f; }
+    .p1-footer { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 44px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 9px; color: #94a3b8; }
+    /* PAGE 2 SUPPLIER */
+    .p2-header { background: linear-gradient(135deg,#312e81,#1e1b4b); padding: 22px 40px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+    .p2-header h1 { margin: 0; font-size: 15px; font-weight: 900; }
+    .p2-hbadge { background: rgba(167,139,250,.3); border: 1px solid rgba(167,139,250,.5); color: #c4b5fd; font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; padding: 3px 10px; border-radius: 99px; }
+    .p2-body { padding: 18px 40px 80px; }
+    .p2-sec { margin-bottom: 14px; }
+    .p2-sec h3 { font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #6d28d9; border-bottom: 2px solid #ede9fe; padding-bottom: 4px; margin: 0 0 7px; }
+    .p2-t { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+    .p2-t th { background: #f5f3ff; padding: 5px 8px; text-align: left; font-size: 8.5px; text-transform: uppercase; letter-spacing: .05em; color: #7c3aed; font-weight: 700; }
+    .p2-t th:last-child,.p2-t td:last-child { text-align: right; }
+    .p2-t td { padding: 5px 8px; border-bottom: 1px solid #f5f3ff; color: #374151; }
+    .p2-t .rs td { background: #f5f3ff; font-weight: 800; color: #1e1b4b; }
+    .p2-t .rsub td { background: #fafafa; font-size: 8.5px; color: #6b7280; padding-left: 16px; }
+    .p2-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .p2-cbox { border: 1px solid #e5e7eb; border-radius: 6px; padding: 9px 11px; }
+    .p2-cbox h4 { margin: 0 0 5px; font-size: 8px; text-transform: uppercase; letter-spacing: .08em; color: #6b7280; }
+    .p2-cr { display: flex; justify-content: space-between; font-size: 9.5px; padding: 2px 0; }
+    .p2-cr .ck { color: #6b7280; }
+    .p2-cr .cv { font-weight: 600; color: #111827; }
+    .p2-cr.hi { background: #f5f3ff; margin: 4px -11px -9px; padding: 5px 11px; border-radius: 0 0 6px 6px; }
+    .p2-cr.hi .ck { color: #7c3aed; font-weight: 700; }
+    .p2-cr.hi .cv { color: #4c1d95; font-weight: 800; }
+    .p2-tots { margin-top: 14px; background: #faf5ff; border: 2px solid #d8b4fe; border-radius: 8px; padding: 12px 14px; }
+    .p2-tots h4 { margin: 0 0 7px; font-size: 8.5px; text-transform: uppercase; letter-spacing: .1em; color: #7c3aed; }
+    .p2-tg { display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; }
+    .p2-ti { background: #fff; border: 1px solid #e9d5ff; border-radius: 6px; padding: 7px 9px; }
+    .p2-ti .tik { font-size: 8px; color: #7c3aed; margin-bottom: 2px; }
+    .p2-ti .tiv { font-size: 13px; font-weight: 900; color: #1e1b4b; }
+    .p2-ti.fin { background: linear-gradient(135deg,#7c3aed,#4c1d95); border-color: transparent; }
+    .p2-ti.fin .tik { color: #c4b5fd; }
+    .p2-ti.fin .tiv { color: #fff; font-size: 16px; }
+    .p2-footer { position: absolute; bottom: 0; left: 0; right: 0; padding: 11px 40px; background: #1e1b4b; color: #a78bfa; font-size: 8.5px; display: flex; justify-content: space-between; }
     @media (max-width: 640px) {
       .app { padding: 12px; }
       .form-grid, .stats, .tabs { grid-template-columns: 1fr; }
@@ -896,48 +911,107 @@
   </div>
 
   <div id="printArea">
-    <div class="doc-header">
-      <div>
-        <h1 id="printSenderName">Preventivo</h1>
-        <div class="doc-sub" id="printSenderSub"></div>
-        <div class="doc-sub" id="printSenderContacts"></div>
+
+    <!-- ═══════════════════ PAGINA 1 – COPIA CLIENTE ═══════════════════ -->
+    <div class="print-page" id="p1">
+      <div class="p1-header">
+        <div class="p1-hl">
+          <div class="sn" id="p1SenderName">—</div>
+          <div class="ss" id="p1SenderSub"></div>
+        </div>
+        <div class="p1-hr">
+          <div class="ql">Preventivo</div>
+          <div class="qn" id="p1QuoteName">—</div>
+          <div class="qd">Data: <span id="p1QuoteDate">—</span></div>
+        </div>
       </div>
-      <div class="doc-number">
-        <strong id="printQuoteName">-</strong>
-        Data: <span id="printQuoteDate">-</span>
+
+      <div class="p1-body">
+        <div class="p1-2col">
+          <div class="p1-box">
+            <h4>Fornitore</h4>
+            <div id="p1SenderInfo"></div>
+          </div>
+          <div class="p1-box">
+            <h4>Cliente</h4>
+            <div id="p1ClientInfo"></div>
+          </div>
+        </div>
+
+        <div class="p1-stitle">Dettaglio lavorazioni</div>
+        <table class="p1-table">
+          <thead>
+            <tr>
+              <th style="width:55%">Lavorazione / Descrizione</th>
+              <th>Materiale</th>
+              <th>Qtà</th>
+              <th>Importo</th>
+            </tr>
+          </thead>
+          <tbody id="p1JobsBody"></tbody>
+        </table>
+
+        <div class="p1-pricing">
+          <div class="p1-pb" id="p1PricingBox"></div>
+        </div>
+
+        <div class="p1-note" id="p1ShippingNote" style="display:none;"></div>
+      </div>
+
+      <div class="p1-footer">
+        <span id="p1FooterLeft"></span>
+        <span class="validity">Documento generato il <span id="p1GeneratedOn"></span> — valido salvo conferma scritta.</span>
       </div>
     </div>
 
-    <div class="doc-section" id="printSenderSection" style="display:none;">
-      <h2>Dati fornitore</h2>
-      <div class="doc-grid" id="printSenderDetails"></div>
-    </div>
+    <!-- ═══════════════════ PAGINA 2 – COPIA FORNITORE ═══════════════════ -->
+    <div class="print-page" id="p2">
+      <div class="p2-header">
+        <h1>📋 Copia Fornitore — Dettaglio Completo</h1>
+        <span class="p2-hbadge">USO INTERNO</span>
+      </div>
 
-    <div class="doc-section">
-      <h2>Dati cliente</h2>
-      <div class="doc-grid">
-        <div class="doc-row"><span>Cliente</span><span id="printClientName">-</span></div>
-        <div class="doc-row"><span>Mail/telefono</span><span id="printClientContact">-</span></div>
-        <div class="doc-row"><span>Tipo preventivo</span><span id="printJobType">-</span></div>
+      <div class="p2-body">
+        <div class="p2-sec">
+          <h3>Dati preventivo</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;font-size:9.5px;" id="p2Meta"></div>
+        </div>
+
+        <div class="p2-sec">
+          <h3>Dettaglio lavorazioni (costi reali)</h3>
+          <table class="p2-t" id="p2JobsTable">
+            <thead>
+              <tr>
+                <th>Lavorazione</th>
+                <th>Macchina</th>
+                <th>Materiale</th>
+                <th>Durata tot.</th>
+                <th>Mat. (€)</th>
+                <th>Energia (€)</th>
+                <th>Manut. (€)</th>
+                <th>Ammort. (€)</th>
+                <th>Extra (€)</th>
+                <th>Subtot. (€)</th>
+              </tr>
+            </thead>
+            <tbody id="p2JobsBody"></tbody>
+          </table>
+        </div>
+
+        <div class="p2-2col" id="p2CalcBoxes"></div>
+
+        <div class="p2-tots">
+          <h4>Riepilogo finale</h4>
+          <div class="p2-tg" id="p2TotalsGrid"></div>
+        </div>
+      </div>
+
+      <div class="p2-footer">
+        <span id="p2FooterLeft">Documento ad uso interno — non divulgare al cliente</span>
+        <span id="p2GeneratedOn"></span>
       </div>
     </div>
 
-    <div class="doc-section">
-      <h2>Riepilogo economico</h2>
-      <div class="price-table">
-        <div class="doc-row"><span>Imponibile (prodotto)</span><span id="printSubtotal">-</span></div>
-        <div class="doc-row" id="printDiscountRow"><span>Sconto applicato</span><span id="printDiscount">-</span></div>
-        <div class="doc-row" id="printVatRow"><span>IVA</span><span id="printVat">-</span></div>
-        <div class="doc-row" id="printShippingRow"><span>Spedizione</span><span id="printShipping">-</span></div>
-        <div class="doc-row" id="printDeliveryRow"><span>Tempi consegna stimati*</span><span id="printDelivery">-</span></div>
-      </div>
-      <div class="price-total">
-        <span class="label" id="printTotalLabel">Totale preventivo</span>
-        <span class="value" id="printTotalValue">-</span>
-      </div>
-    </div>
-
-    <div class="doc-footer">Documento generato il <span id="printGeneratedOn"></span> — valido salvo conferma.<br>* I tempi di consegna indicati sono stime. Le spedizioni sono gestite da corrieri terzi e possono variare.</div>
   </div>
 
   <script>
@@ -1605,96 +1679,195 @@
       return 'Solo stampa 3D';
     }
 
-    function populatePdfProfile() {
+    function buildPdf(result) {
       const p = getProfile();
       const isPiva = p.type === 'piva';
-      const name = isPiva
-        ? (p.RagioneSociale || 'Fornitore')
-        : `${p.Nome||''} ${p.Cognome||''}`.trim() || 'Fornitore';
-      const addr = [p.Indirizzo, p.Cap && p.Citta ? `${p.Cap} ${p.Citta}` : (p.Citta||p.Cap||''), p.Provincia ? `(${p.Provincia.toUpperCase()})` : ''].filter(Boolean).join(', ');
-      const contacts = [p.Email, p.Telefono].filter(Boolean).join(' · ');
+      const senderName = isPiva ? (p.RagioneSociale||'Fornitore') : `${p.Nome||''} ${p.Cognome||''}`.trim() || 'Fornitore';
+      const addr = [p.Indirizzo, p.Cap&&p.Citta?`${p.Cap} ${p.Citta}`:(p.Citta||p.Cap||''), p.Provincia?`(${p.Provincia.toUpperCase()})`:''  ].filter(Boolean).join(', ');
+      const senderSub = [isPiva&&p.PartitaIva?'P.IVA: '+p.PartitaIva:'', p.CodiceFiscale?'C.F.: '+p.CodiceFiscale:'', p.Email, p.Telefono, addr].filter(Boolean).join(' · ');
+      const stLabels = {standard:'Standard', express:'Espresso', economy:'Economy'};
+      const genDate = new Date().toLocaleDateString('it-IT');
+      const regimeLabels = {forfettario:'Regime forfettario',ordinario:'Regime ordinario',semplificato:'Regime semplificato',minimi:'Regime dei minimi'};
 
-      document.getElementById('printSenderName').textContent = name;
-      document.getElementById('printSenderSub').textContent = isPiva
-        ? ['P.IVA: ' + (p.PartitaIva||'—'), p.CodiceFiscale ? 'C.F.: '+p.CodiceFiscale : ''].filter(Boolean).join(' | ')
-        : p.CodiceFiscale ? 'C.F.: '+p.CodiceFiscale : '';
-      document.getElementById('printSenderContacts').textContent = [addr, contacts].filter(Boolean).join(' · ');
+      // ── PAGE 1 ──────────────────────────────────────────────────────
+      document.getElementById('p1SenderName').textContent = senderName;
+      document.getElementById('p1SenderSub').textContent = senderSub;
+      document.getElementById('p1QuoteName').textContent = result.jobName || 'Preventivo';
+      document.getElementById('p1QuoteDate').textContent = result.quoteDate || genDate;
+      document.getElementById('p1GeneratedOn').textContent = genDate;
 
-      // extended detail section (only for piva or if there are extra fields)
-      const detailsBox = document.getElementById('printSenderSection');
-      const detailsGrid = document.getElementById('printSenderDetails');
-      const rows = [];
-      if (isPiva && p.RegimeFiscale) {
-        const labels = {forfettario:'Regime forfettario',ordinario:'Regime ordinario',semplificato:'Regime semplificato',minimi:'Regime dei minimi'};
-        rows.push(`<div class="doc-row"><span>Regime fiscale</span><span>${escapeHtml(labels[p.RegimeFiscale]||p.RegimeFiscale)}</span></div>`);
+      // Sender info box
+      const si = [];
+      if (isPiva && p.PartitaIva) si.push(`<div class="p1-row"><span class="k">P.IVA</span><span class="v">${escapeHtml(p.PartitaIva)}</span></div>`);
+      if (p.CodiceFiscale) si.push(`<div class="p1-row"><span class="k">C.F.</span><span class="v">${escapeHtml(p.CodiceFiscale)}</span></div>`);
+      if (isPiva && p.RegimeFiscale) si.push(`<div class="p1-row"><span class="k">Regime</span><span class="v">${escapeHtml(regimeLabels[p.RegimeFiscale]||p.RegimeFiscale)}</span></div>`);
+      if (isPiva && p.Sdi) si.push(`<div class="p1-row"><span class="k">SDI</span><span class="v">${escapeHtml(p.Sdi)}</span></div>`);
+      if (isPiva && p.Pec) si.push(`<div class="p1-row"><span class="k">PEC</span><span class="v">${escapeHtml(p.Pec)}</span></div>`);
+      if (p.Email) si.push(`<div class="p1-row"><span class="k">Email</span><span class="v">${escapeHtml(p.Email)}</span></div>`);
+      if (p.Telefono) si.push(`<div class="p1-row"><span class="k">Tel.</span><span class="v">${escapeHtml(p.Telefono)}</span></div>`);
+      if (addr) si.push(`<div class="p1-row"><span class="k">Indirizzo</span><span class="v">${escapeHtml(addr)}</span></div>`);
+      if (isPiva && p.Sito) si.push(`<div class="p1-row"><span class="k">Web</span><span class="v">${escapeHtml(p.Sito)}</span></div>`);
+      document.getElementById('p1SenderInfo').innerHTML = si.join('');
+
+      // Client info box
+      const ci = [];
+      ci.push(`<div class="p1-row"><span class="k">Cliente</span><span class="v">${escapeHtml(result.clientName||'Non indicato')}</span></div>`);
+      if (result.clientContact) ci.push(`<div class="p1-row"><span class="k">Contatto</span><span class="v">${escapeHtml(result.clientContact)}</span></div>`);
+      ci.push(`<div class="p1-row"><span class="k">Tipo</span><span class="v">${escapeHtml(jobTypeLabel(result))}</span></div>`);
+      document.getElementById('p1ClientInfo').innerHTML = ci.join('');
+
+      // Jobs table
+      const tbody = document.getElementById('p1JobsBody');
+      tbody.innerHTML = (result.jobResults||[]).map((r, i) => {
+        const is3d = r.job.type === '3d';
+        const badge = is3d ? '<span class="tb tb3">3D</span>' : '<span class="tb tbl">Laser</span>';
+        const label = r.job.label || `Lavorazione ${i+1}`;
+        const qty = `${r.job.unitCount} ${is3d?'piatt'+(r.job.unitCount>1?'i':'o'):'lav.'}`;
+        const matName = r.material ? escapeHtml(r.material.name) : '—';
+        let rows = `<tr>
+          <td><div class="jn">${escapeHtml(label)}${badge}</div>${r.job.piecesPerUnit>1?`<div class="jd">${r.job.piecesPerUnit} pezzi per ${is3d?'piatto':'lavorazione'}</div>`:''}</td>
+          <td>${matName}</td>
+          <td>${qty}</td>
+          <td style="font-weight:700;">${currency.format(r.subtotal)}</td>
+        </tr>`;
+        if (r.extraCost > 0 && r.job.extraMaterialLabel) {
+          rows += `<tr><td colspan="3" style="padding-left:20px;font-size:10px;color:#7c3aed;font-style:italic;">↳ ${escapeHtml(r.job.extraMaterialLabel)} (×${r.job.unitCount})</td><td style="font-size:10px;color:#7c3aed;">${currency.format(r.extraCost)}</td></tr>`;
+        }
+        return rows;
+      }).join('');
+
+      // Pricing box
+      const pb = [];
+      if (result.discountValue > 0) {
+        pb.push(`<div class="p1-pr"><span class="pk">Imponibile</span><span class="pv">${currency.format(result.priceBeforeDiscount)}</span></div>`);
+        pb.push(`<div class="p1-pr ded"><span class="pk">Sconto</span><span class="pv">−${currency.format(result.discountValue)}</span></div>`);
       }
-      if (isPiva && p.Sdi) rows.push(`<div class="doc-row"><span>Codice SDI</span><span>${escapeHtml(p.Sdi)}</span></div>`);
-      if (isPiva && p.Pec) rows.push(`<div class="doc-row"><span>PEC</span><span>${escapeHtml(p.Pec)}</span></div>`);
-      if (isPiva && p.Sito) rows.push(`<div class="doc-row"><span>Sito web</span><span>${escapeHtml(p.Sito)}</span></div>`);
-      if (rows.length) {
-        detailsGrid.innerHTML = rows.join('');
-        detailsBox.style.display = 'block';
+      if (result.includeVat) {
+        pb.push(`<div class="p1-pr"><span class="pk">Imponibile netto</span><span class="pv">${currency.format(result.priceAfterMinimum)}</span></div>`);
+        pb.push(`<div class="p1-pr"><span class="pk">IVA ${num.format(result.vatPercent)}%</span><span class="pv">+${currency.format(result.vatValue)}</span></div>`);
       } else {
-        detailsBox.style.display = 'none';
+        pb.push(`<div class="p1-pr"><span class="pk">Subtotale prodotto</span><span class="pv">${currency.format(result.priceAfterMinimum)}</span></div>`);
+        pb.push(`<div class="p1-pr"><span class="pk">IVA</span><span class="pv">Esclusa</span></div>`);
       }
+      if (result.includeShipping && result.shippingTotal > 0) {
+        pb.push(`<div class="p1-pr shp"><span class="pk">Spedizione (${escapeHtml(stLabels[result.shippingType]||result.shippingType)})</span><span class="pv">+${currency.format(result.shippingCost)}</span></div>`);
+        if (result.includeInsurance) pb.push(`<div class="p1-pr shp"><span class="pk">Assicurazione spedizione</span><span class="pv">+${currency.format(result.insuranceCost)}</span></div>`);
+      }
+      pb.push(`<div class="p1-ptot"><span class="tk">TOTALE${result.includeVat?' IVA INCLUSA':''}</span><span class="tv">${currency.format(result.finalRecommendedPrice)}</span></div>`);
+      document.getElementById('p1PricingBox').innerHTML = pb.join('');
+
+      // Shipping note
+      const snEl = document.getElementById('p1ShippingNote');
+      if (result.includeShipping) {
+        const dmin = result.deliveryDaysMin, dmax = result.deliveryDaysMax;
+        let noteText = `🚚 Consegna stimata: ${dmin}–${dmax} giorni lavorativi (stima indicativa, gestita da corrieri terzi).`;
+        if (result.shippingNotes) noteText += ` Note: ${result.shippingNotes}`;
+        if (result.includeInsurance) noteText += ' Spedizione assicurata inclusa.';
+        snEl.textContent = noteText;
+        snEl.style.display = 'block';
+      } else { snEl.style.display = 'none'; }
+
+      // Footer
+      const footerParts = [senderName, isPiva&&p.PartitaIva?'P.IVA '+p.PartitaIva:'', p.Email].filter(Boolean);
+      document.getElementById('p1FooterLeft').textContent = footerParts.join(' · ');
+
+      // ── PAGE 2 ──────────────────────────────────────────────────────
+      // Meta
+      const meta = [
+        ['Preventivo', result.jobName||'—'],
+        ['Data', result.quoteDate||'—'],
+        ['Cliente', result.clientName||'—'],
+        ['Contatto', result.clientContact||'—'],
+        ['Tipo lavoro', jobTypeLabel(result)],
+        ['Fornitore', senderName],
+      ];
+      document.getElementById('p2Meta').innerHTML = meta.map(([k,v]) =>
+        `<div style="display:flex;gap:6px;"><span style="color:#6b7280;min-width:80px;">${escapeHtml(k)}:</span><strong>${escapeHtml(v)}</strong></div>`
+      ).join('');
+
+      // Jobs detail table
+      const p2body = document.getElementById('p2JobsBody');
+      p2body.innerHTML = (result.jobResults||[]).map((r, i) => {
+        const label = r.job.label || `Lavorazione ${i+1}`;
+        const is3d = r.job.type === '3d';
+        let rows = `<tr>
+          <td><strong>${escapeHtml(label)}</strong><br><span style="font-size:8px;color:#6b7280;">${is3d?'Stampa 3D':'Laser'} · ${r.job.unitCount} ${is3d?'piatti':'lav.'} · ${r.job.piecesPerUnit} pz/${is3d?'piatto':'lav.'}</span></td>
+          <td>${escapeHtml(r.machine?.name||'—')}</td>
+          <td>${escapeHtml(r.material?.name||'—')}</td>
+          <td>${formatHours(r.totalHours)}</td>
+          <td>${currency.format(r.materialCost)}</td>
+          <td>${currency.format(r.energyCost)}</td>
+          <td>${currency.format(r.maintenanceCost)}</td>
+          <td>${currency.format(r.amortCost)}</td>
+          <td>${r.extraCost>0?currency.format(r.extraCost):'—'}</td>
+          <td style="font-weight:800;">${currency.format(r.subtotal)}</td>
+        </tr>`;
+        if (r.extraCost > 0 && r.job.extraMaterialLabel) {
+          rows += `<tr class="rsub"><td colspan="10" style="padding-left:20px;">↳ Componente extra: ${escapeHtml(r.job.extraMaterialLabel)} × ${r.job.unitCount}</td></tr>`;
+        }
+        if (is3d && r.totalGrams > 0) {
+          rows += `<tr class="rsub"><td colspan="10" style="padding-left:20px;">Materiale 3D totale: ${num.format(r.totalGrams)} g | Ore/piatto: ${formatHours(r.hoursPerUnit)}</td></tr>`;
+        }
+        return rows;
+      }).join('');
+      // Totals row
+      const totalMat = result.materialCostTotal, totalEn = result.energyCostTotal;
+      const totalMaint = result.maintenanceCostTotal, totalAmort = result.machineAmortCostTotal;
+      const totalExtra = (result.jobResults||[]).reduce((s,r)=>s+r.extraCost,0);
+      document.getElementById('p2JobsBody').innerHTML += `
+        <tr class="rs">
+          <td><strong>TOTALE LAVORAZIONI</strong></td><td></td><td></td><td></td>
+          <td>${currency.format(totalMat)}</td>
+          <td>${currency.format(totalEn)}</td>
+          <td>${currency.format(totalMaint)}</td>
+          <td>${currency.format(totalAmort)}</td>
+          <td>${totalExtra>0?currency.format(totalExtra):'—'}</td>
+          <td style="font-weight:900;">${currency.format(result.baseTechnicalTotal)}</td>
+        </tr>`;
+
+      // Calc boxes
+      document.getElementById('p2CalcBoxes').innerHTML = `
+        <div class="p2-cbox">
+          <h4>Struttura del costo reale</h4>
+          <div class="p2-cr"><span class="ck">Subtotale lavorazioni</span><span class="cv">${currency.format(result.baseTechnicalTotal)}</span></div>
+          <div class="p2-cr"><span class="ck">+ Manodopera (${num.format(result.manualHours)}h × ${currency.format(result.laborRate)})</span><span class="cv">${currency.format(result.manualLaborCost)}</span></div>
+          <div class="p2-cr"><span class="ck">= Totale base</span><span class="cv">${currency.format(result.baseTotal)}</span></div>
+          <div class="p2-cr"><span class="ck">+ Fallimento ${num.format(result.failureMargin)}%</span><span class="cv">${currency.format(result.failureCost)}</span></div>
+          <div class="p2-cr hi"><span class="ck">COSTO REALE TOTALE</span><span class="cv">${currency.format(result.adjustedTotal)}</span></div>
+        </div>
+        <div class="p2-cbox">
+          <h4>Prezzo al cliente</h4>
+          <div class="p2-cr"><span class="ck">Costo reale</span><span class="cv">${currency.format(result.adjustedTotal)}</span></div>
+          <div class="p2-cr"><span class="ck">+ Rincaro ${num.format(result.profitMargin)}%</span><span class="cv">+${currency.format(result.profitValue)}</span></div>
+          <div class="p2-cr"><span class="ck">− Sconto</span><span class="cv">−${currency.format(result.discountValue)}</span></div>
+          ${result.priceAfterMinimum>result.priceAfterDiscount+0.005?`<div class="p2-cr"><span class="ck">Prezzo minimo applicato</span><span class="cv">${currency.format(result.minimumPrice)}</span></div>`:''}
+          <div class="p2-cr"><span class="ck">+ IVA ${num.format(result.vatPercent)}%</span><span class="cv">${result.includeVat?'+'+currency.format(result.vatValue):'esclusa'}</span></div>
+          ${result.includeShipping?`<div class="p2-cr"><span class="ck">+ Spedizione</span><span class="cv">+${currency.format(result.shippingTotal)}</span></div>`:''}
+          <div class="p2-cr hi"><span class="ck">TOTALE FINALE</span><span class="cv">${currency.format(result.finalRecommendedPrice)}</span></div>
+        </div>`;
+
+      // Totals grid
+      const marginNet = result.priceAfterMinimum - result.adjustedTotal;
+      const marginPct = result.adjustedTotal>0?(marginNet/result.adjustedTotal*100):0;
+      const unitP = result.unitPriceClient;
+      const totalPcs = result.totalPiecesAll;
+      document.getElementById('p2TotalsGrid').innerHTML = `
+        <div class="p2-ti"><div class="tik">Costo reale</div><div class="tiv">${currency.format(result.adjustedTotal)}</div></div>
+        <div class="p2-ti"><div class="tik">Margine netto</div><div class="tiv">${currency.format(marginNet)} (${num.format(marginPct)}%)</div></div>
+        ${totalPcs>1&&unitP?`<div class="p2-ti"><div class="tik">Prezzo/pezzo (${totalPcs} pz)</div><div class="tiv">${currency.format(unitP)}</div></div>`:'<div class="p2-ti"><div class="tik">Pezzi totali</div><div class="tiv">—</div></div>'}
+        ${result.includeShipping?`<div class="p2-ti"><div class="tik">Spedizione${result.includeInsurance?' + ass.':''}</div><div class="tiv">${currency.format(result.shippingTotal)}</div></div>`:''}
+        <div class="p2-ti fin"><div class="tik">TOTALE CLIENTE</div><div class="tiv">${currency.format(result.finalRecommendedPrice)}</div></div>`;
+
+      document.getElementById('p2GeneratedOn').textContent = 'Generato il ' + genDate;
     }
 
     document.getElementById('exportPdfBtn').addEventListener('click', () => {
       const result = window.__lastQuoteResult;
       if (!result) { alert('Prima calcola un preventivo nel tab Lavoro.'); return; }
-
-      // Profilo fornitore
-      populatePdfProfile();
-
-      // Preventivo
-      document.getElementById('printQuoteName').textContent = result.jobName || 'Preventivo senza nome';
-      document.getElementById('printQuoteDate').textContent = result.quoteDate || '-';
-      document.getElementById('printClientName').textContent = result.clientName || 'Non indicato';
-      document.getElementById('printClientContact').textContent = result.clientContact || 'Non indicato';
-      document.getElementById('printJobType').textContent = jobTypeLabel(result);
-      document.getElementById('printSubtotal').textContent = currency.format(result.priceWithVat);
-
-      const discountRow = document.getElementById('printDiscountRow');
-      if (result.discountValue > 0) {
-        discountRow.style.display = 'flex';
-        document.getElementById('printDiscount').textContent = `−${currency.format(result.discountValue)}`;
-      } else {
-        discountRow.style.display = 'none';
-      }
-
-      document.getElementById('printVatRow').style.display = 'flex';
-      document.getElementById('printVat').textContent = result.includeVat
-        ? `${num.format(result.vatPercent)}% (${currency.format(result.vatValue)})`
-        : 'Esclusa';
-
-      // Shipping row in PDF
-      const shippingRow = document.getElementById('printShippingRow');
-      if (result.includeShipping && result.shippingTotal > 0) {
-        shippingRow.style.display = 'flex';
-        const stLabels = { standard:'Standard', express:'Espresso', economy:'Economy' };
-        let shTxt = `${stLabels[result.shippingType]||result.shippingType}: ${currency.format(result.shippingCost)}`;
-        if (result.includeInsurance) shTxt += ` + ass. ${currency.format(result.insuranceCost)}`;
-        document.getElementById('printShipping').textContent = shTxt;
-        const delRow = document.getElementById('printDeliveryRow');
-        if (delRow) {
-          delRow.style.display = 'flex';
-          document.getElementById('printDelivery').textContent =
-            `${result.deliveryDaysMin}–${result.deliveryDaysMax} gg lavorativi (stima)`;
-        }
-      } else {
-        shippingRow.style.display = 'none';
-        const delRow = document.getElementById('printDeliveryRow');
-        if (delRow) delRow.style.display = 'none';
-      }
-
-      document.getElementById('printTotalLabel').textContent = result.includeVat
-        ? 'Totale preventivo (IVA inclusa)'
-        : 'Totale preventivo (IVA esclusa)';
-      document.getElementById('printTotalValue').textContent = currency.format(result.finalRecommendedPrice);
-      document.getElementById('printGeneratedOn').textContent = new Date().toLocaleDateString('it-IT');
-
+      buildPdf(result);
       window.print();
     });
+
 
     // ── RESTORE & INIT ───────────────────────────────────────────────
     function restoreCurrentJob() {
