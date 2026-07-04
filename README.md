@@ -6,7 +6,7 @@ Web-app responsive per la creazione di preventivi professionali per lavorazioni 
 
 ##  Licenza
 
-Progetto personale — tutti i diritti riservati. Puoi usarlo liberamente per uso personale. Per uso commerciale contattami tramite [ddusnoblogo@gmail.com](mailto:ddusnoblogo@gmail.com) per ottenere una licenza commerciale
+Progetto personale — tutti i diritti riservati. Puoi usarlo liberamente per uso personale. Per uso commerciale contattami tramite [mail](mailto:ddusnoblogo@gmail.com) per ottenere una licenza commerciale
 
 
 ---
