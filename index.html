@@ -63,6 +63,22 @@
     }
     .tab-btn.active, .tab-btn:hover { background: var(--accent); color: #052e16; border-color: transparent; }
     .tab-btn[data-tab="tab-profilo"].active, .tab-btn[data-tab="tab-profilo"]:hover { background: var(--blue); color: #0c1a2e; }
+    .tab-btn[data-tab="tab-dati"].active, .tab-btn[data-tab="tab-dati"]:hover { background: #f59e0b; color: #451a03; }
+    .io-section { border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 2px solid transparent; }
+    .io-section.base { background: rgba(56,189,248,.07); border-color: rgba(56,189,248,.25); }
+    .io-section.job  { background: rgba(245,158,11,.07); border-color: rgba(245,158,11,.25); }
+    .io-section h3 { margin: 0 0 4px; font-size: 16px; font-weight: 800; }
+    .io-section.base h3 { color: #bae6fd; }
+    .io-section.job  h3 { color: #fde68a; }
+    .io-section p { margin: 0 0 14px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .io-tag { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 3px 10px; border-radius: 99px; margin-bottom: 10px; }
+    .io-tag.base { background: rgba(56,189,248,.15); color: #bae6fd; }
+    .io-tag.job  { background: rgba(245,158,11,.15); color: #fde68a; }
+    .io-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .io-result { margin-top: 10px; font-size: 12.5px; padding: 8px 12px; border-radius: 8px; display: none; }
+    .io-result.ok  { background: rgba(34,197,94,.15);  color: #86efac; border: 1px solid rgba(34,197,94,.3);  }
+    .io-result.err { background: rgba(239,68,68,.15);  color: #fca5a5; border: 1px solid rgba(239,68,68,.3);  }
+    .io-warn { background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.3); border-radius: 10px; padding: 10px 14px; font-size: 12.5px; color: #fde68a; margin-bottom: 12px; }
     .tab-btn[data-tab="tab-macchine"].active, .tab-btn[data-tab="tab-macchine"]:hover { background: var(--violet); color: #2e1065; }
     .radio-opt {
       display: flex;
@@ -503,7 +519,7 @@
   <div class="app">
     <section class="hero">
       <h1>Preventivi Stampa 3D e Laser</h1>
-      <p>Web-app responsive per creare preventivi separati o combinati con stampa 3D e incisore laser. I dati vengono salvati nel browser e restano disponibili anche su iPhone quando riapri la pagina sullo stesso dispositivo.</p>
+      <p>Web-app responsive per creare preventivi separati o combinati con stampa 3D e incisore laser. I dati vengono salvati nel browser e restano disponibili quando riapri la pagina sullo stesso dispositivo.</p>
     </section>
 
     <nav class="tabs" aria-label="Navigazione sezioni">
@@ -511,6 +527,7 @@
       <button class="tab-btn" data-tab="tab-macchine">Macchine</button>
       <button class="tab-btn" data-tab="tab-lavoro">Lavoro</button>
       <button class="tab-btn" data-tab="tab-riepilogo">Riepilogo</button>
+      <button class="tab-btn" data-tab="tab-dati">📦 Dati &amp; Backup</button>
     </nav>
 
     <section id="tab-profilo" class="tab-panel active">
@@ -909,6 +926,68 @@
       </div>
     </section>
   </div>
+
+    <section id="tab-dati" class="tab-panel">
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+
+        <!-- ── SEZIONE 1: DATI BASE ── -->
+        <div class="card">
+          <div class="io-section base">
+            <div class="io-tag base">⚙️ Dati base</div>
+            <h3>Profilo, Macchine &amp; Materiali</h3>
+            <p>Esporta una volta sola la tua configurazione (dati fornitore, macchine, materiali). Potrai reimportarla su qualsiasi dispositivo per non dover reinserire tutto da capo.</p>
+
+            <div class="io-warn">⚠️ L'importazione <strong>sovrascrive</strong> i dati di profilo, macchine e materiali attualmente salvati.</div>
+
+            <div class="io-actions">
+              <button class="primary" type="button" id="exportBaseBtn">⬇️ Esporta dati base</button>
+              <label class="secondary" style="cursor:pointer;" for="importBaseFile">⬆️ Importa dati base</label>
+              <input id="importBaseFile" type="file" accept=".json" style="display:none;" />
+            </div>
+            <div class="io-result" id="importBaseResult"></div>
+          </div>
+
+          <div class="io-section job" style="margin-top:4px;">
+            <div class="io-tag job">📄 Lavorazione corrente</div>
+            <h3>Esporta / Importa preventivo</h3>
+            <p>Esporta tutti i dati della lavorazione corrente (macchine scelte, materiali, lavorazioni, ore, grammi, margini, prezzi, spedizione ecc.). Salva il file insieme al PDF nella cartella del lavoro: in futuro potrai riaprirlo e continuare da dove hai lasciato.</p>
+
+            <div class="io-warn">⚠️ L'importazione sovrascrive la lavorazione corrente nel tab Lavoro.</div>
+
+            <div class="io-actions">
+              <button class="primary" type="button" id="exportJobBtn">⬇️ Esporta lavorazione</button>
+              <label class="secondary" style="cursor:pointer;" for="importJobFile">⬆️ Importa lavorazione</label>
+              <input id="importJobFile" type="file" accept=".json" style="display:none;" />
+            </div>
+            <div class="io-result" id="importJobResult"></div>
+          </div>
+        </div>
+
+        <!-- ── SEZIONE 2: INFO ── -->
+        <div class="card">
+          <span class="zone-tag quote">ℹ️ Come funziona</span>
+          <h3>Guida rapida</h3>
+          <p class="subtitle" style="margin-top:8px;">I file esportati sono in formato <strong>JSON</strong>, leggibili e modificabili con qualsiasi editor di testo. Puoi salvarli nella cartella del lavoro insieme al PDF del preventivo.</p>
+
+          <div class="summary-block cost-real" style="margin-top:14px;">
+            <div class="summary-block-head"><span class="icon">⚙️</span><span class="title">Dati base</span></div>
+            <div class="summary-line sub"><span>Cosa contiene</span><strong>Profilo fornitore, tutte le macchine, tutti i materiali</strong></div>
+            <div class="summary-line sub"><span>Quando esportarlo</span><strong>Una volta sola, poi ogni volta che aggiungi macchine o materiali</strong></div>
+            <div class="summary-line sub"><span>Nome file</span><strong>dati-base-AAAA-MM-GG.json</strong></div>
+          </div>
+
+          <div class="summary-block cost-client" style="margin-top:10px;">
+            <div class="summary-block-head"><span class="icon">📄</span><span class="title">Lavorazione</span></div>
+            <div class="summary-line sub"><span>Cosa contiene</span><strong>Tutti i dati del preventivo: lavorazioni, margini, prezzi, spedizione, risultato calcolato</strong></div>
+            <div class="summary-line sub"><span>Quando esportarlo</span><strong>Dopo aver calcolato il riepilogo, per ogni preventivo completato</strong></div>
+            <div class="summary-line sub"><span>Nome file</span><strong>lavorazione-[nome]-AAAA-MM-GG.json</strong></div>
+          </div>
+
+          <p class="subtitle" style="margin-top:14px;font-size:12px;">💡 <strong>Flusso consigliato:</strong> calcola → esporta PDF → esporta lavorazione → salva entrambi nella stessa cartella con il nome del cliente.</p>
+        </div>
+
+      </div>
+    </section>
 
   <div id="printArea">
 
@@ -1873,7 +1952,116 @@
     function restoreCurrentJob() {
       const saved = loadData(STORAGE_KEYS.currentJob, null);
       if (!saved || saved.version !== 'hybrid-v3') {
-        if (!quoteDateInput.value) quoteDateInput.value = todayString();
+        // ── IMPORT / EXPORT ─────────────────────────────────────────────
+
+    function todayIso() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function downloadJson(data, filename) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function showIoResult(id, msg, isOk) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = 'io-result ' + (isOk ? 'ok' : 'err');
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+
+    // ── EXPORT BASE (profile + machines + materials) ──
+    document.getElementById('exportBaseBtn').addEventListener('click', () => {
+      const data = {
+        _type: 'preventivi3d-base',
+        _version: 1,
+        _exported: new Date().toISOString(),
+        profile: loadData(STORAGE_KEYS.profile, {}),
+        machines: getMachines(),
+        materials: getMaterials()
+      };
+      downloadJson(data, `dati-base-${todayIso()}.json`);
+    });
+
+    // ── IMPORT BASE ──
+    document.getElementById('importBaseFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (data._type !== 'preventivi3d-base') throw new Error('File non valido: non è un file di dati base.');
+        if (data.profile)   saveData(STORAGE_KEYS.profile,   data.profile);
+        if (data.machines)  saveData(STORAGE_KEYS.machines,  data.machines);
+        if (data.materials) saveData(STORAGE_KEYS.materials, data.materials);
+        renderMachines();
+        renderMaterials();
+        restoreProfile();
+        showIoResult('importBaseResult', `✅ Dati base importati: ${(data.machines||[]).length} macchine, ${(data.materials||[]).length} materiali.`, true);
+      } catch(err) {
+        showIoResult('importBaseResult', '❌ Errore: ' + err.message, false);
+      }
+      e.target.value = '';
+    });
+
+    // ── EXPORT JOB (full current job + saved jobs list + result) ──
+    document.getElementById('exportJobBtn').addEventListener('click', () => {
+      const currentJob = loadData(STORAGE_KEYS.currentJob, null);
+      const jobs = getJobs();
+      if (!jobs.length && !currentJob) {
+        alert('Nessuna lavorazione da esportare. Compila il tab Lavoro prima.'); return;
+      }
+      const jobName = (currentJob && currentJob.jobName) ? currentJob.jobName.replace(/[^a-z0-9]/gi,'_').toLowerCase() : 'senza-nome';
+      const data = {
+        _type: 'preventivi3d-job',
+        _version: 1,
+        _exported: new Date().toISOString(),
+        currentJob,
+        jobs,
+        // Snapshot delle macchine e materiali usati (per riferimento futuro)
+        machinesSnapshot: getMachines(),
+        materialsSnapshot: getMaterials()
+      };
+      downloadJson(data, `lavorazione-${jobName}-${todayIso()}.json`);
+    });
+
+    // ── IMPORT JOB ──
+    document.getElementById('importJobFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (data._type !== 'preventivi3d-job') throw new Error('File non valido: non è un file di lavorazione.');
+
+        // Restore jobs list
+        if (data.jobs) saveJobs(data.jobs);
+
+        // Restore currentJob form fields
+        if (data.currentJob) {
+          saveData(STORAGE_KEYS.currentJob, data.currentJob);
+          restoreCurrentJob();
+        }
+
+        // Render
+        renderJobs();
+        activateTab('tab-lavoro');
+
+        const njobs = (data.jobs||[]).length;
+        const jname = data.currentJob?.jobName || 'senza nome';
+        showIoResult('importJobResult', `✅ Lavorazione "${jname}" importata con ${njobs} lavorazione/i. Vai al tab Lavoro per verificare e ricalcolare.`, true);
+      } catch(err) {
+        showIoResult('importJobResult', '❌ Errore: ' + err.message, false);
+      }
+      e.target.value = '';
+    });
+
+    if (!quoteDateInput.value) quoteDateInput.value = todayString();
         return;
       }
       const set = (id, v, fb='') => {
@@ -1925,6 +2113,115 @@
 
     materialType.addEventListener('change', updateMaterialFormUI);
     materialUnit.addEventListener('change', updateMaterialFormUI);
+
+    // ── IMPORT / EXPORT ─────────────────────────────────────────────
+
+    function todayIso() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function downloadJson(data, filename) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function showIoResult(id, msg, isOk) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = 'io-result ' + (isOk ? 'ok' : 'err');
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+
+    // ── EXPORT BASE (profile + machines + materials) ──
+    document.getElementById('exportBaseBtn').addEventListener('click', () => {
+      const data = {
+        _type: 'preventivi3d-base',
+        _version: 1,
+        _exported: new Date().toISOString(),
+        profile: loadData(STORAGE_KEYS.profile, {}),
+        machines: getMachines(),
+        materials: getMaterials()
+      };
+      downloadJson(data, `dati-base-${todayIso()}.json`);
+    });
+
+    // ── IMPORT BASE ──
+    document.getElementById('importBaseFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (data._type !== 'preventivi3d-base') throw new Error('File non valido: non è un file di dati base.');
+        if (data.profile)   saveData(STORAGE_KEYS.profile,   data.profile);
+        if (data.machines)  saveData(STORAGE_KEYS.machines,  data.machines);
+        if (data.materials) saveData(STORAGE_KEYS.materials, data.materials);
+        renderMachines();
+        renderMaterials();
+        restoreProfile();
+        showIoResult('importBaseResult', `✅ Dati base importati: ${(data.machines||[]).length} macchine, ${(data.materials||[]).length} materiali.`, true);
+      } catch(err) {
+        showIoResult('importBaseResult', '❌ Errore: ' + err.message, false);
+      }
+      e.target.value = '';
+    });
+
+    // ── EXPORT JOB (full current job + saved jobs list + result) ──
+    document.getElementById('exportJobBtn').addEventListener('click', () => {
+      const currentJob = loadData(STORAGE_KEYS.currentJob, null);
+      const jobs = getJobs();
+      if (!jobs.length && !currentJob) {
+        alert('Nessuna lavorazione da esportare. Compila il tab Lavoro prima.'); return;
+      }
+      const jobName = (currentJob && currentJob.jobName) ? currentJob.jobName.replace(/[^a-z0-9]/gi,'_').toLowerCase() : 'senza-nome';
+      const data = {
+        _type: 'preventivi3d-job',
+        _version: 1,
+        _exported: new Date().toISOString(),
+        currentJob,
+        jobs,
+        // Snapshot delle macchine e materiali usati (per riferimento futuro)
+        machinesSnapshot: getMachines(),
+        materialsSnapshot: getMaterials()
+      };
+      downloadJson(data, `lavorazione-${jobName}-${todayIso()}.json`);
+    });
+
+    // ── IMPORT JOB ──
+    document.getElementById('importJobFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (data._type !== 'preventivi3d-job') throw new Error('File non valido: non è un file di lavorazione.');
+
+        // Restore jobs list
+        if (data.jobs) saveJobs(data.jobs);
+
+        // Restore currentJob form fields
+        if (data.currentJob) {
+          saveData(STORAGE_KEYS.currentJob, data.currentJob);
+          restoreCurrentJob();
+        }
+
+        // Render
+        renderJobs();
+        activateTab('tab-lavoro');
+
+        const njobs = (data.jobs||[]).length;
+        const jname = data.currentJob?.jobName || 'senza nome';
+        showIoResult('importJobResult', `✅ Lavorazione "${jname}" importata con ${njobs} lavorazione/i. Vai al tab Lavoro per verificare e ricalcolare.`, true);
+      } catch(err) {
+        showIoResult('importJobResult', '❌ Errore: ' + err.message, false);
+      }
+      e.target.value = '';
+    });
 
     if (!quoteDateInput.value) quoteDateInput.value = todayString();
     updateMaterialFormUI();
