@@ -1094,6 +1094,53 @@
   </div>
 
   <script>
+    // ── VERSIONING & MIGRAZIONE DATI ─────────────────────────────────
+    // Incrementare DATA_VERSION ogni volta che cambia la struttura dei dati salvati.
+    // Aggiungere la funzione di migrazione corrispondente in MIGRATIONS.
+    const DATA_VERSION = 1;
+
+    const MIGRATIONS = {
+      // Esempio di migrazione futura:
+      // 2: (data) => ({ ...data, nuovoCampo: valoreDefault }),
+    };
+
+    function migrateData(data, fromVersion) {
+      let current = fromVersion;
+      let migrated = { ...data };
+      while (current < DATA_VERSION) {
+        const next = current + 1;
+        if (MIGRATIONS[next]) {
+          migrated = MIGRATIONS[next](migrated);
+          console.info(`[Preventivator] Dati migrati da v${current} → v${next}`);
+        }
+        current = next;
+      }
+      return migrated;
+    }
+
+    function loadDataVersioned(key, fallback = []) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return fallback;
+        const parsed = JSON.parse(raw);
+        // Se i dati hanno una versione e sono vecchi, migra automaticamente
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && parsed._v) {
+          if (parsed._v < DATA_VERSION) {
+            const migrated = migrateData(parsed, parsed._v);
+            migrated._v = DATA_VERSION;
+            localStorage.setItem(key, JSON.stringify(migrated));
+            return migrated.data ?? fallback;
+          }
+          return parsed.data ?? fallback;
+        }
+        return parsed;
+      } catch (e) {
+        console.warn(`[Preventivator] Errore lettura dati (${key}):`, e);
+        return fallback;
+      }
+    }
+
+    // ── STORAGE KEYS ─────────────────────────────────────────────────
     const STORAGE_KEYS = {
       machines: 'preventivi3d_machines',
       materials: 'preventivi3d_materials',
