@@ -1,0 +1,12 @@
+{
+  "name": "preventivator",
+  "version": "1.2.0",
+  "description": "Test suite per la logica di calcolo di Preventivator",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/calc.test.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

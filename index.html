@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Preventivi Stampa 3D e Laser</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <section class="hero">
+      <h1>Preventivi Stampa 3D e Laser</h1>
+      <p>Web-app responsive per creare preventivi separati o combinati con stampa 3D e incisore laser. I dati vengono salvati nel browser e restano disponibili quando riapri la pagina sullo stesso dispositivo.</p>
+    </section>
+
+    <nav class="tabs" aria-label="Navigazione sezioni">
+      <button class="tab-btn active" data-tab="tab-profilo">Profilo</button>
+      <button class="tab-btn" data-tab="tab-macchine">Macchine</button>
+      <button class="tab-btn" data-tab="tab-lavoro">Lavoro</button>
+      <button class="tab-btn" data-tab="tab-riepilogo">Riepilogo</button>
+      <button class="tab-btn" data-tab="tab-dati">📦 Dati &amp; Backup</button>
+    </nav>
+
+    <section id="tab-profilo" class="tab-panel active">
+      <div class="grid">
+        <div class="card">
+          <span class="zone-tag quote">👤 Il mio profilo</span>
+          <h2>Dati del fornitore</h2>
+          <p class="subtitle">Questi dati vengono usati nell'intestazione del PDF inviato al cliente. Seleziona il tipo di soggetto per mostrare i campi pertinenti.</p>
+
+          <div class="form-grid">
+            <div class="field full">
+              <label>Tipo soggetto</label>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <label class="radio-opt" id="radioPrivato">
+                  <input type="radio" name="profileType" value="privato" id="profilePrivato" />
+                  <span>Privato</span>
+                </label>
+                <label class="radio-opt" id="radioPartita">
+                  <input type="radio" name="profileType" value="piva" id="profilePiva" />
+                  <span>Partita IVA / Azienda</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="field profile-piva-only" id="profileRagioneSocialeWrap">
+              <label for="profileRagioneSociale">Ragione sociale / Nome commerciale</label>
+              <input id="profileRagioneSociale" type="text" placeholder="Es. Mario Rossi Stampe 3D" />
+            </div>
+            <div class="field profile-privato-only">
+              <label for="profileNome">Nome</label>
+              <input id="profileNome" type="text" placeholder="Es. Mario" />
+            </div>
+            <div class="field profile-privato-only">
+              <label for="profileCognome">Cognome</label>
+              <input id="profileCognome" type="text" placeholder="Es. Rossi" />
+            </div>
+            <div class="field profile-piva-only">
+              <label for="profilePartitaIva">Partita IVA</label>
+              <input id="profilePartitaIva" type="text" placeholder="Es. IT12345678901" />
+            </div>
+            <div class="field">
+              <label for="profileCodiceFiscale">Codice Fiscale</label>
+              <input id="profileCodiceFiscale" type="text" placeholder="Es. RSSMRA80A01H501Z" />
+            </div>
+            <div class="field profile-piva-only">
+              <label for="profileRegimeFiscale">Regime fiscale</label>
+              <select id="profileRegimeFiscale">
+                <option value="">— Seleziona —</option>
+                <option value="forfettario">Regime forfettario</option>
+                <option value="ordinario">Regime ordinario</option>
+                <option value="semplificato">Regime semplificato</option>
+                <option value="minimi">Regime dei minimi</option>
+              </select>
+            </div>
+            <div class="field profile-piva-only">
+              <label for="profileSdi">Codice SDI</label>
+              <input id="profileSdi" type="text" placeholder="Es. XXXXXXX" />
+            </div>
+            <div class="field profile-piva-only">
+              <label for="profilePec">PEC</label>
+              <input id="profilePec" type="email" placeholder="Es. mario.rossi@pec.it" />
+            </div>
+            <div class="field">
+              <label for="profileEmail">Email</label>
+              <input id="profileEmail" type="email" placeholder="Es. mario.rossi@email.it" />
+            </div>
+            <div class="field">
+              <label for="profileTelefono">Telefono</label>
+              <input id="profileTelefono" type="tel" placeholder="Es. +39 333 1234567" />
+            </div>
+            <div class="field full">
+              <label for="profileIndirizzo">Indirizzo</label>
+              <input id="profileIndirizzo" type="text" placeholder="Es. Via Roma 1" />
+            </div>
+            <div class="field">
+              <label for="profileCitta">Città</label>
+              <input id="profileCitta" type="text" placeholder="Es. Milano" />
+            </div>
+            <div class="field">
+              <label for="profileCap">CAP</label>
+              <input id="profileCap" type="text" placeholder="Es. 20100" />
+            </div>
+            <div class="field">
+              <label for="profileProvincia">Provincia</label>
+              <input id="profileProvincia" type="text" placeholder="Es. MI" maxlength="2" style="text-transform:uppercase;" />
+            </div>
+            <div class="field profile-piva-only">
+              <label for="profileSito">Sito web (opzionale)</label>
+              <input id="profileSito" type="url" placeholder="Es. https://www.miosito.it" />
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="primary" type="button" id="saveProfileBtn">Salva profilo</button>
+          </div>
+          <div class="ok" id="profileSaved">Profilo salvato correttamente.</div>
+        </div>
+
+        <div class="card">
+          <span class="zone-tag quote">👁️ Anteprima profilo</span>
+          <h3>Come apparirà nel PDF</h3>
+          <div id="profilePreview" class="profile-preview-box">
+            <div class="pp-empty">Compila i dati e clicca "Salva profilo" per vedere l'anteprima.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-macchine" class="tab-panel">
+      <div class="grid">
+        <div class="card zone-resources">
+          <span class="zone-tag">📦 Risorse: parco macchine</span>
+          <h2>Aggiungi macchina</h2>
+          <p class="subtitle">Puoi salvare sia stampanti 3D sia incisori laser, con i relativi costi, consumo orario e vita utile stimata, da riutilizzare nei preventivi singoli o combinati. Il costo energia viene calcolato come ore di lavoro × consumo (kW/h) × costo energia (€/kWh); il costo macchina (acquisto) viene ammortizzato come ore di lavoro × (costo macchina ÷ vita utile in ore).</p>
+          <form id="machineForm">
+            <div class="form-grid">
+              <div class="field">
+                <label for="machineType">Tipo macchina</label>
+                <select id="machineType" required>
+                  <option value="3d">Stampante 3D</option>
+                  <option value="laser">Incisore laser</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="machineName">Nome macchina</label>
+                <input id="machineName" type="text" placeholder="Es. Bambu Lab X1C / Laser CO2 60W" required />
+              </div>
+              <div class="field">
+                <label for="machineCost">Costo macchina (€)</label>
+                <input id="machineCost" type="number" min="0" step="0.01" placeholder="0.00" required />
+              </div>
+              <div class="field">
+                <label for="lifetimeHours">Vita utile stimata (ore)</label>
+                <input id="lifetimeHours" type="number" min="1" step="1" placeholder="Es. 8000" required />
+              </div>
+              <div class="field">
+                <label for="energyCost">Costo energia (€/kWh)</label>
+                <input id="energyCost" type="number" min="0" step="0.0001" placeholder="0.0000" required />
+              </div>
+              <div class="field full">
+                <label>Consumo macchina</label>
+                <div class="inline-fields">
+                  <input id="powerKwh" type="number" min="0" step="0.01" placeholder="Es. 1" required />
+                  <span class="inline-label">kWh ogni</span>
+                  <input id="powerEveryH" type="number" min="0.1" step="0.1" placeholder="Es. 6" required />
+                  <span class="inline-label">ore</span>
+                </div>
+                <div class="field-hint">Se la tua macchina consuma 1 kWh ogni 6 ore di funzionamento, scrivi 1 e 6.</div>
+              </div>
+              <div class="field full">
+                <label for="maintenanceCost">Manutenzione ogni 1000h (€)</label>
+                <input id="maintenanceCost" type="number" min="0" step="0.01" placeholder="0.00" required />
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary" type="submit">Salva macchina</button>
+              <button class="secondary" type="button" id="resetMachines">Azzera elenco</button>
+            </div>
+            <div class="ok" id="machineSaved">Macchina salvata correttamente.</div>
+          </form>
+        </div>
+        <div class="card zone-resources">
+          <span class="zone-tag">📦 Risorse: parco macchine</span>
+          <h3>Macchine salvate</h3>
+          <div id="machineList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-lavoro" class="tab-panel">
+      <div class="grid">
+        <div class="card">
+          <span class="zone-tag quote">🧾 Preventivo</span>
+          <h2>Dati del lavoro</h2>
+          <p class="subtitle">Scegli se fare un preventivo solo 3D, solo laser oppure combinato con entrambe le lavorazioni, includendo anche le ore di preparazione e post-produzione manuale.</p>
+          <form id="jobForm">
+            <div class="form-grid">
+              <div class="field full">
+                <label for="jobName">Nome preventivo</label>
+                <input id="jobName" type="text" placeholder="Es. Kit espositori personalizzati" />
+              </div>
+              <div class="field">
+                <label for="clientName">Cliente</label>
+                <input id="clientName" type="text" placeholder="Es. Rossi Arredamenti" />
+              </div>
+              <div class="field">
+                <label for="clientContact">Mail/telefono cliente</label>
+                <input id="clientContact" type="text" placeholder="Es. mario.rossi@email.it / 333 1234567" />
+              </div>
+              <div class="field">
+                <label for="quoteDate">Data preventivo</label>
+                <input id="quoteDate" type="date" />
+              </div>
+            </div>
+
+            <div class="section-block">
+              <div class="section-head">
+                <div class="section-title">Lavorazioni</div>
+                <span class="badge blue">Stampa 3D &amp; Laser</span>
+              </div>
+              <p class="subtitle" style="margin-top:-6px;">Aggiungi una o più lavorazioni: ogni riga può essere 3D o laser, con macchina e materiale propri. "Pezzi per piatto/lavorazione" è informativo (usato per il costo unitario); il moltiplicatore di costo reale è "Numero piatti/lavorazioni".</p>
+              <div id="jobsList"></div>
+              <div class="actions" style="margin-top:10px; flex-wrap:wrap; gap:8px;">
+                <button class="secondary" type="button" id="addJob3d">＋ Aggiungi lavorazione 3D</button>
+                <button class="secondary" type="button" id="addJobLaser">＋ Aggiungi lavorazione laser</button>
+              </div>
+            </div>
+
+            <div class="section-block">
+              <div class="section-head">
+                <div class="section-title">Preparazione e post-produzione</div>
+                <span class="badge green">Manodopera</span>
+              </div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="manualHours">Ore lavoro manuale</label>
+                  <input id="manualHours" type="number" min="0" step="0.01" value="0" />
+                </div>
+                <div class="field">
+                  <label for="laborRate">Costo orario manodopera (€)</label>
+                  <input id="laborRate" type="number" min="0" step="0.01" value="0" />
+                </div>
+              </div>
+            </div>
+
+            <div class="section-block">
+              <div class="section-head">
+                <div class="section-title">Aspetti commerciali</div>
+                <span class="badge green">Calcolo finale</span>
+              </div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="failureMargin">Margine fallimento (%)</label>
+                  <input id="failureMargin" type="number" min="0" step="0.01" value="8" required />
+                </div>
+                <div class="field">
+                  <label for="profitMargin">Rincaro / guadagno (%)</label>
+                  <input id="profitMargin" type="number" min="0" step="0.01" value="100" required />
+                </div>
+                <div class="field">
+                  <label for="discountAmount">Sconto cliente (€)</label>
+                  <input id="discountAmount" type="number" min="0" step="0.01" value="0" required />
+                </div>
+                <div class="field">
+                  <label for="minimumPrice">Prezzo minimo (€)</label>
+                  <input id="minimumPrice" type="number" min="0" step="0.01" value="0" required />
+                </div>
+                <div class="field">
+                  <label for="vatPercent">IVA (%)</label>
+                  <input id="vatPercent" type="number" min="0" step="0.01" value="22" required />
+                </div>
+                <div class="field">
+                  <label>Applicazione IVA</label>
+                  <div class="checkbox-wrap">
+                    <input id="includeVat" type="checkbox" checked />
+                    <span>Includi IVA nel calcolo finale</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-block" id="shippingSection">
+              <div class="section-head">
+                <div class="section-title">Spedizione</div>
+                <span class="badge blue">Opzionale</span>
+              </div>
+              <div class="form-grid">
+                <div class="field full">
+                  <label>Includi spedizione nel preventivo</label>
+                  <div class="checkbox-wrap">
+                    <input id="includeShipping" type="checkbox" />
+                    <span>Aggiungi costi di spedizione al totale</span>
+                  </div>
+                </div>
+              </div>
+              <div id="shippingFields" class="hidden">
+                <div class="field-hint" style="margin:-4px 0 12px;padding:10px 12px;background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);border-radius:10px;color:#bae6fd;">
+                  ⚠️ I tempi e i costi di spedizione indicati sono <strong>stime</strong>. Le spedizioni sono gestite da terzi e possono variare.
+                </div>
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="shippingCost">Costo spedizione base (€)</label>
+                    <input id="shippingCost" type="number" min="0" step="0.01" value="0" placeholder="0.00" />
+                  </div>
+                  <div class="field">
+                    <label for="shippingType">Tipologia spedizione</label>
+                    <select id="shippingType">
+                      <option value="standard">Standard</option>
+                      <option value="express">Espresso</option>
+                      <option value="economy">Economy</option>
+                    </select>
+                  </div>
+                  <div class="field full">
+                    <label>Spedizione assicurata</label>
+                    <div class="checkbox-wrap">
+                      <input id="includeInsurance" type="checkbox" />
+                      <span>Aggiungi assicurazione sulla spedizione</span>
+                    </div>
+                  </div>
+                  <div class="field" id="insuranceCostWrap" style="display:none;">
+                    <label for="insuranceCost">Costo assicurazione (€)</label>
+                    <input id="insuranceCost" type="number" min="0" step="0.01" value="0" placeholder="0.00" />
+                  </div>
+                  <div class="field">
+                    <label for="deliveryDaysMin">Tempi consegna stimati — da (gg lavorativi)</label>
+                    <input id="deliveryDaysMin" type="number" min="1" step="1" value="3" />
+                  </div>
+                  <div class="field">
+                    <label for="deliveryDaysMax">a (gg lavorativi)</label>
+                    <input id="deliveryDaysMax" type="number" min="1" step="1" value="5" />
+                  </div>
+                  <div class="field full">
+                    <label for="shippingNotes">Note spedizione (opzionale)</label>
+                    <input id="shippingNotes" type="text" placeholder="Es. Corriere GLS, imballaggio robusto incluso" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="primary" type="submit">Calcola riepilogo</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card zone-resources">
+          <span class="zone-tag">📦 Risorse: materiali</span>
+          <h3>Aggiungi materiale</h3>
+          <p class="subtitle">Puoi salvare materiali per stampa 3D e materiali per laser. Per il laser puoi scegliere l’unità di costo.</p>
+          <form id="materialForm">
+            <div class="form-grid">
+              <div class="field">
+                <label for="materialType">Tipo materiale</label>
+                <select id="materialType" required>
+                  <option value="3d">Materiale stampa 3D</option>
+                  <option value="laser">Materiale laser</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="materialUnit">Unità costo</label>
+                <select id="materialUnit" required>
+                  <option value="kg">kg</option>
+                  <option value="pezzo">pezzo</option>
+                  <option value="foglio">foglio</option>
+                  <option value="lastra">lastra</option>
+                  <option value="metro">metro</option>
+                </select>
+              </div>
+              <div class="field full">
+                <label for="materialName">Nome materiale</label>
+                <input id="materialName" type="text" placeholder="Es. PLA / Compensato 3 mm" required />
+              </div>
+              <div class="field full">
+                <label id="materialCostLabel" for="materialCost">Costo per kg (€)</label>
+                <input id="materialCost" type="number" min="0" step="0.01" placeholder="0.00" required />
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary" type="submit">Salva materiale</button>
+              <button class="secondary" type="button" id="resetMaterials">Azzera materiali</button>
+            </div>
+            <div class="ok" id="materialSaved">Materiale salvato correttamente.</div>
+          </form>
+          <div style="height: 14px"></div>
+          <div id="materialList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-riepilogo" class="tab-panel">
+      <div class="grid">
+        <div class="card">
+          <span class="zone-tag quote">🧾 Preventivo</span>
+          <h2>Riepilogo preventivo</h2>
+          <p class="subtitle">Il riepilogo mostra i costi separati per stampa 3D e laser, la manodopera manuale e il totale combinato finale.</p>
+          <div class="actions" style="margin-bottom:14px;">
+            <button class="primary" type="button" id="exportPdfBtn">Esporta PDF per il cliente</button>
+          </div>
+          <div id="quoteSummary" class="summary"></div>
+        </div>
+        <div class="card">
+          <h3>Formula prezzo</h3>
+          <div class="summary">
+            <div class="summary-line"><span>Subtotale 3D</span><strong>materiale + energia + manutenzione + ammortamento</strong></div>
+            <div class="summary-line"><span>Subtotale laser</span><strong>materiale + energia + manutenzione + ammortamento</strong></div>
+            <div class="summary-line"><span>Manodopera</span><strong>ore manuali × costo orario</strong></div>
+            <div class="summary-line"><span>Totale tecnico</span><strong>3D + laser + manodopera</strong></div>
+            <div class="summary-line"><span>Costo con fallimento</span><strong>totale base × (1 + fallimento %)</strong></div>
+            <div class="summary-line"><span>Prezzo finale</span><strong>rincaro, sconto, minimo e IVA opzionale</strong></div>
+          </div>
+          <div class="total-box">
+            <div class="label">Prezzo finale consigliato</div>
+            <div class="value" id="recommendedPriceBox">--</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+    <section id="tab-dati" class="tab-panel">
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+
+        <!-- ── SEZIONE 1: DATI BASE ── -->
+        <div class="card">
+          <div class="io-section base">
+            <div class="io-tag base">⚙️ Dati base</div>
+            <h3>Profilo, Macchine &amp; Materiali</h3>
+            <p>Esporta una volta sola la tua configurazione (dati fornitore, macchine, materiali). Potrai reimportarla su qualsiasi dispositivo per non dover reinserire tutto da capo.</p>
+
+            <div class="io-warn">⚠️ L'importazione <strong>sovrascrive</strong> i dati di profilo, macchine e materiali attualmente salvati.</div>
+
+            <div class="io-actions">
+              <button class="primary" type="button" id="exportBaseBtn">⬇️ Esporta dati base</button>
+              <label class="secondary" style="cursor:pointer;" for="importBaseFile">⬆️ Importa dati base</label>
+              <input id="importBaseFile" type="file" accept=".json" style="display:none;" />
+            </div>
+            <div class="io-result" id="importBaseResult"></div>
+          </div>
+
+          <div class="io-section job" style="margin-top:4px;">
+            <div class="io-tag job">📄 Lavorazione corrente</div>
+            <h3>Esporta / Importa preventivo</h3>
+            <p>Esporta tutti i dati della lavorazione corrente (macchine scelte, materiali, lavorazioni, ore, grammi, margini, prezzi, spedizione ecc.). Salva il file insieme al PDF nella cartella del lavoro: in futuro potrai riaprirlo e continuare da dove hai lasciato.</p>
+
+            <div class="io-warn">⚠️ L'importazione sovrascrive la lavorazione corrente nel tab Lavoro.</div>
+
+            <div class="io-actions">
+              <button class="primary" type="button" id="exportJobBtn">⬇️ Esporta lavorazione</button>
+              <label class="secondary" style="cursor:pointer;" for="importJobFile">⬆️ Importa lavorazione</label>
+              <input id="importJobFile" type="file" accept=".json" style="display:none;" />
+            </div>
+            <div class="io-result" id="importJobResult"></div>
+          </div>
+        </div>
+
+        <!-- ── SEZIONE 2: INFO ── -->
+        <div class="card">
+          <span class="zone-tag quote">ℹ️ Come funziona</span>
+          <h3>Guida rapida</h3>
+          <p class="subtitle" style="margin-top:8px;">I file esportati sono in formato <strong>JSON</strong>, leggibili e modificabili con qualsiasi editor di testo. Puoi salvarli nella cartella del lavoro insieme al PDF del preventivo.</p>
+
+          <div class="summary-block cost-real" style="margin-top:14px;">
+            <div class="summary-block-head"><span class="icon">⚙️</span><span class="title">Dati base</span></div>
+            <div class="summary-line sub"><span>Cosa contiene</span><strong>Profilo fornitore, tutte le macchine, tutti i materiali</strong></div>
+            <div class="summary-line sub"><span>Quando esportarlo</span><strong>Una volta sola, poi ogni volta che aggiungi macchine o materiali</strong></div>
+            <div class="summary-line sub"><span>Nome file</span><strong>dati-base-AAAA-MM-GG.json</strong></div>
+          </div>
+
+          <div class="summary-block cost-client" style="margin-top:10px;">
+            <div class="summary-block-head"><span class="icon">📄</span><span class="title">Lavorazione</span></div>
+            <div class="summary-line sub"><span>Cosa contiene</span><strong>Tutti i dati del preventivo: lavorazioni, margini, prezzi, spedizione, risultato calcolato</strong></div>
+            <div class="summary-line sub"><span>Quando esportarlo</span><strong>Dopo aver calcolato il riepilogo, per ogni preventivo completato</strong></div>
+            <div class="summary-line sub"><span>Nome file</span><strong>lavorazione-[nome]-AAAA-MM-GG.json</strong></div>
+          </div>
+
+          <p class="subtitle" style="margin-top:14px;font-size:12px;">💡 <strong>Flusso consigliato:</strong> calcola → esporta PDF → esporta lavorazione → salva entrambi nella stessa cartella con il nome del cliente.</p>
+        </div>
+
+      </div>
+    </section>
+
+  <div id="printArea">
+
+    <!-- ═══════════════════ PAGINA 1 – COPIA CLIENTE ═══════════════════ -->
+    <div class="print-page" id="p1">
+      <div class="p1-header">
+        <div class="p1-hl">
+          <div class="sn" id="p1SenderName">—</div>
+          <div class="ss" id="p1SenderSub"></div>
+        </div>
+        <div class="p1-hr">
+          <div class="ql">Preventivo</div>
+          <div class="qn" id="p1QuoteName">—</div>
+          <div class="qd">Data: <span id="p1QuoteDate">—</span></div>
+        </div>
+      </div>
+
+      <div class="p1-body">
+        <div class="p1-2col">
+          <div class="p1-box">
+            <h4>Fornitore</h4>
+            <div id="p1SenderInfo"></div>
+          </div>
+          <div class="p1-box">
+            <h4>Cliente</h4>
+            <div id="p1ClientInfo"></div>
+          </div>
+        </div>
+
+        <div class="p1-stitle">Dettaglio lavorazioni</div>
+        <table class="p1-table">
+          <thead>
+            <tr>
+              <th style="width:55%">Lavorazione / Descrizione</th>
+              <th>Materiale</th>
+              <th>Qtà</th>
+              <th>Importo</th>
+            </tr>
+          </thead>
+          <tbody id="p1JobsBody"></tbody>
+        </table>
+
+        <div class="p1-pricing">
+          <div class="p1-pb" id="p1PricingBox"></div>
+        </div>
+
+        <div class="p1-note" id="p1ShippingNote" style="display:none;"></div>
+      </div>
+
+      <div class="p1-footer">
+        <span id="p1FooterLeft"></span>
+        <span class="validity">Documento generato il <span id="p1GeneratedOn"></span> — valido salvo conferma scritta.</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════ PAGINA 2 – COPIA FORNITORE ═══════════════════ -->
+    <div class="print-page" id="p2">
+      <div class="p2-header">
+        <h1>📋 Copia Fornitore — Dettaglio Completo</h1>
+        <span class="p2-hbadge">USO INTERNO</span>
+      </div>
+
+      <div class="p2-body">
+        <div class="p2-sec">
+          <h3>Dati preventivo</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;font-size:9.5px;" id="p2Meta"></div>
+        </div>
+
+        <div class="p2-sec">
+          <h3>Dettaglio lavorazioni (costi reali)</h3>
+          <table class="p2-t" id="p2JobsTable">
+            <thead>
+              <tr>
+                <th>Lavorazione</th>
+                <th>Macchina</th>
+                <th>Materiale</th>
+                <th>Durata tot.</th>
+                <th>Mat. (€)</th>
+                <th>Energia (€)</th>
+                <th>Manut. (€)</th>
+                <th>Ammort. (€)</th>
+                <th>Extra (€)</th>
+                <th>Subtot. (€)</th>
+              </tr>
+            </thead>
+            <tbody id="p2JobsBody"></tbody>
+          </table>
+        </div>
+
+        <div class="p2-2col" id="p2CalcBoxes"></div>
+
+        <div class="p2-tots">
+          <h4>Riepilogo finale</h4>
+          <div class="p2-tg" id="p2TotalsGrid"></div>
+        </div>
+      </div>
+
+      <div class="p2-footer">
+        <span id="p2FooterLeft">Documento ad uso interno — non divulgare al cliente</span>
+        <span id="p2GeneratedOn"></span>
+      </div>
+    </div>
+
+  </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
