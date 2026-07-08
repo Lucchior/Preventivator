@@ -1,20 +1,19 @@
 /**
  * app.js — Preventivator
- * Punto di ingresso dell'applicazione.
- * Importa tutti i moduli e coordina l'inizializzazione.
+ * Punto di ingresso. Inizializza IndexedDB, migra dati e avvia l'app.
  */
 
-import { loadData, saveData, STORAGE_KEYS } from './storage.js';
-import { getMachines, getMaterials, getJobs } from './models.js';
-import { computeJobCost }                   from './calc.js';
-import { todayString }                      from './utils.js';
-import { renderMachines, initMachinesHandlers } from './ui-machines.js';
+import { loadData, saveData, STORAGE_KEYS, initStorage } from './storage.js';
+import { getMachines, getMaterials, getJobs }             from './models.js';
+import { computeJobCost }                                  from './calc.js';
+import { todayString }                                     from './utils.js';
+import { renderMachines, initMachinesHandlers }            from './ui-machines.js';
 import { renderMaterials, initMaterialsHandlers, updateMaterialFormUI } from './ui-materials.js';
-import { renderJobs, initJobsHandlers }     from './ui-jobs.js';
-import { renderSummary }                    from './ui-summary.js';
-import { restoreProfile, initProfileHandlers } from './ui-profile.js';
-import { initPdfHandler }                   from './ui-pdf.js';
-import { initIoHandlers }                   from './ui-io.js';
+import { renderJobs, initJobsHandlers }                    from './ui-jobs.js';
+import { renderSummary }                                   from './ui-summary.js';
+import { restoreProfile, initProfileHandlers }             from './ui-profile.js';
+import { initPdfHandler }                                  from './ui-pdf.js';
+import { initIoHandlers }                                  from './ui-io.js';
 
 // ── Tab navigation ────────────────────────────────────────────────────────────
 export function activateTab(id) {
@@ -22,16 +21,14 @@ export function activateTab(id) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === id));
 }
 
-// ── Restore job form from localStorage ───────────────────────────────────────
-export function restoreCurrentJob() {
-  const saved = loadData(STORAGE_KEYS.currentJob, null);
-
+// ── Restore job form ──────────────────────────────────────────────────────────
+export async function restoreCurrentJob() {
+  const saved = await loadData(STORAGE_KEYS.currentJob, null);
   if (!saved || saved.version !== 'hybrid-v3') {
     const dateInput = document.getElementById('quoteDate');
     if (dateInput && !dateInput.value) dateInput.value = todayString();
     return;
   }
-
   const set = (id, v, fb = '') => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -39,33 +36,31 @@ export function restoreCurrentJob() {
     if (v !== undefined && v !== null && v !== '') el.value = v;
     else if (fb !== '') el.value = fb;
   };
-
-  set('jobName',        saved.jobName        || '');
-  set('clientName',     saved.clientName     || '');
-  set('clientContact',  saved.clientContact  || '');
-  set('quoteDate',      saved.quoteDate      || todayString());
-  set('manualHours',    saved.manualHours,      0);
-  set('laborRate',      saved.laborRate,         0);
-  set('failureMargin',  saved.failureMargin,     8);
-  set('profitMargin',   saved.profitMargin,      100);
-  set('discountAmount', saved.discountAmount,    0);
-  set('minimumPrice',   saved.minimumPrice,      0);
-  set('vatPercent',     saved.vatPercent,        22);
-  set('includeVat',     saved.includeVat,        true);
-  set('includeShipping',  saved.includeShipping, false);
-  set('shippingCost',     saved.shippingCost,    0);
-  set('shippingType',     saved.shippingType,    'standard');
-  set('includeInsurance', saved.includeInsurance, false);
-  set('insuranceCost',    saved.insuranceCost,   0);
-  set('deliveryDaysMin',  saved.deliveryDaysMin, 3);
-  set('deliveryDaysMax',  saved.deliveryDaysMax, 5);
-  set('shippingNotes',    saved.shippingNotes,   '');
-
+  set('jobName',         saved.jobName        || '');
+  set('clientName',      saved.clientName     || '');
+  set('clientContact',   saved.clientContact  || '');
+  set('quoteDate',       saved.quoteDate      || todayString());
+  set('manualHours',     saved.manualHours,       0);
+  set('laborRate',       saved.laborRate,          0);
+  set('failureMargin',   saved.failureMargin,      8);
+  set('profitMargin',    saved.profitMargin,        100);
+  set('discountAmount',  saved.discountAmount,     0);
+  set('minimumPrice',    saved.minimumPrice,        0);
+  set('vatPercent',      saved.vatPercent,          22);
+  set('includeVat',      saved.includeVat,          true);
+  set('includeShipping', saved.includeShipping,     false);
+  set('shippingCost',    saved.shippingCost,        0);
+  set('shippingType',    saved.shippingType,        'standard');
+  set('includeInsurance',saved.includeInsurance,    false);
+  set('insuranceCost',   saved.insuranceCost,       0);
+  set('deliveryDaysMin', saved.deliveryDaysMin,     3);
+  set('deliveryDaysMax', saved.deliveryDaysMax,     5);
+  set('shippingNotes',   saved.shippingNotes,       '');
   updateShippingUI();
   if (saved.result) renderSummary(saved.result);
 }
 
-// ── Shipping UI toggle ────────────────────────────────────────────────────────
+// ── Shipping UI ───────────────────────────────────────────────────────────────
 function updateShippingUI() {
   const on = document.getElementById('includeShipping').checked;
   document.getElementById('shippingFields').classList.toggle('hidden', !on);
@@ -73,18 +68,14 @@ function updateShippingUI() {
   document.getElementById('insuranceCostWrap').style.display = insured ? 'block' : 'none';
 }
 
-// ── Job form submit (calcolo preventivo) ──────────────────────────────────────
+// ── Job form submit ───────────────────────────────────────────────────────────
 function initJobFormHandler() {
-  const jobForm = document.getElementById('jobForm');
-
-  jobForm.addEventListener('submit', (e) => {
+  document.getElementById('jobForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const jobs = getJobs();
+    const jobs = await getJobs();
     if (!jobs.length) { alert('Aggiungi almeno una lavorazione prima di calcolare.'); return; }
 
-    const machines  = getMachines();
-    const materials = getMaterials();
-
+    const [machines, materials] = await Promise.all([getMachines(), getMaterials()]);
     const jobResults = jobs.map(j => computeJobCost(j, machines, materials));
     const invalid    = jobResults.findIndex(r => r === null);
     if (invalid !== -1) {
@@ -94,25 +85,24 @@ function initJobFormHandler() {
     }
 
     const g = id => document.getElementById(id);
-    const manualHours      = Number(g('manualHours').value      || 0);
-    const laborRate        = Number(g('laborRate').value        || 0);
-    const failureMargin    = Number(g('failureMargin').value    || 0);
-    const profitMargin     = Number(g('profitMargin').value     || 0);
-    const discountAmount   = Number(g('discountAmount').value   || 0);
-    const minimumPrice     = Number(g('minimumPrice').value     || 0);
-    const vatPercent       = Number(g('vatPercent').value       || 0);
-    const includeVat       = g('includeVat').checked;
-    const includeShipping  = g('includeShipping').checked;
-    const shippingCost     = includeShipping ? Number(g('shippingCost').value || 0) : 0;
-    const shippingType     = includeShipping ? g('shippingType').value : '';
-    const includeInsurance = includeShipping && g('includeInsurance').checked;
-    const insuranceCost    = includeInsurance ? Number(g('insuranceCost').value || 0) : 0;
-    const deliveryDaysMin  = includeShipping ? Number(g('deliveryDaysMin').value || 1) : 0;
-    const deliveryDaysMax  = includeShipping ? Number(g('deliveryDaysMax').value || 1) : 0;
-    const shippingNotes    = includeShipping ? g('shippingNotes').value.trim() : '';
-    const shippingTotal    = shippingCost + insuranceCost;
+    const manualHours       = Number(g('manualHours').value      || 0);
+    const laborRate         = Number(g('laborRate').value        || 0);
+    const failureMargin     = Number(g('failureMargin').value    || 0);
+    const profitMargin      = Number(g('profitMargin').value     || 0);
+    const discountAmount    = Number(g('discountAmount').value   || 0);
+    const minimumPrice      = Number(g('minimumPrice').value     || 0);
+    const vatPercent        = Number(g('vatPercent').value       || 0);
+    const includeVat        = g('includeVat').checked;
+    const includeShipping   = g('includeShipping').checked;
+    const shippingCost      = includeShipping ? Number(g('shippingCost').value     || 0) : 0;
+    const shippingType      = includeShipping ? g('shippingType').value               : '';
+    const includeInsurance  = includeShipping && g('includeInsurance').checked;
+    const insuranceCost     = includeInsurance ? Number(g('insuranceCost').value  || 0) : 0;
+    const deliveryDaysMin   = includeShipping ? Number(g('deliveryDaysMin').value || 1) : 0;
+    const deliveryDaysMax   = includeShipping ? Number(g('deliveryDaysMax').value || 1) : 0;
+    const shippingNotes     = includeShipping ? g('shippingNotes').value.trim()         : '';
+    const shippingTotal     = shippingCost + insuranceCost;
 
-    // Sequenza di calcolo (documentata in calc.js)
     const baseTechnicalTotal  = jobResults.reduce((s, r) => s + r.subtotal, 0);
     const manualLaborCost     = manualHours * laborRate;
     const baseTotal           = baseTechnicalTotal + manualLaborCost;
@@ -126,16 +116,13 @@ function initJobFormHandler() {
     const vatValue            = includeVat ? priceAfterMinimum * (vatPercent / 100) : 0;
     const priceWithVat        = priceAfterMinimum + vatValue;
     const finalRecommendedPrice = priceWithVat + shippingTotal;
-
-    const totalPiecesAll  = jobResults.reduce((s, r) => s + r.totalPieces, 0);
-    const unitPriceClient = totalPiecesAll > 0 ? priceWithVat / totalPiecesAll : null;
+    const totalPiecesAll      = jobResults.reduce((s, r) => s + r.totalPieces, 0);
+    const unitPriceClient     = totalPiecesAll > 0 ? priceWithVat / totalPiecesAll : null;
 
     const result = {
       version: 'hybrid-v3',
-      jobName:       g('jobName').value.trim(),
-      clientName:    g('clientName').value.trim(),
-      clientContact: g('clientContact').value.trim(),
-      quoteDate:     g('quoteDate').value || todayString(),
+      jobName: g('jobName').value.trim(), clientName: g('clientName').value.trim(),
+      clientContact: g('clientContact').value.trim(), quoteDate: g('quoteDate').value || todayString(),
       jobResults, totalPiecesAll, unitPriceClient,
       manualHours, laborRate, manualLaborCost,
       failureMargin, profitMargin, discountAmount, minimumPrice, vatPercent, includeVat,
@@ -150,9 +137,8 @@ function initJobFormHandler() {
       vatValue, priceWithVat, finalRecommendedPrice,
     };
 
-    saveData(STORAGE_KEYS.currentJob, {
-      version: 'hybrid-v3',
-      jobName: result.jobName, clientName: result.clientName,
+    await saveData(STORAGE_KEYS.currentJob, {
+      version: 'hybrid-v3', jobName: result.jobName, clientName: result.clientName,
       clientContact: result.clientContact, quoteDate: result.quoteDate,
       manualHours, laborRate, failureMargin, profitMargin,
       discountAmount, minimumPrice, vatPercent, includeVat,
@@ -166,17 +152,20 @@ function initJobFormHandler() {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
-function init() {
-  // Tab navigation
+async function init() {
+  // 1. Prima di tutto: apri il DB e migra da localStorage se necessario
+  await initStorage();
+
+  // 2. Tab navigation
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => activateTab(btn.dataset.tab));
   });
 
-  // Shipping toggle
+  // 3. Shipping toggle
   document.getElementById('includeShipping').addEventListener('change',  updateShippingUI);
   document.getElementById('includeInsurance').addEventListener('change', updateShippingUI);
 
-  // Module handlers
+  // 4. Moduli
   initMachinesHandlers();
   initMaterialsHandlers();
   initJobsHandlers();
@@ -185,18 +174,23 @@ function init() {
   initIoHandlers({ renderMachines, renderMaterials, restoreProfile, renderJobs, restoreCurrentJob, activateTab });
   initJobFormHandler();
 
-  // Initial render
+  // 5. Render iniziale (parallelo dove possibile)
   const dateInput = document.getElementById('quoteDate');
   if (dateInput && !dateInput.value) dateInput.value = todayString();
   updateMaterialFormUI();
   updateShippingUI();
-  renderMachines();
-  renderMaterials();
-  renderJobs();
-  restoreProfile();
-  restoreCurrentJob();
-  renderSummary(loadData(STORAGE_KEYS.currentJob, {}).result || null);
+
+  await Promise.all([
+    renderMachines(),
+    renderMaterials(),
+    restoreProfile(),
+  ]);
+  await renderJobs();
+  await restoreCurrentJob();
+
+  // 6. Ripristina ultimo riepilogo calcolato
+  const saved = await loadData(STORAGE_KEYS.currentJob, {});
+  if (saved.result) renderSummary(saved.result);
 }
 
-// Avvia quando il DOM è pronto (type="module" è già deferred di default)
-init();
+init().catch(err => console.error('[Preventivator] Errore avvio:', err));

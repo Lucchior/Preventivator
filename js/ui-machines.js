@@ -1,22 +1,21 @@
 /**
  * ui-machines.js — Preventivator
- * Rendering e gestione del form macchine nel tab Macchine.
+ * Rendering e gestione del form macchine (async).
  */
 
-import { loadData, saveData, STORAGE_KEYS } from './storage.js';
-import { getMachines, normalizeMachine }     from './models.js';
+import { saveData, STORAGE_KEYS }            from './storage.js';
+import { getMachines, normalizeMachine }      from './models.js';
 import { currency, num, escapeHtml, showSaved } from './utils.js';
-import { renderJobs } from './ui-jobs.js';
+import { renderJobs }                         from './ui-jobs.js';
 
-// ── Render lista macchine ─────────────────────────────────────────────────────
-export function renderMachines() {
-  const machines    = getMachines();
+export async function renderMachines() {
+  const machines    = await getMachines();
   const machineList = document.getElementById('machineList');
 
   machineList.innerHTML = machines.length
     ? machines.map(m => {
-        const amortH   = Number(m.lifetimeHours) > 0 ? Number(m.machineCost || 0) / Number(m.lifetimeHours) : 0;
-        const energyH  = (Number(m.powerKwh || 0) / Math.max(Number(m.powerEveryH || 1), 0.001)) * Number(m.energyCost || 0);
+        const amortH  = Number(m.lifetimeHours) > 0 ? Number(m.machineCost || 0) / Number(m.lifetimeHours) : 0;
+        const energyH = (Number(m.powerKwh || 0) / Math.max(Number(m.powerEveryH || 1), 0.001)) * Number(m.energyCost || 0);
         return `<div class="item">
           <div class="item-head">
             <div>
@@ -35,29 +34,28 @@ export function renderMachines() {
       }).join('')
     : '<div class="empty">Nessuna macchina salvata.</div>';
 
-  renderJobs(); // aggiorna i select nelle lavorazioni
+  await renderJobs();
 }
 
-function removeMachine(id) {
-  saveData(STORAGE_KEYS.machines, getMachines().filter(m => m.id !== id));
-  renderMachines();
+async function removeMachine(id) {
+  const machines = await getMachines();
+  await saveData(STORAGE_KEYS.machines, machines.filter(m => m.id !== id));
+  await renderMachines();
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
 export function initMachinesHandlers() {
   const machineList = document.getElementById('machineList');
   const machineForm = document.getElementById('machineForm');
 
-  // Delega click per il pulsante Elimina (generato dinamicamente)
-  machineList.addEventListener('click', (e) => {
+  machineList.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-machine-remove]');
     if (!btn) return;
-    removeMachine(btn.dataset.machineRemove);
+    await removeMachine(btn.dataset.machineRemove);
   });
 
-  machineForm.addEventListener('submit', (e) => {
+  machineForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const machines = getMachines();
+    const machines = await getMachines();
     machines.push(normalizeMachine({
       id:              crypto.randomUUID(),
       type:            document.getElementById('machineType').value,
@@ -69,16 +67,16 @@ export function initMachinesHandlers() {
       powerEveryH:     Number(document.getElementById('powerEveryH').value) || 1,
       maintenanceCost: Number(document.getElementById('maintenanceCost').value),
     }));
-    saveData(STORAGE_KEYS.machines, machines);
+    await saveData(STORAGE_KEYS.machines, machines);
     machineForm.reset();
     document.getElementById('machineType').value = '3d';
-    renderMachines();
+    await renderMachines();
     showSaved('machineSaved');
   });
 
-  document.getElementById('resetMachines').addEventListener('click', () => {
+  document.getElementById('resetMachines').addEventListener('click', async () => {
     if (!confirm('Vuoi cancellare tutte le macchine salvate?')) return;
-    saveData(STORAGE_KEYS.machines, []);
-    renderMachines();
+    await saveData(STORAGE_KEYS.machines, []);
+    await renderMachines();
   });
 }

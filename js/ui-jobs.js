@@ -1,24 +1,21 @@
 /**
  * ui-jobs.js — Preventivator
- * Rendering e gestione della lista lavorazioni nel tab Lavoro.
+ * Rendering e gestione della lista lavorazioni (async).
  */
 
 import { getJobs, saveJobs, newJob, getMachines, getMaterials, UNIT_LABELS } from './models.js';
 import { escapeHtml } from './utils.js';
 
-// ── Card HTML ─────────────────────────────────────────────────────────────────
 function buildJobCard(job, index, machines, materials) {
-  const is3d         = job.type === '3d';
+  const is3d          = job.type === '3d';
   const typeMachines  = machines.filter(m => m.type === job.type);
   const typeMaterials = materials.filter(m => m.type === job.type);
-
   const machineOptions = typeMachines.map(m =>
     `<option value="${m.id}" ${m.id === job.machineId ? 'selected' : ''}>${escapeHtml(m.name)}</option>`
   ).join('');
   const materialOptions = typeMaterials.map(m =>
     `<option value="${m.id}" ${m.id === job.materialId ? 'selected' : ''}>${escapeHtml(m.name)}${m.type === 'laser' ? ' (' + (UNIT_LABELS[m.unit] || m.unit) + ')' : ''}</option>`
   ).join('');
-
   const unitLabel = is3d ? 'piatto' : 'lavorazione';
   const badge     = is3d
     ? '<span class="badge blue">Stampa 3D</span>'
@@ -79,7 +76,7 @@ function buildJobCard(job, index, machines, materials) {
         </div>
         <div class="field">
           <label>Materiale/componente extra (opzionale)</label>
-          <input type="text" data-field="extraMaterialLabel" data-id="${job.id}" value="${escapeHtml(job.extraMaterialLabel || '')}" placeholder="Es. Meccanismo orologio, Vite M3, Magnete..." />
+          <input type="text" data-field="extraMaterialLabel" data-id="${job.id}" value="${escapeHtml(job.extraMaterialLabel || '')}" placeholder="Es. Meccanismo orologio, Vite M3..." />
         </div>
         <div class="field">
           <label>Costo componente extra (€ tot.)</label>
@@ -89,13 +86,11 @@ function buildJobCard(job, index, machines, materials) {
     </div>`;
 }
 
-// ── Render ────────────────────────────────────────────────────────────────────
-export function renderJobs() {
-  const jobs      = getJobs();
-  const machines  = getMachines();
-  const materials = getMaterials();
+export async function renderJobs() {
+  const [jobs, machines, materials] = await Promise.all([
+    getJobs(), getMachines(), getMaterials(),
+  ]);
   const container = document.getElementById('jobsList');
-
   if (!jobs.length) {
     container.innerHTML = '<div class="jobs-empty">Nessuna lavorazione aggiunta. Usa i pulsanti qui sotto per aggiungerne una.</div>';
     return;
@@ -103,51 +98,46 @@ export function renderJobs() {
   container.innerHTML = jobs.map((j, i) => buildJobCard(j, i, machines, materials)).join('');
 }
 
-// ── Field change handler ──────────────────────────────────────────────────────
-function handleJobFieldChange(e) {
+async function handleJobFieldChange(e) {
   const el    = e.target;
   const id    = el.dataset.id;
   const field = el.dataset.field;
   if (!id || !field) return;
-
-  const jobs = getJobs();
+  const jobs = await getJobs();
   const job  = jobs.find(j => j.id === id);
   if (!job) return;
-
-  if (el.type === 'number')   job[field] = Number(el.value) || 0;
+  if (el.type === 'number')        job[field] = Number(el.value) || 0;
   else if (el.type === 'checkbox') job[field] = el.checked;
-  else                        job[field] = el.value;
-
-  saveJobs(jobs);
+  else                             job[field] = el.value;
+  await saveJobs(jobs);
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
 export function initJobsHandlers() {
   const container = document.getElementById('jobsList');
 
-  container.addEventListener('click', (e) => {
+  container.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-remove]');
     if (!btn) return;
     const id   = btn.dataset.remove;
-    const jobs = getJobs().filter(j => j.id !== id);
-    saveJobs(jobs);
-    renderJobs();
+    const jobs = (await getJobs()).filter(j => j.id !== id);
+    await saveJobs(jobs);
+    await renderJobs();
   });
 
   container.addEventListener('input',  handleJobFieldChange);
   container.addEventListener('change', handleJobFieldChange);
 
-  document.getElementById('addJob3d').addEventListener('click', () => {
-    const jobs = getJobs();
+  document.getElementById('addJob3d').addEventListener('click', async () => {
+    const jobs = await getJobs();
     jobs.push(newJob('3d'));
-    saveJobs(jobs);
-    renderJobs();
+    await saveJobs(jobs);
+    await renderJobs();
   });
 
-  document.getElementById('addJobLaser').addEventListener('click', () => {
-    const jobs = getJobs();
+  document.getElementById('addJobLaser').addEventListener('click', async () => {
+    const jobs = await getJobs();
     jobs.push(newJob('laser'));
-    saveJobs(jobs);
-    renderJobs();
+    await saveJobs(jobs);
+    await renderJobs();
   });
 }
