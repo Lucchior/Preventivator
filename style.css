@@ -416,12 +416,6 @@
     .hidden { display: none !important; }
     .print-only { display: none; }
     @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
-      #printArea, #printArea * { visibility: visible; }
-      #printArea { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
-      @page { margin: 0; size: A4; }
-      .print-page { page-break-after: always; }
-      .print-page:last-child { page-break-after: avoid; }
-    }
     #printArea { display: none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #fff; }
     .print-page { width: 210mm; min-height: 297mm; box-sizing: border-box; position: relative; overflow: hidden; background: #fff; }
     /* PAGE 1 CLIENT */
