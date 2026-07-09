@@ -416,8 +416,6 @@
     .hidden { display: none !important; }
     .print-only { display: none; }
     @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
-    @media print {
-      body * { visibility: hidden; }
       #printArea, #printArea * { visibility: visible; }
       #printArea { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
       @page { margin: 0; size: A4; }
@@ -505,4 +503,22 @@
       .card { padding: 15px; }
       .item-head, .summary-line, .section-head { flex-direction: column; }
       .summary-line strong { text-align: left; }
+    }
+
+    /* ── PDF rendering (off-screen, html2canvas) ── */
+    #printArea.rendering {
+      display: block !important;
+      position: absolute;
+      top: -9999px;
+      left: 0;
+      width: 794px;
+      visibility: visible;
+      pointer-events: none;
+    }
+    /* ── Fallback: se l'utente stampa dal browser ── */
+    @media print {
+      body > *:not(#printArea) { display: none !important; }
+      #printArea { display: block !important; position: static !important; top: auto !important; width: 100% !important; }
+      .print-page { page-break-after: always; }
+      .print-page:last-child { page-break-after: avoid; }
     }
