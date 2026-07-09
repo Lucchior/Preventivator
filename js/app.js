@@ -194,3 +194,53 @@ async function init() {
 }
 
 init().catch(err => console.error('[Preventivator] Errore avvio:', err));
+
+// ── Service Worker ────────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('./service-worker.js', {
+        scope: './',
+      });
+
+      // Notifica aggiornamento disponibile
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker?.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // Nuova versione disponibile: mostra banner
+            showUpdateBanner(newWorker);
+          }
+        });
+      });
+
+      console.info('[SW] Registrato con scope:', reg.scope);
+    } catch (err) {
+      console.warn('[SW] Registrazione non riuscita (normale in locale su file://):', err.message);
+    }
+  });
+}
+
+function showUpdateBanner(newWorker) {
+  const banner = document.createElement('div');
+  banner.id    = 'updateBanner';
+  banner.innerHTML = `
+    <span>🔄 Nuova versione disponibile</span>
+    <button id="updateNowBtn">Aggiorna ora</button>
+  `;
+  banner.style.cssText = `
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:#166534;color:#dcfce7;padding:12px 20px;border-radius:12px;
+    display:flex;align-items:center;gap:14px;z-index:9998;
+    box-shadow:0 4px 20px rgba(0,0,0,.4);font-size:14px;font-weight:600;
+  `;
+  document.body.appendChild(banner);
+
+  document.getElementById('updateNowBtn').addEventListener('click', () => {
+    newWorker.postMessage('skipWaiting');
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+    banner.remove();
+  });
+}
