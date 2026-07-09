@@ -1,0 +1,43 @@
+{
+  "name": "Preventivator — Stampa 3D e Laser",
+  "short_name": "Preventivator",
+  "description": "Crea preventivi professionali per stampa 3D e incisione laser. Funziona offline.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0f1e",
+  "theme_color": "#22c55e",
+  "lang": "it",
+  "categories": ["productivity", "business"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Nuovo preventivo",
+      "short_name": "Preventivo",
+      "description": "Apri direttamente il tab Lavoro",
+      "url": "./#tab-lavoro",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
