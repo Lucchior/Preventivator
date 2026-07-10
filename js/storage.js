@@ -27,6 +27,7 @@ export const STORAGE_KEYS = {
   currentJob: 'preventivi3d_current_job',
   jobs:       'preventivi3d_jobs',
   profile:    'preventivi3d_profile',
+  archive:    'preventivi3d_archive',
 };
 
 // ── DB singleton ──────────────────────────────────────────────────────────────

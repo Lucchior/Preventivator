@@ -12,8 +12,9 @@ import { renderMaterials, initMaterialsHandlers, updateMaterialFormUI } from './
 import { renderJobs, initJobsHandlers }                    from './ui-jobs.js';
 import { renderSummary }                                   from './ui-summary.js';
 import { restoreProfile, initProfileHandlers }             from './ui-profile.js';
-import { initPdfHandler }                                  from './ui-pdf.js';
+import { initPdfHandler, generatePdf }                     from './ui-pdf.js';
 import { initIoHandlers }                                  from './ui-io.js';
+import { archiveSave, renderArchive, initArchiveHandlers } from './ui-archive.js';
 
 // ── Tab navigation ────────────────────────────────────────────────────────────
 export function activateTab(id) {
@@ -148,6 +149,19 @@ function initJobFormHandler() {
 
     renderSummary(result);
     activateTab('tab-riepilogo');
+
+    // Salva automaticamente in archivio
+    const currentJobData = {
+      version: 'hybrid-v3', jobName: result.jobName, clientName: result.clientName,
+      clientContact: result.clientContact, quoteDate: result.quoteDate,
+      manualHours, laborRate, failureMargin, profitMargin,
+      discountAmount, minimumPrice, vatPercent, includeVat,
+      includeShipping, shippingCost, shippingType, includeInsurance, insuranceCost,
+      deliveryDaysMin, deliveryDaysMax, shippingNotes,
+      jobsList: jobs, // snapshot delle lavorazioni per ripristino futuro
+      result,
+    };
+    archiveSave(currentJobData, result).then(() => renderArchive());
   });
 }
 
@@ -171,6 +185,7 @@ async function init() {
   initJobsHandlers();
   initProfileHandlers();
   initPdfHandler();
+  initArchiveHandlers({ restoreCurrentJob, renderJobs, activateTab, generatePdf });
   initIoHandlers({ renderMachines, renderMaterials, restoreProfile, renderJobs, restoreCurrentJob, activateTab });
   initJobFormHandler();
 
@@ -184,6 +199,7 @@ async function init() {
     renderMachines(),
     renderMaterials(),
     restoreProfile(),
+    renderArchive(),
   ]);
   await renderJobs();
   await restoreCurrentJob();
