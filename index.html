@@ -29,6 +29,7 @@
       <button class="tab-btn" data-tab="tab-macchine">Macchine</button>
       <button class="tab-btn" data-tab="tab-lavoro">Lavoro</button>
       <button class="tab-btn" data-tab="tab-riepilogo">Riepilogo</button>
+      <button class="tab-btn" data-tab="tab-archivio">📁 Archivio</button>
       <button class="tab-btn" data-tab="tab-dati">📦 Dati &amp; Backup</button>
     </nav>
 
@@ -428,6 +429,19 @@
       </div>
     </section>
   </div>
+
+    <section id="tab-archivio" class="tab-panel">
+      <div class="card">
+        <span class="zone-tag quote">📁 Storico preventivi</span>
+        <h2>Archivio</h2>
+        <p class="subtitle">Ogni preventivo calcolato viene salvato automaticamente. Puoi riaprirlo, riesportarlo in PDF o eliminarlo.</p>
+        <div class="archive-toolbar">
+          <input id="archiveSearch" type="search" placeholder="🔍  Cerca per nome, cliente o data…" class="archive-search" />
+          <span id="archiveCount" class="archive-count"></span>
+        </div>
+        <div id="archiveList" class="archive-list"></div>
+      </div>
+    </section>
 
     <section id="tab-dati" class="tab-panel">
       <div class="grid" style="grid-template-columns:1fr 1fr;gap:20px;align-items:start;">

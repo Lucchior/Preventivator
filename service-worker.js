@@ -6,7 +6,7 @@
  * IMPORTANTE: aggiornare CACHE_VERSION ad ogni deploy che modifica i file.
  */
 
-const CACHE_VERSION  = 'v1.5.0';
+const CACHE_VERSION  = 'v1.6.0';
 const CACHE_NAME     = `preventivator-${CACHE_VERSION}`;
 const CACHE_CDN_NAME = `preventivator-cdn-${CACHE_VERSION}`;
 
@@ -28,6 +28,7 @@ const LOCAL_ASSETS = [
   './js/ui-profile.js',
   './js/ui-pdf.js',
   './js/ui-io.js',
+  './js/ui-archive.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-180.png',
