@@ -21,6 +21,7 @@
   <div class="app">
     <section class="hero">
       <h1>Preventivi Stampa 3D e Laser</h1>
+        <button id="themeToggleBtn" class="theme-btn" title="Passa al tema chiaro" aria-label="Cambia tema">☀️</button>
       <p>Web-app responsive per creare preventivi separati o combinati con stampa 3D e incisore laser. I dati vengono salvati nel browser e restano disponibili quando riapri la pagina sullo stesso dispositivo.</p>
     </section>
 
@@ -350,6 +351,7 @@
               </div>
             </div>
 
+            <div id="jobFormError" class="form-error hidden"></div>
             <div class="actions">
               <button class="primary" type="submit">Calcola riepilogo</button>
             </div>
@@ -613,6 +615,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script type="module" src="js/app.js"></script>
+  <!-- Toast undo container -->
+  <div id="toastContainer" class="toast-container"></div>
+
   <!-- Loading overlay for PDF generation -->
   <div id="pdfOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;">
     <div style="width:40px;height:40px;border:4px solid rgba(255,255,255,.2);border-top-color:#22c55e;border-radius:50%;animation:spin .8s linear infinite;"></div>
