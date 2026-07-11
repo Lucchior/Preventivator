@@ -6,7 +6,7 @@
 
 import { loadData, saveData, STORAGE_KEYS } from './storage.js';
 import { saveJobs }                          from './models.js';
-import { currency, escapeHtml, todayIso }    from './utils.js';
+import { currency, escapeHtml, todayIso, showUndoToast } from './utils.js';
 
 // ── Struttura di un record archivio ──────────────────────────────────────────
 /**
@@ -168,10 +168,13 @@ export function initArchiveHandlers({ restoreCurrentJob, renderJobs, activateTab
     // ── Elimina ──
     const delBtn = e.target.closest('[data-archive-delete]');
     if (delBtn) {
-      if (!confirm('Eliminare questo preventivo dall\'archivio?')) return;
       const archive = await getArchive();
-      await saveArchive(archive.filter(e => e.id !== delBtn.dataset.archiveDelete));
-      await renderArchive(searchEl?.value || '');
+      const target  = archive.find(e => e.id === delBtn.dataset.archiveDelete);
+      const confirmed = await showUndoToast(`"${target?.jobName || 'Preventivo'}" eliminato dall'archivio.`);
+      if (confirmed) {
+        await saveArchive(archive.filter(e => e.id !== delBtn.dataset.archiveDelete));
+        await renderArchive(searchEl?.value || '');
+      }
       return;
     }
   });

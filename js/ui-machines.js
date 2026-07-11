@@ -5,7 +5,7 @@
 
 import { saveData, STORAGE_KEYS }            from './storage.js';
 import { getMachines, normalizeMachine }      from './models.js';
-import { currency, num, escapeHtml, showSaved } from './utils.js';
+import { currency, num, escapeHtml, showSaved, showUndoToast } from './utils.js';
 import { renderJobs }                         from './ui-jobs.js';
 
 export async function renderMachines() {
@@ -37,11 +37,6 @@ export async function renderMachines() {
   await renderJobs();
 }
 
-async function removeMachine(id) {
-  const machines = await getMachines();
-  await saveData(STORAGE_KEYS.machines, machines.filter(m => m.id !== id));
-  await renderMachines();
-}
 
 export function initMachinesHandlers() {
   const machineList = document.getElementById('machineList');
@@ -50,7 +45,14 @@ export function initMachinesHandlers() {
   machineList.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-machine-remove]');
     if (!btn) return;
-    await removeMachine(btn.dataset.machineRemove);
+    const machines  = await getMachines();
+    const target    = machines.find(m => m.id === btn.dataset.machineRemove);
+    if (!target) return;
+    const confirmed = await showUndoToast(`Macchina "${target.name}" eliminata.`);
+    if (confirmed) {
+      await saveData(STORAGE_KEYS.machines, machines.filter(m => m.id !== target.id));
+      await renderMachines();
+    }
   });
 
   machineForm.addEventListener('submit', async (e) => {
@@ -75,8 +77,7 @@ export function initMachinesHandlers() {
   });
 
   document.getElementById('resetMachines').addEventListener('click', async () => {
-    if (!confirm('Vuoi cancellare tutte le macchine salvate?')) return;
-    await saveData(STORAGE_KEYS.machines, []);
-    await renderMachines();
+    const confirmed = await showUndoToast('Tutte le macchine eliminate.');
+    if (confirmed) { await saveData(STORAGE_KEYS.machines, []); await renderMachines(); }
   });
 }

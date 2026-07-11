@@ -4,7 +4,7 @@
  */
 
 import { getJobs, saveJobs, newJob, getMachines, getMaterials, UNIT_LABELS } from './models.js';
-import { escapeHtml } from './utils.js';
+import { escapeHtml, showUndoToast } from './utils.js';
 
 function buildJobCard(job, index, machines, materials) {
   const is3d          = job.type === '3d';
@@ -119,9 +119,14 @@ export function initJobsHandlers() {
     const btn = e.target.closest('[data-remove]');
     if (!btn) return;
     const id   = btn.dataset.remove;
-    const jobs = (await getJobs()).filter(j => j.id !== id);
-    await saveJobs(jobs);
-    await renderJobs();
+    const jobs = await getJobs();
+    const target = jobs.find(j => j.id === id);
+    const label  = target?.label || `Lavorazione ${jobs.findIndex(j=>j.id===id)+1}`;
+    const confirmed = await showUndoToast(`"${label}" eliminata.`);
+    if (confirmed) {
+      await saveJobs(jobs.filter(j => j.id !== id));
+      await renderJobs();
+    }
   });
 
   container.addEventListener('input',  handleJobFieldChange);

@@ -69,3 +69,57 @@ export function downloadJson(data, filename) {
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+// ── Toast / Undo ──────────────────────────────────────────────────────────────
+
+let _toastContainer = null;
+function getToastContainer() {
+  if (!_toastContainer) {
+    _toastContainer = document.getElementById('toastContainer');
+  }
+  return _toastContainer;
+}
+
+/**
+ * Mostra un toast con pulsante "Annulla" che scompare dopo `duration` ms.
+ * Restituisce una Promise che risolve true se confermato, false se annullato.
+ */
+export function showUndoToast(message, duration = 5000) {
+  return new Promise((resolve) => {
+    const container = getToastContainer();
+    if (!container) { resolve(true); return; }
+
+    const toast = document.createElement('div');
+    toast.className = 'undo-toast';
+    let timer;
+
+    const confirm = () => { clearTimeout(timer); toast.remove(); resolve(true); };
+    const undo    = () => { clearTimeout(timer); toast.remove(); resolve(false); };
+
+    toast.innerHTML = `
+      <span class="undo-msg">${escapeHtml(message)}</span>
+      <button class="undo-btn" type="button">Annulla</button>
+    `;
+    toast.querySelector('.undo-btn').addEventListener('click', undo);
+    container.appendChild(toast);
+
+    // Animazione entrata
+    requestAnimationFrame(() => toast.classList.add('visible'));
+    timer = setTimeout(() => { toast.classList.remove('visible'); setTimeout(() => { toast.remove(); resolve(true); }, 300); }, duration);
+  });
+}
+
+/** Mostra un messaggio di errore inline su un elemento specifico. */
+export function showInlineError(elementId, message) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  el.textContent = message;
+  el.classList.remove('hidden');
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  setTimeout(() => el.classList.add('hidden'), 6000);
+}
+
+/** Nasconde un messaggio di errore inline. */
+export function hideInlineError(elementId) {
+  document.getElementById(elementId)?.classList.add('hidden');
+}

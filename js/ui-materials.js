@@ -5,7 +5,7 @@
 
 import { saveData, STORAGE_KEYS }                       from './storage.js';
 import { getMaterials, normalizeMaterial, UNIT_LABELS } from './models.js';
-import { currency, escapeHtml, showSaved }              from './utils.js';
+import { currency, escapeHtml, showSaved, showUndoToast }              from './utils.js';
 import { renderJobs }                                   from './ui-jobs.js';
 
 export async function renderMaterials() {
@@ -27,11 +27,6 @@ export async function renderMaterials() {
   await renderJobs();
 }
 
-async function removeMaterial(id) {
-  const materials = await getMaterials();
-  await saveData(STORAGE_KEYS.materials, materials.filter(m => m.id !== id));
-  await renderMaterials();
-}
 
 export function updateMaterialFormUI() {
   const materialType      = document.getElementById('materialType');
@@ -55,7 +50,14 @@ export function initMaterialsHandlers() {
   materialList.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-material-remove]');
     if (!btn) return;
-    await removeMaterial(btn.dataset.materialRemove);
+    const materials = await getMaterials();
+    const target    = materials.find(m => m.id === btn.dataset.materialRemove);
+    if (!target) return;
+    const confirmed = await showUndoToast(`Materiale "${target.name}" eliminato.`);
+    if (confirmed) {
+      await saveData(STORAGE_KEYS.materials, materials.filter(m => m.id !== target.id));
+      await renderMaterials();
+    }
   });
 
   materialForm.addEventListener('submit', async (e) => {
@@ -77,9 +79,8 @@ export function initMaterialsHandlers() {
   });
 
   document.getElementById('resetMaterials').addEventListener('click', async () => {
-    if (!confirm('Vuoi cancellare tutti i materiali salvati?')) return;
-    await saveData(STORAGE_KEYS.materials, []);
-    await renderMaterials();
+    const confirmed = await showUndoToast('Tutti i materiali eliminati.');
+    if (confirmed) { await saveData(STORAGE_KEYS.materials, []); await renderMaterials(); }
   });
 
   document.getElementById('materialType').addEventListener('change', updateMaterialFormUI);

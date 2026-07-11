@@ -6,7 +6,7 @@
 import { loadData, saveData, STORAGE_KEYS, initStorage } from './storage.js';
 import { getMachines, getMaterials, getJobs }             from './models.js';
 import { computeJobCost }                                  from './calc.js';
-import { todayString }                                     from './utils.js';
+import { todayString, showInlineError, hideInlineError } from './utils.js';
 import { renderMachines, initMachinesHandlers }            from './ui-machines.js';
 import { renderMaterials, initMaterialsHandlers, updateMaterialFormUI } from './ui-materials.js';
 import { renderJobs, initJobsHandlers }                    from './ui-jobs.js';
@@ -15,6 +15,7 @@ import { restoreProfile, initProfileHandlers }             from './ui-profile.js
 import { initPdfHandler, generatePdf }                     from './ui-pdf.js';
 import { initIoHandlers }                                  from './ui-io.js';
 import { archiveSave, renderArchive, initArchiveHandlers } from './ui-archive.js';
+import { initTheme }                                        from './ui-theme.js';
 
 // ── Tab navigation ────────────────────────────────────────────────────────────
 export function activateTab(id) {
@@ -74,16 +75,20 @@ function initJobFormHandler() {
   document.getElementById('jobForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const jobs = await getJobs();
-    if (!jobs.length) { alert('Aggiungi almeno una lavorazione prima di calcolare.'); return; }
+    if (!jobs.length) {
+      showInlineError('jobFormError', '⚠️ Aggiungi almeno una lavorazione prima di calcolare.');
+      return;
+    }
 
     const [machines, materials] = await Promise.all([getMachines(), getMaterials()]);
     const jobResults = jobs.map(j => computeJobCost(j, machines, materials));
     const invalid    = jobResults.findIndex(r => r === null);
     if (invalid !== -1) {
       const j = jobs[invalid];
-      alert(`Lavorazione ${invalid + 1}${j.label ? ' (' + j.label + ')' : ''}: seleziona una macchina e un materiale validi.`);
+      showInlineError('jobFormError', `⚠️ Lavorazione ${invalid + 1}${j.label ? ' (' + j.label + ')' : ''}: seleziona una macchina e un materiale validi.`);
       return;
     }
+    hideInlineError('jobFormError');
 
     const g = id => document.getElementById(id);
     const manualHours       = Number(g('manualHours').value      || 0);
@@ -167,8 +172,9 @@ function initJobFormHandler() {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
-  // 1. Prima di tutto: apri il DB e migra da localStorage se necessario
+  // 1. Storage + tema (prima di tutto per evitare flash)
   await initStorage();
+  await initTheme();
 
   // 2. Tab navigation
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -207,6 +213,15 @@ async function init() {
   // 6. Ripristina ultimo riepilogo calcolato
   const saved = await loadData(STORAGE_KEYS.currentJob, {});
   if (saved.result) renderSummary(saved.result);
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    const ctrl = e.ctrlKey || e.metaKey;
+    if (!ctrl) return;
+    const TAB_MAP = { '1':'tab-profilo','2':'tab-macchine','3':'tab-lavoro','4':'tab-riepilogo','5':'tab-archivio','6':'tab-dati' };
+    if (TAB_MAP[e.key]) { e.preventDefault(); activateTab(TAB_MAP[e.key]); return; }
+    if (e.key === 's') { e.preventDefault(); document.getElementById('jobForm')?.requestSubmit(); return; }
+    if (e.key === 'p') { e.preventDefault(); if (window.__lastQuoteResult) document.getElementById('exportPdfBtn')?.click(); return; }
+  });
 }
 
 init().catch(err => console.error('[Preventivator] Errore avvio:', err));
