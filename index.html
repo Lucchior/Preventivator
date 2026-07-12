@@ -15,15 +15,24 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
   <title>Preventivi Stampa 3D e Laser</title>
-    <link rel="stylesheet" href="style.css">
+    <!-- Inter font: fallback SF Pro-like per non-Apple -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="app">
-    <section class="hero">
-      <h1>Preventivi Stampa 3D e Laser</h1>
-        <button id="themeToggleBtn" class="theme-btn" title="Passa al tema chiaro" aria-label="Cambia tema">☀️</button>
-      <p>Web-app responsive per creare preventivi separati o combinati con stampa 3D e incisore laser. I dati vengono salvati nel browser e restano disponibili quando riapri la pagina sullo stesso dispositivo.</p>
-    </section>
+    <header class="app-header">
+      <div class="header-brand">
+        <span class="header-icon">🖨️</span>
+        <div class="header-text">
+          <h1>Preventivator</h1>
+          <p class="header-sub">Stampa 3D &amp; Laser · Ludwing's Creations</p>
+        </div>
+      </div>
+      <button id="themeToggleBtn" class="theme-btn" title="Cambia tema" aria-label="Cambia tema">☀️</button>
+    </header>
 
     <nav class="tabs" aria-label="Navigazione sezioni">
       <button class="tab-btn active" data-tab="tab-profilo">Profilo</button>
@@ -615,6 +624,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script type="module" src="js/app.js"></script>
+  <footer class="app-footer">
+    <span class="footer-copy">© 2025 <strong>Ludwing's Creations</strong> — Tutti i diritti riservati. Vietata la copia o la riproduzione non autorizzata senza consenso scritto.</span>
+    <a href="mailto:ddusnoblogo@gmail.com?subject=Bug%20Report%20%E2%80%94%20Preventivator&body=Descrivi%20il%20bug%3A" class="footer-bug">🐛 Segnala un bug</a>
+  </footer>
+
   <!-- Toast undo container -->
   <div id="toastContainer" class="toast-container"></div>
 
