@@ -24,14 +24,16 @@
 <body>
   <div class="app">
     <header class="app-header">
-      <div class="header-brand">
-        <span class="header-icon">🖨️</span>
-        <div class="header-text">
-          <h1>Preventivator</h1>
-          <p class="header-sub">Stampa 3D &amp; Laser · Ludwing's Creations</p>
+      <div class="header-inner">
+        <div class="header-brand">
+          <span class="header-icon">🖨️</span>
+          <div class="header-text">
+            <h1>Preventivator</h1>
+            <p class="header-sub">Stampa 3D &amp; Laser · Ludwing's Creations</p>
+          </div>
         </div>
+        <button id="themeToggleBtn" class="theme-btn" title="Cambia tema" aria-label="Cambia tema">☀️</button>
       </div>
-      <button id="themeToggleBtn" class="theme-btn" title="Cambia tema" aria-label="Cambia tema">☀️</button>
     </header>
 
     <nav class="tabs" aria-label="Navigazione sezioni">
@@ -42,6 +44,8 @@
       <button class="tab-btn" data-tab="tab-archivio">📁 Archivio</button>
       <button class="tab-btn" data-tab="tab-dati">📦 Dati &amp; Backup</button>
     </nav>
+
+    <main id="appMain">
 
     <section id="tab-profilo" class="tab-panel active">
       <div class="grid">
@@ -455,7 +459,7 @@
     </section>
 
     <section id="tab-dati" class="tab-panel">
-      <div class="grid" style="grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+      <div class="grid">
 
         <!-- ── SEZIONE 1: DATI BASE ── -->
         <div class="card">
@@ -516,6 +520,7 @@
       </div>
     </section>
 
+    </main>
   <div id="printArea">
 
     <!-- ═══════════════════ PAGINA 1 – COPIA CLIENTE ═══════════════════ -->
@@ -625,8 +630,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script type="module" src="js/app.js"></script>
   <footer class="app-footer">
-    <span class="footer-copy">© 2025 <strong>Ludwing's Creations</strong> — Tutti i diritti riservati. Vietata la copia o la riproduzione non autorizzata senza consenso scritto.</span>
-    <a href="mailto:ddusnoblogo@gmail.com?subject=Bug%20Report%20%E2%80%94%20Preventivator&body=Descrivi%20il%20bug%3A" class="footer-bug">🐛 Segnala un bug</a>
+    <div class="footer-inner">
+      <span class="footer-copy">© 2025 <strong>Ludwing's Creations</strong> — Tutti i diritti riservati. Vietata la copia o la riproduzione non autorizzata senza consenso scritto.</span>
+      <a href="mailto:ddusnoblogo@gmail.com?subject=Bug%20Report%20%E2%80%94%20Preventivator&body=Descrivi%20il%20bug%3A" class="footer-bug">🐛 Segnala un bug</a>
+    </div>
   </footer>
 
   <!-- Toast undo container -->

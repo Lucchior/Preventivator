@@ -111,14 +111,11 @@ body::before {
 
 /* ── App layout ──────────────────────────────────────────────────── */
 .app { display: flex; flex-direction: column; min-height: 100vh; }
-main { flex: 1; max-width: 1200px; margin: 0 auto; padding: 0 16px 100px; width: 100%; }
+#appMain { flex: 1; max-width: 860px; margin: 0 auto; padding: 20px 20px 120px; width: 100%; }
+.tab-panel.active { display: block; min-height: 200px; }
 
 /* ── Header ──────────────────────────────────────────────────────── */
 .app-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 24px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -127,6 +124,14 @@ main { flex: 1; max-width: 1200px; margin: 0 auto; padding: 0 16px 100px; width:
   -webkit-backdrop-filter: var(--blur);
   border-bottom: 1px solid var(--glass-border);
   box-shadow: 0 1px 0 var(--sep);
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 12px 20px;
 }
 .header-brand { display: flex; align-items: center; gap: 12px; }
 .header-icon { font-size: 28px; line-height: 1; }
@@ -152,32 +157,35 @@ main { flex: 1; max-width: 1200px; margin: 0 auto; padding: 0 16px 100px; width:
 .tabs {
   display: flex;
   gap: 4px;
-  padding: 6px;
-  margin: 16px 0;
+  padding: 5px;
+  margin: 0 auto 20px;
+  max-width: 820px;
   background: var(--glass);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   box-shadow: var(--glass-shadow);
-  flex-wrap: wrap;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.tabs::-webkit-scrollbar { display: none; }
 .tab-btn {
   flex: 1;
-  min-width: 80px;
-  padding: 8px 14px;
+  min-width: 70px;
+  padding: 7px 12px;
   border: none;
   border-radius: var(--radius);
   background: transparent;
   color: var(--muted);
   font-family: var(--font);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all .18s;
   white-space: nowrap;
 }
-.tab-btn:hover { color: var(--text); background: rgba(99,102,241,.08); }
+.tab-btn:hover:not(.active) { color: var(--text); background: rgba(99,102,241,.08); }
 .tab-btn.active {
   background: var(--accent);
   color: #fff;
@@ -185,11 +193,10 @@ main { flex: 1; max-width: 1200px; margin: 0 auto; padding: 0 16px 100px; width:
   box-shadow: 0 2px 12px rgba(99,102,241,.35);
 }
 .tab-panel { display: none; animation: fadeUp .22s ease; }
-.tab-panel.active { display: block; }
 @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 
 /* ── Grid layout ─────────────────────────────────────────────────── */
-.grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 16px; align-items: start; }
+.grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 16px; align-items: start; max-width: 100%; }
 @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
 
 /* ── Glass card ──────────────────────────────────────────────────── */
@@ -581,12 +588,6 @@ input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); c
 
 /* ── Footer ──────────────────────────────────────────────────────── */
 .app-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 14px 24px;
   background: var(--glass);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
@@ -595,6 +596,16 @@ input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); c
   color: var(--muted);
   position: relative;
   z-index: 10;
+}
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 12px 20px;
 }
 .footer-copy strong { color: var(--text-2); }
 .footer-bug {
@@ -614,13 +625,24 @@ input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); c
 .footer-bug:hover { background: rgba(99,102,241,.18); transform: translateY(-1px); }
 
 /* ── Responsive ──────────────────────────────────────────────────── */
-@media (max-width: 640px) {
+/* ── Tablet (max 860px) ── */
+@media (max-width: 860px) {
+  .grid { grid-template-columns: 1fr; }
+  #appMain { padding: 16px 16px 100px; }
+  .tabs { max-width: 100%; margin-bottom: 16px; }
+}
+/* ── Mobile (max 600px) ── */
+@media (max-width: 600px) {
   .form-grid { grid-template-columns: 1fr; }
   .summary-meta { grid-template-columns: 1fr; }
   .archive-card { flex-direction: column; align-items: flex-start; }
   .archive-card-price { text-align: left; }
   .archive-card-actions { width: 100%; }
-  .app-footer { flex-direction: column; align-items: flex-start; }
+  .app-footer { flex-direction: column; align-items: flex-start; gap: 8px; }
   .tabs { border-radius: var(--radius-lg); }
-  .tab-btn { font-size: 12px; padding: 7px 10px; }
+  .tab-btn { font-size: 12px; padding: 6px 8px; min-width: 60px; }
+  .header-inner { padding: 10px 16px; }
+  .header-text h1 { font-size: 16px; }
+  .card { padding: 16px; }
+  #appMain { padding: 12px 12px 90px; }
 }

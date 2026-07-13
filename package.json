@@ -1,6 +1,6 @@
 {
   "name": "preventivator",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Preventivator — app per preventivi stampa 3D e laser",
   "type": "module",
   "scripts": {
