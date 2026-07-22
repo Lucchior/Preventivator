@@ -110,8 +110,8 @@ body::before {
 }
 
 /* ── App layout ──────────────────────────────────────────────────── */
-.app { display: flex; flex-direction: column; min-height: 100vh; }
-#appMain { flex: 1; max-width: 860px; margin: 0 auto; padding: 20px 20px 120px; width: 100%; }
+.app { display: block; min-height: 100vh; }
+#appMain { max-width: 860px; margin: 0 auto; padding: 20px 20px 80px; width: 100%; }
 .tab-panel.active { display: block; min-height: 200px; }
 
 /* ── Header ──────────────────────────────────────────────────────── */
@@ -154,12 +154,16 @@ body::before {
 .theme-btn:hover { background: var(--glass-hover); transform: scale(1.05); }
 
 /* ── Navigation tabs ─────────────────────────────────────────────── */
+.tabs-wrapper {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 20px 0;
+}
 .tabs {
   display: flex;
   gap: 4px;
   padding: 5px;
-  margin: 0 auto 20px;
-  max-width: 820px;
+  margin-bottom: 20px;
   background: var(--glass);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
@@ -168,18 +172,19 @@ body::before {
   box-shadow: var(--glass-shadow);
   overflow-x: auto;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 .tabs::-webkit-scrollbar { display: none; }
+.tabs::-webkit-scrollbar { display: none; }
 .tab-btn {
-  flex: 1;
-  min-width: 70px;
-  padding: 7px 12px;
+  flex: 0 0 auto;
+  padding: 8px 16px;
   border: none;
   border-radius: var(--radius);
   background: transparent;
   color: var(--muted);
   font-family: var(--font);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all .18s;
@@ -197,7 +202,11 @@ body::before {
 
 /* ── Grid layout ─────────────────────────────────────────────────── */
 .grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 16px; align-items: start; max-width: 100%; }
-@media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+@media (max-width: 820px) {
+  .grid { grid-template-columns: 1fr; }
+  .tabs-wrapper { padding: 0 12px; }
+  #appMain { padding: 16px 16px 60px; }
+} }
 
 /* ── Glass card ──────────────────────────────────────────────────── */
 .card {
@@ -626,9 +635,12 @@ input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); c
 
 /* ── Responsive ──────────────────────────────────────────────────── */
 /* ── Tablet (max 860px) ── */
-@media (max-width: 860px) {
+@media (max-width: 820px) {
   .grid { grid-template-columns: 1fr; }
-  #appMain { padding: 16px 16px 100px; }
+  .tabs-wrapper { padding: 0 12px; }
+  #appMain { padding: 16px 16px 60px; }
+}
+  #appMain { max-width: 860px; margin: 0 auto; padding: 20px 20px 80px; width: 100%; }
   .tabs { max-width: 100%; margin-bottom: 16px; }
 }
 /* ── Mobile (max 600px) ── */
@@ -644,5 +656,5 @@ input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); c
   .header-inner { padding: 10px 16px; }
   .header-text h1 { font-size: 16px; }
   .card { padding: 16px; }
-  #appMain { padding: 12px 12px 90px; }
+  #appMain { max-width: 860px; margin: 0 auto; padding: 20px 20px 80px; width: 100%; }
 }
