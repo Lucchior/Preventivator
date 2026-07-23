@@ -3,7 +3,7 @@
  * Modelli dati, normalizzatori e accessor asincroni dello storage.
  */
 
-import { loadData, saveData, STORAGE_KEYS } from './storage.js';
+import { loadData, saveData, keyExists, STORAGE_KEYS } from './storage.js';
 
 // ── Costanti ──────────────────────────────────────────────────────────────────
 export const UNIT_LABELS = {
@@ -72,19 +72,31 @@ export function newJob(type) {
 
 // ── Accessor asincroni ────────────────────────────────────────────────────────
 
+/**
+ * Popola macchine e materiali con i valori di esempio SOLO alla primissima
+ * apertura in assoluto dell'app (chiave mai scritta prima). Se l'utente in
+ * seguito elimina tutte le sue macchine/materiali, la lista resta vuota:
+ * non vengono più reintrodotti automaticamente i dati di esempio.
+ */
+export async function seedDefaultsIfFirstRun() {
+  if (!(await keyExists(STORAGE_KEYS.machines))) {
+    const legacy = await loadData('preventivi3d_printers', []);
+    const seed = (legacy.length ? legacy : defaults.machines).map(normalizeMachine);
+    await saveData(STORAGE_KEYS.machines, seed);
+  }
+  if (!(await keyExists(STORAGE_KEYS.materials))) {
+    await saveData(STORAGE_KEYS.materials, defaults.materials.map(normalizeMaterial));
+  }
+}
+
 export async function getMachines() {
   const base = await loadData(STORAGE_KEYS.machines, []);
-  if (Array.isArray(base) && base.length) return base.map(normalizeMachine);
-  // Compatibilità con vecchio storage key
-  const legacy = await loadData('preventivi3d_printers', []);
-  if (legacy.length) return legacy.map(normalizeMachine);
-  return defaults.machines.map(normalizeMachine);
+  return (Array.isArray(base) ? base : []).map(normalizeMachine);
 }
 
 export async function getMaterials() {
   const base = await loadData(STORAGE_KEYS.materials, []);
-  if (Array.isArray(base) && base.length) return base.map(normalizeMaterial);
-  return defaults.materials.map(normalizeMaterial);
+  return (Array.isArray(base) ? base : []).map(normalizeMaterial);
 }
 
 export async function getJobs() {

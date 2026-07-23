@@ -4,7 +4,7 @@
  */
 
 import { loadData, saveData, STORAGE_KEYS, initStorage } from './storage.js';
-import { getMachines, getMaterials, getJobs }             from './models.js';
+import { getMachines, getMaterials, getJobs, seedDefaultsIfFirstRun } from './models.js';
 import { computeJobCost, computeQuote }                    from './calc.js';
 import { todayString, showInlineError, hideInlineError } from './utils.js';
 import { renderMachines, initMachinesHandlers }            from './ui-machines.js';
@@ -168,6 +168,7 @@ function initJobFormHandler() {
 async function init() {
   // 1. Storage + tema (prima di tutto per evitare flash)
   await initStorage();
+  await seedDefaultsIfFirstRun();
   await initTheme();
 
   // 2. Tab navigation

@@ -120,6 +120,21 @@ export async function loadData(key, fallback = []) {
 }
 
 /**
+ * Verifica se una chiave è MAI stata scritta in precedenza (anche con array vuoto).
+ * Serve per distinguere "prima apertura in assoluto" da "l'utente ha svuotato la lista":
+ * un array vuoto SALVATO deve restare vuoto, non essere confuso con "dato mai inizializzato".
+ */
+export async function keyExists(key) {
+  try {
+    const db  = await getDb();
+    const val = await db.get(STORE, key);
+    return val !== undefined;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Scrive un valore nell'IndexedDB.
  * @param {string} key
  * @param {*}      data

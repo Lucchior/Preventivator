@@ -271,7 +271,7 @@ function buildPage1(doc, result, profile, qrDataUrl) {
     rows.push({ cells: [label, r.material ? r.material.name : '—', qty, currency.format(r.subtotal)] });
     if (r.extraCost > 0 && r.job.extraMaterialLabel) {
       rows.push({
-        cells: [`↳ ${r.job.extraMaterialLabel} (×${r.job.unitCount})`, '', '', currency.format(r.extraCost)],
+        cells: [`» ${r.job.extraMaterialLabel} (x${r.job.unitCount})`, '', '', currency.format(r.extraCost)],
         italic: true, small: true, color: C.indigoD, indent: 3,
       });
     }
@@ -310,7 +310,7 @@ function buildPage1(doc, result, profile, qrDataUrl) {
 
   if (result.discountValue > 0) {
     priceLine('Imponibile', currency.format(result.priceBeforeDiscount));
-    priceLine('Sconto', '−' + currency.format(result.discountValue), { valueColor: C.red });
+    priceLine('Sconto', '-' + currency.format(result.discountValue), { valueColor: C.red });
   }
   if (result.includeVat) {
     priceLine('Imponibile netto', currency.format(result.priceAfterMinimum));
@@ -429,7 +429,7 @@ function buildPage2(doc, result, profile) {
       ],
     });
     if (r.extraCost > 0 && r.job.extraMaterialLabel) {
-      rows.push({ cells: [`↳ ${r.job.extraMaterialLabel} × ${r.job.unitCount}`, '', '', '', '', '', '', '', '', ''], italic: true, small: true, color: C.indigoD, indent: 3 });
+      rows.push({ cells: [`» ${r.job.extraMaterialLabel} x ${r.job.unitCount}`, '', '', '', '', '', '', '', '', ''], italic: true, small: true, color: C.indigoD, indent: 3 });
     }
     if (is3d && r.totalGrams > 0) {
       rows.push({ cells: [`Materiale 3D totale: ${num.format(r.totalGrams)} g  ·  Ore/piatto: ${formatHours(r.hoursPerUnit)}`, '', '', '', '', '', '', '', '', ''], italic: true, small: true, color: C.muted, indent: 3 });
@@ -501,7 +501,7 @@ function buildPage2(doc, result, profile) {
   const priceLines = [
     ['Costo reale', currency.format(result.adjustedTotal)],
     [`+ Rincaro ${num.format(result.profitMargin)}%`, '+' + currency.format(result.profitValue)],
-    ['− Sconto', '−' + currency.format(result.discountValue)],
+    ['- Sconto', '-' + currency.format(result.discountValue)],
   ];
   if (minApplied) priceLines.push(['Prezzo minimo', currency.format(result.minimumPrice)]);
   priceLines.push([`+ IVA ${num.format(result.vatPercent)}%`, result.includeVat ? '+' + currency.format(result.vatValue) : 'esclusa']);
