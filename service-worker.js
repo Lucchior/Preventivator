@@ -6,7 +6,7 @@
  * IMPORTANTE: aggiornare CACHE_VERSION ad ogni deploy che modifica i file.
  */
 
-const CACHE_VERSION  = 'v2.1.0';
+const CACHE_VERSION  = 'v2.1.1';
 const CACHE_NAME     = `preventivator-${CACHE_VERSION}`;
 const CACHE_CDN_NAME = `preventivator-cdn-${CACHE_VERSION}`;
 
