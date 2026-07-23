@@ -228,7 +228,14 @@ async function init() {
   });
 }
 
-init().catch(err => console.error('[Preventivator] Errore avvio:', err));
+init().catch(err => {
+  console.error('[Preventivator] Errore avvio:', err);
+  // Mostra l'errore in modo visibile invece di lasciare la pagina bloccata in silenzio
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#dc2626;color:#fff;padding:14px 20px;font-family:system-ui,sans-serif;font-size:13px;z-index:99999;text-align:center;';
+  banner.textContent = '⚠️ Errore di avvio: ' + (err?.message || err) + ' — Prova a fare un hard refresh (Ctrl+Shift+R) o svuota i dati del sito dalle impostazioni del browser.';
+  document.body.prepend(banner);
+});
 
 // ── Service Worker ────────────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
