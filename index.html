@@ -15,6 +15,15 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
   <title>Preventivi Stampa 3D e Laser</title>
+  <meta name="description" content="Preventivator: crea preventivi professionali per stampa 3D e incisione laser, gestisci macchine, materiali e archivio clienti. Funziona offline, gratis, nel browser.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Preventivator — Preventivi Stampa 3D e Laser">
+  <meta property="og:description" content="Crea preventivi professionali per stampa 3D e incisione laser. Gratuito, funziona offline, nessun dato lascia il tuo dispositivo.">
+  <meta property="og:image" content="icons/icon-512.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Preventivator — Preventivi Stampa 3D e Laser">
+  <meta name="twitter:description" content="Crea preventivi professionali per stampa 3D e incisione laser, gratis e offline.">
+  <meta name="twitter:image" content="icons/icon-512.png">
     <!-- Inter font: fallback SF Pro-like per non-Apple -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,18 +45,18 @@
       </div>
     </header>
 
-    <div class="tabs-wrapper"><nav class="tabs" aria-label="Navigazione sezioni">
-      <button class="tab-btn active" data-tab="tab-profilo">Profilo</button>
-      <button class="tab-btn" data-tab="tab-macchine">Macchine</button>
-      <button class="tab-btn" data-tab="tab-lavoro">Lavoro</button>
-      <button class="tab-btn" data-tab="tab-riepilogo">Riepilogo</button>
-      <button class="tab-btn" data-tab="tab-archivio">📁 Archivio</button>
-      <button class="tab-btn" data-tab="tab-dati">📦 Dati &amp; Backup</button>
+    <div class="tabs-wrapper"><nav class="tabs" aria-label="Navigazione sezioni" role="tablist">
+      <button class="tab-btn active" data-tab="tab-profilo" role="tab" aria-selected="true" aria-controls="tab-profilo" id="tabbtn-tab-profilo">Profilo</button>
+      <button class="tab-btn" data-tab="tab-macchine" role="tab" aria-selected="false" aria-controls="tab-macchine" id="tabbtn-tab-macchine">Macchine</button>
+      <button class="tab-btn" data-tab="tab-lavoro" role="tab" aria-selected="false" aria-controls="tab-lavoro" id="tabbtn-tab-lavoro">Lavoro</button>
+      <button class="tab-btn" data-tab="tab-riepilogo" role="tab" aria-selected="false" aria-controls="tab-riepilogo" id="tabbtn-tab-riepilogo">Riepilogo</button>
+      <button class="tab-btn" data-tab="tab-archivio" role="tab" aria-selected="false" aria-controls="tab-archivio" id="tabbtn-tab-archivio">📁 Archivio</button>
+      <button class="tab-btn" data-tab="tab-dati" role="tab" aria-selected="false" aria-controls="tab-dati" id="tabbtn-tab-dati">📦 Dati &amp; Backup</button>
     </nav></div>
 
     <main id="appMain">
 
-    <section id="tab-profilo" class="tab-panel active">
+    <section id="tab-profilo" class="tab-panel active" role="tabpanel" aria-labelledby="tabbtn-tab-profilo">
       <div class="grid">
         <div class="card">
           <span class="zone-tag quote">👤 Il mio profilo</span>
@@ -141,6 +150,7 @@
             <button class="primary" type="button" id="saveProfileBtn">Salva profilo</button>
           </div>
           <div class="ok" id="profileSaved">Profilo salvato correttamente.</div>
+          <div class="form-error hidden" id="profileFormatWarning"></div>
         </div>
 
         <div class="card">
@@ -153,7 +163,7 @@
       </div>
     </section>
 
-    <section id="tab-macchine" class="tab-panel">
+    <section id="tab-macchine" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-tab-macchine">
       <div class="grid">
         <div class="card zone-resources">
           <span class="zone-tag">📦 Risorse: parco macchine</span>
@@ -214,7 +224,7 @@
       </div>
     </section>
 
-    <section id="tab-lavoro" class="tab-panel">
+    <section id="tab-lavoro" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-tab-lavoro">
       <div class="grid">
         <div class="card">
           <span class="zone-tag quote">🧾 Preventivo</span>
@@ -250,6 +260,9 @@
               <div class="actions" style="margin-top:10px; flex-wrap:wrap; gap:8px;">
                 <button class="secondary" type="button" id="addJob3d">＋ Aggiungi lavorazione 3D</button>
                 <button class="secondary" type="button" id="addJobLaser">＋ Aggiungi lavorazione laser</button>
+                <select id="templateSelect" style="width:auto;max-width:220px;">
+                  <option value="">📋 Da template salvato…</option>
+                </select>
               </div>
             </div>
 
@@ -415,15 +428,18 @@
       </div>
     </section>
 
-    <section id="tab-riepilogo" class="tab-panel">
+    <section id="tab-riepilogo" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-tab-riepilogo">
       <div class="grid">
         <div class="card">
           <span class="zone-tag quote">🧾 Preventivo</span>
           <h2>Riepilogo preventivo</h2>
           <p class="subtitle">Il riepilogo mostra i costi separati per stampa 3D e laser, la manodopera manuale e il totale combinato finale.</p>
-          <div class="actions" style="margin-bottom:14px;">
+          <div class="actions" style="margin-bottom:14px;flex-wrap:wrap;">
             <button class="primary" type="button" id="exportPdfBtn">Esporta PDF per il cliente</button>
+            <button class="secondary" type="button" id="saveScenarioABtn">💾 Salva come Scenario A</button>
+            <button class="secondary" type="button" id="saveScenarioBBtn">💾 Salva come Scenario B</button>
           </div>
+          <div id="scenarioCompareBox" class="hidden" style="margin-bottom:14px;"></div>
           <div id="quoteSummary" class="summary"></div>
         </div>
         <div class="card">
@@ -444,11 +460,18 @@
       </div>
     </section>
 
-    <section id="tab-archivio" class="tab-panel">
+    <section id="tab-archivio" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-tab-archivio">
+      <div class="card">
+        <span class="zone-tag quote">📊 Statistiche</span>
+        <details id="statsDetails">
+          <summary style="cursor:pointer;font-weight:700;font-size:14px;color:var(--text);list-style:none;">▸ Mostra statistiche archivio</summary>
+          <div id="statsGrid" style="margin-top:14px;"></div>
+        </details>
+      </div>
       <div class="card">
         <span class="zone-tag quote">📁 Storico preventivi</span>
         <h2>Archivio</h2>
-        <p class="subtitle">Ogni preventivo calcolato viene salvato automaticamente. Puoi riaprirlo, riesportarlo in PDF o eliminarlo.</p>
+        <p class="subtitle">Ogni preventivo calcolato viene salvato automaticamente. Puoi riaprirlo, duplicarlo, riesportarlo in PDF o eliminarlo.</p>
         <div class="archive-toolbar">
           <input id="archiveSearch" type="search" placeholder="🔍  Cerca per nome, cliente o data…" class="archive-search" />
           <span id="archiveCount" class="archive-count"></span>
@@ -457,7 +480,7 @@
       </div>
     </section>
 
-    <section id="tab-dati" class="tab-panel">
+    <section id="tab-dati" class="tab-panel" role="tabpanel" aria-labelledby="tabbtn-tab-dati">
       <div class="grid">
 
         <!-- ── SEZIONE 1: DATI BASE ── -->
@@ -473,6 +496,14 @@
               <button class="primary" type="button" id="exportBaseBtn">⬇️ Esporta dati base</button>
               <label class="secondary" style="cursor:pointer;" for="importBaseFile">⬆️ Importa dati base</label>
               <input id="importBaseFile" type="file" accept=".json" style="display:none;" />
+            </div>
+            <div class="io-actions" style="margin-top:10px;">
+              <button class="secondary" type="button" id="exportMachinesCsvBtn">⬇️ CSV Macchine</button>
+              <label class="secondary" style="cursor:pointer;" for="importMachinesCsvFile">⬆️ CSV Macchine</label>
+              <input id="importMachinesCsvFile" type="file" accept=".csv" style="display:none;" />
+              <button class="secondary" type="button" id="exportMaterialsCsvBtn">⬇️ CSV Materiali</button>
+              <label class="secondary" style="cursor:pointer;" for="importMaterialsCsvFile">⬆️ CSV Materiali</label>
+              <input id="importMaterialsCsvFile" type="file" accept=".csv" style="display:none;" />
             </div>
             <div class="io-result" id="importBaseResult"></div>
           </div>
@@ -522,120 +553,7 @@
     </main>
   </div>
 
-  <div id="printArea">
 
-    <!-- ═══════════════════ PAGINA 1 – COPIA CLIENTE ═══════════════════ -->
-    <div class="print-page" id="p1">
-      <div class="p1-header">
-        <div class="p1-hl">
-          <div class="sn" id="p1SenderName">—</div>
-          <div class="ss" id="p1SenderSub"></div>
-        </div>
-        <div class="p1-hr">
-          <div class="ql">Preventivo</div>
-          <div class="qn" id="p1QuoteName">—</div>
-          <div class="qd">Data: <span id="p1QuoteDate">—</span></div>
-        </div>
-      </div>
-
-      <div class="p1-body">
-        <div class="p1-2col">
-          <div class="p1-box">
-            <h4>Fornitore</h4>
-            <div id="p1SenderInfo"></div>
-          </div>
-          <div class="p1-box">
-            <h4>Cliente</h4>
-            <div id="p1ClientInfo"></div>
-          </div>
-        </div>
-
-        <div class="p1-stitle">Dettaglio lavorazioni</div>
-        <table class="p1-table">
-          <thead>
-            <tr>
-              <th style="width:55%">Lavorazione / Descrizione</th>
-              <th>Materiale</th>
-              <th>Qtà</th>
-              <th>Importo</th>
-            </tr>
-          </thead>
-          <tbody id="p1JobsBody"></tbody>
-        </table>
-
-        <div class="p1-pricing">
-          <div class="p1-pb" id="p1PricingBox"></div>
-        </div>
-
-        <div class="p1-note" id="p1ShippingNote" style="display:none;"></div>
-      </div>
-
-      <div class="p1-footer">
-        <span id="p1FooterLeft"></span>
-        <span class="validity">Documento generato il <span id="p1GeneratedOn"></span> — valido salvo conferma scritta.</span>
-      </div>
-    </div>
-
-    <!-- ═══════════════════ PAGINA 2 – COPIA FORNITORE ═══════════════════ -->
-    <div class="print-page" id="p2">
-      <div class="p2-header">
-        <h1>📋 Copia Fornitore — Dettaglio Completo</h1>
-        <span class="p2-hbadge">USO INTERNO</span>
-      </div>
-
-      <div class="p2-body">
-        <div class="p2-sec">
-          <h3>Dati preventivo</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;font-size:9.5px;" id="p2Meta"></div>
-        </div>
-
-        <div class="p2-sec">
-          <h3>Dettaglio lavorazioni (costi reali)</h3>
-          <table class="p2-t" id="p2JobsTable">
-            <thead>
-              <tr>
-                <th>Lavorazione</th>
-                <th>Macchina</th>
-                <th>Materiale</th>
-                <th>Durata tot.</th>
-                <th>Mat. (€)</th>
-                <th>Energia (€)</th>
-                <th>Manut. (€)</th>
-                <th>Ammort. (€)</th>
-                <th>Extra (€)</th>
-                <th>Subtot. (€)</th>
-              </tr>
-            </thead>
-            <tbody id="p2JobsBody"></tbody>
-          </table>
-        </div>
-
-        <div class="p2-2col" id="p2CalcBoxes"></div>
-
-        <div class="p2-tots">
-          <h4>Riepilogo finale</h4>
-          <div class="p2-tg" id="p2TotalsGrid"></div>
-        </div>
-      </div>
-
-      <div class="p2-footer">
-        <span id="p2FooterLeft">Documento ad uso interno — non divulgare al cliente</span>
-        <span id="p2GeneratedOn"></span>
-      </div>
-    </div>
-
-  </div>
-
-    <!-- PDF generation libraries (loaded before ES module) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script type="module" src="js/app.js"></script>
-  <footer class="app-footer">
-    <div class="footer-inner">
-      <span class="footer-copy">© 2025 <strong>Ludwing's Creations</strong> — Tutti i diritti riservati. Vietata la copia o la riproduzione non autorizzata senza consenso scritto.</span>
-      <a href="mailto:ddusnoblogo@gmail.com?subject=Bug%20Report%20%E2%80%94%20Preventivator&body=Descrivi%20il%20bug%3A" class="footer-bug">🐛 Segnala un bug</a>
-    </div>
-  </footer>
 
   <!-- Toast undo container -->
   <div id="toastContainer" class="toast-container"></div>

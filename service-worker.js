@@ -6,7 +6,7 @@
  * IMPORTANTE: aggiornare CACHE_VERSION ad ogni deploy che modifica i file.
  */
 
-const CACHE_VERSION  = 'v1.9.0';
+const CACHE_VERSION  = 'v2.0.0';
 const CACHE_NAME     = `preventivator-${CACHE_VERSION}`;
 const CACHE_CDN_NAME = `preventivator-cdn-${CACHE_VERSION}`;
 
@@ -30,15 +30,17 @@ const LOCAL_ASSETS = [
   './js/ui-io.js',
   './js/ui-archive.js',
   './js/ui-theme.js',
+  './vendor/jspdf.umd.min.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-180.png',
 ];
 
 // Origini CDN da cachare al primo utilizzo
+// Origini esterne rimaste (solo font, non critiche: fallback di sistema se offline)
 const CDN_ORIGINS = [
-  'cdnjs.cloudflare.com',
-  'cdn.jsdelivr.net',
+  'fonts.googleapis.com',
+  'fonts.gstatic.com',
 ];
 
 // ── Install: precache tutti gli asset locali ──────────────────────────────────
