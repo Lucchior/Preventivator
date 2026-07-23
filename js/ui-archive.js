@@ -6,7 +6,7 @@
 
 import { loadData, saveData, STORAGE_KEYS } from './storage.js';
 import { saveJobs }                          from './models.js';
-import { currency, escapeHtml, todayIso, showUndoToast } from './utils.js';
+import { currency, num, escapeHtml, todayIso, showUndoToast } from './utils.js';
 
 // ── Struttura di un record archivio ──────────────────────────────────────────
 /**
@@ -102,10 +102,67 @@ function buildEntryCard(entry) {
       </div>
       <div class="archive-card-actions">
         <button class="secondary" type="button" data-archive-load="${entry.id}" title="Ripristina nel tab Lavoro">📂 Carica</button>
+        <button class="secondary" type="button" data-archive-duplicate="${entry.id}" title="Duplica come nuovo preventivo">🧬 Duplica</button>
         <button class="secondary" type="button" data-archive-pdf="${entry.id}" title="Esporta PDF">📄 PDF</button>
         <button class="danger"    type="button" data-archive-delete="${entry.id}" title="Elimina">✕</button>
       </div>
     </div>`;
+}
+
+// ── Dashboard statistiche ─────────────────────────────────────────────────────
+async function renderStats(archive) {
+  const grid = document.getElementById('statsGrid');
+  if (!grid) return;
+
+  if (!archive.length) {
+    grid.innerHTML = '<div class="empty">Nessun dato ancora disponibile: calcola qualche preventivo per vedere le statistiche.</div>';
+    return;
+  }
+
+  const totalRevenue = archive.reduce((s, e) => s + (e.finalPrice || 0), 0);
+  const avgTicket     = totalRevenue / archive.length;
+
+  // Cliente più profittevole (somma prezzi finali per cliente)
+  const byClient = {};
+  archive.forEach(e => {
+    const c = e.clientName || 'Non indicato';
+    byClient[c] = (byClient[c] || 0) + (e.finalPrice || 0);
+  });
+  const topClient = Object.entries(byClient).sort((a, b) => b[1] - a[1])[0];
+
+  // Materiale più usato (conta occorrenze nei jobResults salvati)
+  const materialCount = {};
+  archive.forEach(e => {
+    (e.fullData?.result?.jobResults || []).forEach(r => {
+      const m = r.material?.name;
+      if (m) materialCount[m] = (materialCount[m] || 0) + 1;
+    });
+  });
+  const topMaterial = Object.entries(materialCount).sort((a, b) => b[1] - a[1])[0];
+
+  // Margine medio %
+  let marginSum = 0, marginCount = 0;
+  archive.forEach(e => {
+    const r = e.fullData?.result;
+    if (r && r.adjustedTotal > 0) {
+      marginSum += ((r.priceAfterMinimum - r.adjustedTotal) / r.adjustedTotal) * 100;
+      marginCount++;
+    }
+  });
+  const avgMargin = marginCount > 0 ? marginSum / marginCount : null;
+
+  const tiles = [
+    ['💶 Fatturato totale preventivi', currency.format(totalRevenue)],
+    ['🧾 Preventivo medio', currency.format(avgTicket)],
+    ['👤 Cliente top', topClient ? `${escapeHtml(topClient[0])} (${currency.format(topClient[1])})` : '—'],
+    ['🧵 Materiale più usato', topMaterial ? `${escapeHtml(topMaterial[0])} (${topMaterial[1]}×)` : '—'],
+    ['📈 Margine medio', avgMargin !== null ? `${num.format(avgMargin)}%` : '—'],
+    ['📦 Preventivi totali', String(archive.length)],
+  ];
+
+  grid.innerHTML = `<div class="summary-meta" style="grid-template-columns:repeat(2,1fr);">${
+    tiles.map(([k, v]) => `<div class="meta-item"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')
+  }</div>`;
 }
 
 export async function renderArchive(filterText = '') {
@@ -113,6 +170,8 @@ export async function renderArchive(filterText = '') {
   const container  = document.getElementById('archiveList');
   const countEl    = document.getElementById('archiveCount');
   if (!container) return;
+
+  await renderStats(archive);
 
   const q = filterText.toLowerCase().trim();
   const filtered = q
@@ -155,6 +214,15 @@ export function initArchiveHandlers({ restoreCurrentJob, renderJobs, activateTab
       return;
     }
 
+    // ── Duplica ──
+    const dupBtn = e.target.closest('[data-archive-duplicate]');
+    if (dupBtn) {
+      const entry = await findEntry(dupBtn.dataset.archiveDuplicate);
+      if (!entry) return;
+      await duplicateEntry(entry, { restoreCurrentJob, renderJobs, activateTab });
+      return;
+    }
+
     // ── PDF ──
     const pdfBtn = e.target.closest('[data-archive-pdf]');
     if (pdfBtn) {
@@ -169,12 +237,17 @@ export function initArchiveHandlers({ restoreCurrentJob, renderJobs, activateTab
     const delBtn = e.target.closest('[data-archive-delete]');
     if (delBtn) {
       const archive = await getArchive();
-      const target  = archive.find(e => e.id === delBtn.dataset.archiveDelete);
-      const confirmed = await showUndoToast(`"${target?.jobName || 'Preventivo'}" eliminato dall'archivio.`);
-      if (confirmed) {
-        await saveArchive(archive.filter(e => e.id !== delBtn.dataset.archiveDelete));
+      const idx     = archive.findIndex(e => e.id === delBtn.dataset.archiveDelete);
+      const target  = archive[idx];
+      if (!target) return;
+      await saveArchive(archive.filter(e => e.id !== target.id));
+      await renderArchive(searchEl?.value || '');
+      showUndoToast(`"${target.jobName || 'Preventivo'}" eliminato dall'archivio.`, async () => {
+        const current = await getArchive();
+        current.splice(idx, 0, target);
+        await saveArchive(current);
         await renderArchive(searchEl?.value || '');
-      }
+      });
       return;
     }
   });
@@ -192,12 +265,7 @@ async function loadEntry(entry, { restoreCurrentJob, renderJobs, activateTab }) 
   // 1. Salva i dati del preventivo come currentJob
   await saveData(STORAGE_KEYS.currentJob, entry.fullData);
 
-  // 2. Salva le lavorazioni
-  if (Array.isArray(entry.fullData.jobs)) {
-    // export separato dei jobs (se salvato nella fullData)
-  }
-  // Nota: i jobs sono già in STORAGE_KEYS.jobs dal momento del salvataggio originale.
-  // Per il ripristino completo li ricarichiamo dalla fullData se presenti.
+  // 2. Ripristina le lavorazioni (jobsList è lo snapshot salvato al momento del calcolo)
   if (entry.fullData.jobsList) {
     await saveData(STORAGE_KEYS.jobs, entry.fullData.jobsList);
   }
@@ -210,4 +278,21 @@ async function loadEntry(entry, { restoreCurrentJob, renderJobs, activateTab }) 
 
   // 5. Vai al tab Lavoro
   activateTab('tab-lavoro');
+}
+
+/**
+ * Duplica un preventivo archiviato: lo carica nel tab Lavoro come bozza NUOVA
+ * (nome con suffisso "(copia)", data odierna, nessun collegamento all'originale
+ * che resta intatto in archivio — al prossimo calcolo verrà creato un nuovo
+ * record invece di sovrascrivere quello di partenza).
+ */
+async function duplicateEntry(entry, ctx) {
+  if (!entry.fullData) { alert('Dati non disponibili per questo preventivo.'); return; }
+  const clone = JSON.parse(JSON.stringify(entry.fullData));
+  clone.jobName  = `${clone.jobName || 'Preventivo'} (copia)`;
+  clone.quoteDate = todayIso();
+  if (clone.result) {
+    clone.result = { ...clone.result, jobName: clone.jobName, quoteDate: clone.quoteDate };
+  }
+  await loadEntry({ fullData: clone }, ctx);
 }

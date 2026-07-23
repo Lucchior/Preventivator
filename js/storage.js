@@ -7,7 +7,50 @@
  * Al primo avvio migra automaticamente i dati da localStorage a IndexedDB.
  */
 
-import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
+/**
+ * Mini-wrapper IndexedDB nativo, senza dipendenze esterne.
+ * Sostituisce la libreria idb (CDN) con l'equivalente minimo che serve qui:
+ * apertura DB, get/put/delete su un unico object store "keyval".
+ */
+function openDB(name, version, { upgrade }) {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(name, version);
+    req.onupgradeneeded = () => upgrade(req.result);
+    req.onsuccess = () => resolve(wrapDb(req.result));
+    req.onerror   = () => reject(req.error);
+    req.onblocked = () => console.warn('[Storage] Apertura DB bloccata da un\'altra tab.');
+  });
+}
+
+function wrapDb(db) {
+  function tx(store, mode) {
+    return db.transaction(store, mode).objectStore(store);
+  }
+  return {
+    get(store, key) {
+      return new Promise((resolve, reject) => {
+        const r = tx(store, 'readonly').get(key);
+        r.onsuccess = () => resolve(r.result);
+        r.onerror   = () => reject(r.error);
+      });
+    },
+    put(store, value, key) {
+      return new Promise((resolve, reject) => {
+        const r = tx(store, 'readwrite').put(value, key);
+        r.onsuccess = () => resolve(r.result);
+        r.onerror   = () => reject(r.error);
+      });
+    },
+    delete(store, key) {
+      return new Promise((resolve, reject) => {
+        const r = tx(store, 'readwrite').delete(key);
+        r.onsuccess = () => resolve();
+        r.onerror   = () => reject(r.error);
+      });
+    },
+    close() { db.close(); },
+  };
+}
 
 // ── Costanti ──────────────────────────────────────────────────────────────────
 const DB_NAME    = 'preventivator';
@@ -28,6 +71,9 @@ export const STORAGE_KEYS = {
   jobs:       'preventivi3d_jobs',
   profile:    'preventivi3d_profile',
   archive:    'preventivi3d_archive',
+  templates:  'preventivi3d_templates',
+  scenarioA:  'preventivi3d_scenario_a',
+  scenarioB:  'preventivi3d_scenario_b',
 };
 
 // ── DB singleton ──────────────────────────────────────────────────────────────
@@ -41,8 +87,6 @@ async function getDb() {
         db.createObjectStore(STORE);
       }
     },
-    blocked()  { console.warn('[Storage] DB bloccato da una versione precedente aperta.'); },
-    blocking() { _db?.close(); _db = null; },
   });
   return _db;
 }

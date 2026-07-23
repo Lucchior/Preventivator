@@ -1,11 +1,14 @@
 /**
  * ui-pdf.js — Preventivator
- * Generazione PDF a due pagine tramite html2canvas + jsPDF.
- * Fallback a window.print() se le librerie non sono disponibili.
+ * Generazione PDF a due pagine con jsPDF nativo (testo vettoriale vero,
+ * selezionabile e copiabile — non più uno screenshot rasterizzato).
+ *
+ * Dipende solo da jsPDF (vendorizzata in vendor/jspdf.umd.min.js).
+ * html2canvas non è più necessaria: rimossa.
  */
 
 import { getProfile }                             from './ui-profile.js';
-import { currency, num, escapeHtml, formatHours } from './utils.js';
+import { currency, num, formatHours }             from './utils.js';
 
 const REGIME_LABELS = {
   forfettario: 'Regime forfettario', ordinario: 'Regime ordinario',
@@ -13,7 +16,30 @@ const REGIME_LABELS = {
 };
 const ST_LABELS = { standard: 'Standard', express: 'Espresso', economy: 'Economy' };
 
-// ── Label tipo lavoro ─────────────────────────────────────────────────────────
+// ── Palette (RGB 0-255) ───────────────────────────────────────────────────────
+const C = {
+  navy:    [15, 23, 42],
+  indigo:  [79, 70, 229],
+  indigoD: [55, 48, 163],
+  purpleD: [30, 27, 75],
+  purple2: [49, 46, 129],
+  white:   [255, 255, 255],
+  text:    [30, 41, 59],
+  muted:   [100, 116, 139],
+  mutedL:  [148, 163, 184],
+  border:  [226, 232, 240],
+  bgLight: [248, 250, 252],
+  bgPurple:[245, 243, 255],
+  green:   [22, 101, 52],
+  greenBg: [240, 253, 244],
+  red:     [220, 38, 38],
+  amber:   [217, 119, 6],
+};
+
+const PAGE_W = 210, PAGE_H = 297;
+const MARGIN = 16;
+
+// ── Helpers di label ──────────────────────────────────────────────────────────
 export function jobTypeLabel(result) {
   const types = [...new Set((result.jobResults || []).map(r => r.job.type))];
   if (types.includes('3d') && types.includes('laser')) return 'Stampa 3D + Laser';
@@ -21,160 +47,517 @@ export function jobTypeLabel(result) {
   return 'Solo stampa 3D';
 }
 
-// ── Popolamento DOM delle due pagine ─────────────────────────────────────────
-export async function buildPdf(result) {
-  const p          = await getProfile();
-  const isPiva     = p.type === 'piva';
-  const senderName = isPiva ? (p.RagioneSociale || 'Fornitore') : `${p.Nome || ''} ${p.Cognome || ''}`.trim() || 'Fornitore';
-  const addr       = [p.Indirizzo, p.Cap && p.Citta ? `${p.Cap} ${p.Citta}` : (p.Citta || p.Cap || ''), p.Provincia ? `(${p.Provincia.toUpperCase()})` : ''].filter(Boolean).join(', ');
-  const senderSub  = [isPiva && p.PartitaIva ? 'P.IVA: ' + p.PartitaIva : '', p.CodiceFiscale ? 'C.F.: ' + p.CodiceFiscale : '', p.Email, p.Telefono, addr].filter(Boolean).join(' · ');
-  const genDate    = new Date().toLocaleDateString('it-IT');
+function senderInfo(p) {
+  const isPiva = p.type === 'piva';
+  const name = isPiva
+    ? (p.RagioneSociale || 'Fornitore')
+    : `${p.Nome || ''} ${p.Cognome || ''}`.trim() || 'Fornitore';
+  const addr = [
+    p.Indirizzo,
+    p.Cap && p.Citta ? `${p.Cap} ${p.Citta}` : (p.Citta || p.Cap || ''),
+    p.Provincia ? `(${p.Provincia.toUpperCase()})` : '',
+  ].filter(Boolean).join(', ');
+  return { isPiva, name, addr };
+}
 
-  // ── Pagina 1 ──────────────────────────────────────────────────────
-  document.getElementById('p1SenderName').textContent  = senderName;
-  document.getElementById('p1SenderSub').textContent   = senderSub;
-  document.getElementById('p1QuoteName').textContent   = result.jobName || 'Preventivo';
-  document.getElementById('p1QuoteDate').textContent   = result.quoteDate || genDate;
-  document.getElementById('p1GeneratedOn').textContent = genDate;
+// ── Primitive di disegno ──────────────────────────────────────────────────────
 
-  const si = [];
-  if (isPiva && p.PartitaIva)    si.push(`<div class="p1-row"><span class="k">P.IVA</span><span class="v">${escapeHtml(p.PartitaIva)}</span></div>`);
-  if (p.CodiceFiscale)           si.push(`<div class="p1-row"><span class="k">C.F.</span><span class="v">${escapeHtml(p.CodiceFiscale)}</span></div>`);
-  if (isPiva && p.RegimeFiscale) si.push(`<div class="p1-row"><span class="k">Regime</span><span class="v">${escapeHtml(REGIME_LABELS[p.RegimeFiscale] || p.RegimeFiscale)}</span></div>`);
-  if (isPiva && p.Sdi)           si.push(`<div class="p1-row"><span class="k">SDI</span><span class="v">${escapeHtml(p.Sdi)}</span></div>`);
-  if (isPiva && p.Pec)           si.push(`<div class="p1-row"><span class="k">PEC</span><span class="v">${escapeHtml(p.Pec)}</span></div>`);
-  if (p.Email)                   si.push(`<div class="p1-row"><span class="k">Email</span><span class="v">${escapeHtml(p.Email)}</span></div>`);
-  if (p.Telefono)                si.push(`<div class="p1-row"><span class="k">Tel.</span><span class="v">${escapeHtml(p.Telefono)}</span></div>`);
-  if (addr)                      si.push(`<div class="p1-row"><span class="k">Indirizzo</span><span class="v">${escapeHtml(addr)}</span></div>`);
-  if (isPiva && p.Sito)          si.push(`<div class="p1-row"><span class="k">Web</span><span class="v">${escapeHtml(p.Sito)}</span></div>`);
-  document.getElementById('p1SenderInfo').innerHTML = si.join('');
+function setFill(doc, rgb)  { doc.setFillColor(rgb[0], rgb[1], rgb[2]); }
+function setText(doc, rgb)  { doc.setTextColor(rgb[0], rgb[1], rgb[2]); }
+function setDraw(doc, rgb)  { doc.setDrawColor(rgb[0], rgb[1], rgb[2]); }
 
-  const ci = [
-    `<div class="p1-row"><span class="k">Cliente</span><span class="v">${escapeHtml(result.clientName || 'Non indicato')}</span></div>`,
-    result.clientContact ? `<div class="p1-row"><span class="k">Contatto</span><span class="v">${escapeHtml(result.clientContact)}</span></div>` : '',
-    `<div class="p1-row"><span class="k">Tipo</span><span class="v">${escapeHtml(jobTypeLabel(result))}</span></div>`,
-  ];
-  document.getElementById('p1ClientInfo').innerHTML = ci.join('');
+function wrapText(doc, text, maxWidth, fontSize) {
+  doc.setFontSize(fontSize);
+  return doc.splitTextToSize(String(text ?? ''), maxWidth);
+}
 
-  document.getElementById('p1JobsBody').innerHTML = (result.jobResults || []).map((r, i) => {
-    const is3d  = r.job.type === '3d';
-    const badge = is3d ? '<span class="tb tb3">3D</span>' : '<span class="tb tbl">Laser</span>';
-    const label = r.job.label || `Lavorazione ${i + 1}`;
-    const qty   = `${r.job.unitCount} ${is3d ? (r.job.unitCount > 1 ? 'piatti' : 'piatto') : 'lav.'}`;
-    let rows = `<tr>
-      <td><div class="jn">${escapeHtml(label)}${badge}</div>${r.job.piecesPerUnit > 1 ? `<div class="jd">${r.job.piecesPerUnit} pezzi per ${is3d ? 'piatto' : 'lavorazione'}</div>` : ''}</td>
-      <td>${r.material ? escapeHtml(r.material.name) : '—'}</td>
-      <td>${qty}</td>
-      <td style="font-weight:700;">${currency.format(r.subtotal)}</td>
-    </tr>`;
-    if (r.extraCost > 0 && r.job.extraMaterialLabel)
-      rows += `<tr><td colspan="3" style="padding-left:20px;font-size:10px;color:#7c3aed;font-style:italic;">↳ ${escapeHtml(r.job.extraMaterialLabel)} (×${r.job.unitCount})</td><td style="font-size:10px;color:#7c3aed;">${currency.format(r.extraCost)}</td></tr>`;
-    return rows;
-  }).join('');
+function ensureSpace(doc, y, needed, bottomLimit = PAGE_H - 20) {
+  if (y + needed > bottomLimit) {
+    doc.addPage();
+    return 14;
+  }
+  return y;
+}
 
-  const pb = [];
+function drawBanner(doc, { height, colorTop, colorBottom, title, subtitleLines = [], rightLines = [] }) {
+  const steps = 24;
+  for (let i = 0; i < steps; i++) {
+    const t = i / (steps - 1);
+    const r = Math.round(colorTop[0] + (colorBottom[0] - colorTop[0]) * t);
+    const g = Math.round(colorTop[1] + (colorBottom[1] - colorTop[1]) * t);
+    const b = Math.round(colorTop[2] + (colorBottom[2] - colorTop[2]) * t);
+    setFill(doc, [r, g, b]);
+    doc.rect(0, (height / steps) * i, PAGE_W, height / steps + 0.5, 'F');
+  }
+
+  setText(doc, C.white);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(17);
+  doc.text(title, MARGIN, 16);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  let sy = 22;
+  subtitleLines.forEach(line => {
+    if (!line) return;
+    doc.text(line, MARGIN, sy);
+    sy += 4.2;
+  });
+
+  let ry = 14;
+  rightLines.forEach(({ text, size = 9, bold = false, color = C.white }) => {
+    doc.setFont('helvetica', bold ? 'bold' : 'normal');
+    doc.setFontSize(size);
+    setText(doc, color);
+    doc.text(text, PAGE_W - MARGIN, ry, { align: 'right' });
+    ry += size > 12 ? 6.5 : 4.5;
+  });
+}
+
+function drawTable(doc, { x, y, columns, rows, headerFill = C.bgLight, headerText = C.muted, fontSize = 8.5, lineH = 4 }) {
+  const totalW = columns.reduce((s, c) => s + c.width, 0);
+
+  setFill(doc, headerFill);
+  doc.rect(x, y, totalW, 7, 'F');
+  setText(doc, headerText);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  let cx = x;
+  columns.forEach(col => {
+    const tx = col.align === 'right' ? cx + col.width - 2 : cx + 2;
+    doc.text(col.label.toUpperCase(), tx, y + 4.7, { align: col.align === 'right' ? 'right' : 'left' });
+    cx += col.width;
+  });
+  y += 7;
+  setDraw(doc, C.border);
+  doc.setLineWidth(0.3);
+  doc.line(x, y, x + totalW, y);
+
+  rows.forEach(row => {
+    const wrapped = columns.map((col, i) => wrapText(doc, row.cells[i] ?? '', col.width - 4, fontSize));
+    const maxLines = Math.max(1, ...wrapped.map(w => w.length));
+    const rowH = Math.max(7, maxLines * lineH + 3);
+
+    y = ensureSpace(doc, y, rowH + 2);
+
+    if (row.fill) { setFill(doc, row.fill); doc.rect(x, y, totalW, rowH, 'F'); }
+
+    doc.setFont('helvetica', row.bold ? 'bold' : (row.italic ? 'italic' : 'normal'));
+    doc.setFontSize(row.small ? fontSize - 1 : fontSize);
+    setText(doc, row.color || C.text);
+
+    cx = x;
+    columns.forEach((col, i) => {
+      const lines = wrapped[i];
+      const tx = col.align === 'right' ? cx + col.width - 2 : cx + 2 + (row.indent && i === 0 ? row.indent : 0);
+      lines.forEach((ln, li) => {
+        doc.text(ln, tx, y + 4.8 + li * lineH, { align: col.align === 'right' ? 'right' : 'left' });
+      });
+      cx += col.width;
+    });
+
+    y += rowH;
+    setDraw(doc, C.border);
+    doc.setLineWidth(0.2);
+    doc.line(x, y, x + totalW, y);
+  });
+
+  return y;
+}
+
+function kvRow(doc, x, y, key, value, { keyW = 26, width = 80, size = 8.5, bold = true } = {}) {
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(size);
+  setText(doc, C.muted);
+  doc.text(key, x, y);
+  doc.setFont('helvetica', bold ? 'bold' : 'normal');
+  setText(doc, C.text);
+  const lines = wrapText(doc, value, width - keyW, size);
+  doc.text(lines, x + keyW, y);
+  return y + lines.length * 4;
+}
+
+function drawInfoBox(doc, { x, y, width, height, title }) {
+  setDraw(doc, C.border);
+  setFill(doc, C.bgLight);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(x, y, width, height, 2, 2, 'FD');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  setText(doc, C.muted);
+  doc.text(title.toUpperCase(), x + 4, y + 6);
+}
+
+/**
+ * Recupera un QR code (PNG base64) da un servizio pubblico gratuito.
+ * Enhancement progressivo: se offline o il servizio non risponde, restituisce
+ * null e il PDF viene comunque generato correttamente senza QR.
+ */
+async function fetchQrDataUrl(payload) {
+  if (!payload) return null;
+  try {
+    const url = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=' + encodeURIComponent(payload);
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    const blob = await resp.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror    = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+// ── PAGINA 1 — Copia Cliente ─────────────────────────────────────────────────
+function buildPage1(doc, result, profile, qrDataUrl) {
+  const { isPiva, name, addr } = senderInfo(profile);
+  const genDate = new Date().toLocaleDateString('it-IT');
+
+  const subtitleLines = [
+    [isPiva && profile.PartitaIva ? 'P.IVA: ' + profile.PartitaIva : '', profile.CodiceFiscale ? 'C.F.: ' + profile.CodiceFiscale : ''].filter(Boolean).join('   '),
+    [profile.Email, profile.Telefono].filter(Boolean).join('   ·   '),
+    addr,
+  ].filter(Boolean);
+
+  drawBanner(doc, {
+    height: 34,
+    colorTop: C.navy, colorBottom: C.indigo,
+    title: name,
+    subtitleLines,
+    rightLines: [
+      { text: 'PREVENTIVO', size: 8, color: [199, 210, 254] },
+      { text: result.jobName || 'Senza nome', size: 13, bold: true },
+      { text: 'Data: ' + (result.quoteDate || genDate), size: 8.5, color: [203, 213, 225] },
+    ],
+  });
+
+  let y = 46;
+
+  const boxW = (PAGE_W - MARGIN * 2 - 6) / 2;
+  const boxH = 34;
+  drawInfoBox(doc, { x: MARGIN, y, width: boxW, height: boxH, title: 'Fornitore' });
+  drawInfoBox(doc, { x: MARGIN + boxW + 6, y, width: boxW, height: boxH, title: 'Cliente' });
+
+  let fy = y + 11;
+  if (isPiva && profile.PartitaIva) fy = kvRow(doc, MARGIN + 4, fy, 'P.IVA', profile.PartitaIva, { width: boxW - 8 });
+  if (profile.CodiceFiscale)        fy = kvRow(doc, MARGIN + 4, fy, 'C.F.', profile.CodiceFiscale, { width: boxW - 8 });
+  if (profile.Email)                fy = kvRow(doc, MARGIN + 4, fy, 'Email', profile.Email, { width: boxW - 8, size: 7.8 });
+  if (profile.Telefono)             fy = kvRow(doc, MARGIN + 4, fy, 'Tel.', profile.Telefono, { width: boxW - 8 });
+
+  let cy = y + 11;
+  cy = kvRow(doc, MARGIN + boxW + 10, cy, 'Cliente', result.clientName || 'Non indicato', { width: boxW - 8 });
+  if (result.clientContact) cy = kvRow(doc, MARGIN + boxW + 10, cy, 'Contatto', result.clientContact, { width: boxW - 8, size: 7.8 });
+  cy = kvRow(doc, MARGIN + boxW + 10, cy, 'Tipo', jobTypeLabel(result), { width: boxW - 8 });
+
+  y += boxH + 10;
+
+  setFill(doc, C.indigo);
+  doc.roundedRect(MARGIN, y, 62, 7, 1.5, 1.5, 'F');
+  setText(doc, C.white);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text('DETTAGLIO LAVORAZIONI', MARGIN + 4, y + 4.8);
+  y += 12;
+
+  const tableW = PAGE_W - MARGIN * 2;
+  const rows = [];
+  (result.jobResults || []).forEach((r, i) => {
+    const is3d = r.job.type === '3d';
+    const label = (r.job.label || `Lavorazione ${i + 1}`) + '  ·  ' + (is3d ? '3D' : 'Laser');
+    const qty = `${r.job.unitCount} ${is3d ? (r.job.unitCount > 1 ? 'piatti' : 'piatto') : 'lav.'}`;
+    rows.push({ cells: [label, r.material ? r.material.name : '—', qty, currency.format(r.subtotal)] });
+    if (r.extraCost > 0 && r.job.extraMaterialLabel) {
+      rows.push({
+        cells: [`↳ ${r.job.extraMaterialLabel} (×${r.job.unitCount})`, '', '', currency.format(r.extraCost)],
+        italic: true, small: true, color: C.indigoD, indent: 3,
+      });
+    }
+  });
+
+  y = drawTable(doc, {
+    x: MARGIN, y,
+    columns: [
+      { label: 'Lavorazione', width: tableW * 0.48, align: 'left' },
+      { label: 'Materiale',   width: tableW * 0.22, align: 'left' },
+      { label: 'Qtà',         width: tableW * 0.12, align: 'left' },
+      { label: 'Importo',     width: tableW * 0.18, align: 'right' },
+    ],
+    rows,
+  });
+
+  y += 8;
+  y = ensureSpace(doc, y, 60);
+
+  const pbW = 78;
+  const pbX = PAGE_W - MARGIN - pbW;
+  let py = y;
+
+  const priceLine = (label, value, opts = {}) => {
+    doc.setFont('helvetica', opts.bold ? 'bold' : 'normal');
+    doc.setFontSize(opts.bold ? 9 : 8.5);
+    setText(doc, opts.color || C.muted);
+    doc.text(label, pbX, py);
+    setText(doc, opts.valueColor || C.text);
+    doc.text(value, pbX + pbW, py, { align: 'right' });
+    setDraw(doc, C.border);
+    doc.setLineWidth(0.15);
+    doc.line(pbX, py + 1.6, pbX + pbW, py + 1.6);
+    py += 6;
+  };
+
   if (result.discountValue > 0) {
-    pb.push(`<div class="p1-pr"><span class="pk">Imponibile</span><span class="pv">${currency.format(result.priceBeforeDiscount)}</span></div>`);
-    pb.push(`<div class="p1-pr ded"><span class="pk">Sconto</span><span class="pv">−${currency.format(result.discountValue)}</span></div>`);
+    priceLine('Imponibile', currency.format(result.priceBeforeDiscount));
+    priceLine('Sconto', '−' + currency.format(result.discountValue), { valueColor: C.red });
   }
   if (result.includeVat) {
-    pb.push(`<div class="p1-pr"><span class="pk">Imponibile netto</span><span class="pv">${currency.format(result.priceAfterMinimum)}</span></div>`);
-    pb.push(`<div class="p1-pr"><span class="pk">IVA ${num.format(result.vatPercent)}%</span><span class="pv">+${currency.format(result.vatValue)}</span></div>`);
+    priceLine('Imponibile netto', currency.format(result.priceAfterMinimum));
+    priceLine(`IVA ${num.format(result.vatPercent)}%`, '+' + currency.format(result.vatValue));
   } else {
-    pb.push(`<div class="p1-pr"><span class="pk">Subtotale prodotto</span><span class="pv">${currency.format(result.priceAfterMinimum)}</span></div>`);
-    pb.push(`<div class="p1-pr"><span class="pk">IVA</span><span class="pv">Esclusa</span></div>`);
+    priceLine('Subtotale prodotto', currency.format(result.priceAfterMinimum));
+    priceLine('IVA', 'Esclusa');
   }
   if (result.includeShipping && result.shippingTotal > 0) {
-    pb.push(`<div class="p1-pr shp"><span class="pk">Spedizione (${escapeHtml(ST_LABELS[result.shippingType] || result.shippingType)})</span><span class="pv">+${currency.format(result.shippingCost)}</span></div>`);
-    if (result.includeInsurance)
-      pb.push(`<div class="p1-pr shp"><span class="pk">Assicurazione</span><span class="pv">+${currency.format(result.insuranceCost)}</span></div>`);
+    priceLine(`Spedizione (${ST_LABELS[result.shippingType] || result.shippingType})`, '+' + currency.format(result.shippingCost));
+    if (result.includeInsurance) priceLine('Assicurazione', '+' + currency.format(result.insuranceCost));
   }
-  pb.push(`<div class="p1-ptot"><span class="tk">TOTALE${result.includeVat ? ' IVA INCLUSA' : ''}</span><span class="tv">${currency.format(result.finalRecommendedPrice)}</span></div>`);
-  document.getElementById('p1PricingBox').innerHTML = pb.join('');
 
-  const snEl = document.getElementById('p1ShippingNote');
+  py += 2;
+  setFill(doc, C.green);
+  doc.roundedRect(pbX, py, pbW, 13, 2, 2, 'F');
+  setText(doc, C.white);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text(`TOTALE${result.includeVat ? ' IVA INCL.' : ''}`, pbX + 4, py + 5.2);
+  doc.setFontSize(14);
+  doc.text(currency.format(result.finalRecommendedPrice), pbX + pbW - 4, py + 9.5, { align: 'right' });
+  py += 20;
+
+  y = Math.max(y, py);
+
   if (result.includeShipping) {
-    let note = `🚚 Consegna stimata: ${result.deliveryDaysMin}–${result.deliveryDaysMax} giorni lavorativi (stima indicativa).`;
+    let note = `Consegna stimata: ${result.deliveryDaysMin}\u2013${result.deliveryDaysMax} giorni lavorativi (stima indicativa, gestita da corrieri terzi).`;
     if (result.shippingNotes)    note += ` Note: ${result.shippingNotes}`;
     if (result.includeInsurance) note += ' Spedizione assicurata inclusa.';
-    snEl.textContent   = note;
-    snEl.style.display = 'block';
-  } else { snEl.style.display = 'none'; }
+    const lines = wrapText(doc, note, PAGE_W - MARGIN * 2 - 8, 8);
+    const boxH2 = lines.length * 4 + 6;
+    y = ensureSpace(doc, y, boxH2 + 6);
+    setFill(doc, [255, 251, 235]);
+    setDraw(doc, [253, 230, 138]);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(MARGIN, y, PAGE_W - MARGIN * 2, boxH2, 1.5, 1.5, 'FD');
+    setText(doc, [120, 53, 15]);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(lines, MARGIN + 4, y + 5);
+  }
 
-  document.getElementById('p1FooterLeft').textContent =
-    [senderName, isPiva && p.PartitaIva ? 'P.IVA ' + p.PartitaIva : '', p.Email].filter(Boolean).join(' · ');
+  setDraw(doc, C.border);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN, PAGE_H - 20, PAGE_W - MARGIN, PAGE_H - 20);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  setText(doc, C.mutedL);
+  const footerLeft = [name, isPiva && profile.PartitaIva ? 'P.IVA ' + profile.PartitaIva : '', profile.Email].filter(Boolean).join('  ·  ');
+  doc.text(footerLeft, MARGIN, PAGE_H - 15);
+  doc.text(`Documento generato il ${genDate} — valido salvo conferma scritta.`, MARGIN, PAGE_H - 10);
 
-  // ── Pagina 2 ──────────────────────────────────────────────────────
+  if (qrDataUrl) {
+    try {
+      const qrSize = 14;
+      const qx = PAGE_W - MARGIN - qrSize;
+      const qy = PAGE_H - 19;
+      doc.addImage(qrDataUrl, 'PNG', qx, qy, qrSize, qrSize);
+      doc.setFontSize(5.5);
+      setText(doc, C.mutedL);
+      doc.text('Scansiona per contattarci', qx + qrSize / 2, qy + qrSize + 3, { align: 'center' });
+    } catch { /* se l'immagine non è valida, il PDF resta comunque corretto */ }
+  }
+}
+
+// ── PAGINA 2 — Copia Fornitore (uso interno) ──────────────────────────────────
+function buildPage2(doc, result, profile) {
+  const { name } = senderInfo(profile);
+  const genDate = new Date().toLocaleDateString('it-IT');
+
+  drawBanner(doc, {
+    height: 24,
+    colorTop: C.purpleD, colorBottom: C.purple2,
+    title: 'Copia Fornitore — Dettaglio Completo',
+    subtitleLines: [],
+    rightLines: [{ text: 'USO INTERNO', size: 8, bold: true, color: [196, 181, 253] }],
+  });
+
+  let y = 32;
+
   const meta = [
-    ['Preventivo', result.jobName || '—'], ['Data', result.quoteDate || '—'],
+    ['Preventivo', result.jobName || '—'], ['Data', result.quoteDate || genDate],
     ['Cliente', result.clientName || '—'], ['Contatto', result.clientContact || '—'],
-    ['Tipo lavoro', jobTypeLabel(result)],  ['Fornitore', senderName],
+    ['Tipo lavoro', jobTypeLabel(result)], ['Fornitore', name],
   ];
-  document.getElementById('p2Meta').innerHTML = meta.map(([k, v]) =>
-    `<div style="display:flex;gap:6px;"><span style="color:#6b7280;min-width:80px;">${escapeHtml(k)}:</span><strong>${escapeHtml(v)}</strong></div>`
-  ).join('');
+  const colW = (PAGE_W - MARGIN * 2) / 2;
+  meta.forEach(([k, v], i) => {
+    const col = i % 2, row = Math.floor(i / 2);
+    const mx = MARGIN + col * colW, my = y + row * 5.5;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); setText(doc, C.muted);
+    doc.text(k + ':', mx, my);
+    doc.setFont('helvetica', 'bold'); setText(doc, C.text);
+    doc.text(String(v), mx + 24, my);
+  });
+  y += Math.ceil(meta.length / 2) * 5.5 + 6;
 
-  const p2body = document.getElementById('p2JobsBody');
-  p2body.innerHTML = (result.jobResults || []).map((r, i) => {
-    const label = r.job.label || `Lavorazione ${i + 1}`;
-    const is3d  = r.job.type === '3d';
-    let rows = `<tr>
-      <td><strong>${escapeHtml(label)}</strong><br><span style="font-size:8px;color:#6b7280;">${is3d ? 'Stampa 3D' : 'Laser'} · ${r.job.unitCount} ${is3d ? 'piatti' : 'lav.'} · ${r.job.piecesPerUnit} pz/${is3d ? 'piatto' : 'lav.'}</span></td>
-      <td>${escapeHtml(r.machine?.name || '—')}</td>
-      <td>${escapeHtml(r.material?.name || '—')}</td>
-      <td>${formatHours(r.totalHours)}</td>
-      <td>${currency.format(r.materialCost)}</td>
-      <td>${currency.format(r.energyCost)}</td>
-      <td>${currency.format(r.maintenanceCost)}</td>
-      <td>${currency.format(r.amortCost)}</td>
-      <td>${r.extraCost > 0 ? currency.format(r.extraCost) : '—'}</td>
-      <td style="font-weight:800;">${currency.format(r.subtotal)}</td>
-    </tr>`;
-    if (r.extraCost > 0 && r.job.extraMaterialLabel)
-      rows += `<tr class="rsub"><td colspan="10" style="padding-left:20px;">↳ ${escapeHtml(r.job.extraMaterialLabel)} × ${r.job.unitCount}</td></tr>`;
-    if (is3d && r.totalGrams > 0)
-      rows += `<tr class="rsub"><td colspan="10" style="padding-left:20px;">Materiale 3D totale: ${num.format(r.totalGrams)} g | Ore/piatto: ${formatHours(r.hoursPerUnit)}</td></tr>`;
-    return rows;
-  }).join('');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); setText(doc, [124, 58, 237]);
+  doc.text('DETTAGLIO LAVORAZIONI (COSTI REALI)', MARGIN, y);
+  setDraw(doc, [237, 233, 254]); doc.setLineWidth(0.4);
+  doc.line(MARGIN, y + 1.5, PAGE_W - MARGIN, y + 1.5);
+  y += 6;
 
+  const tableW = PAGE_W - MARGIN * 2;
+  const rows = [];
+  (result.jobResults || []).forEach((r, i) => {
+    const is3d = r.job.type === '3d';
+    const label = `${r.job.label || `Lavorazione ${i + 1}`}\n${is3d ? '3D' : 'Laser'} · ${r.job.unitCount} ${is3d ? 'piatti' : 'lav.'} · ${r.job.piecesPerUnit} pz`;
+    rows.push({
+      cells: [
+        label, r.machine?.name || '—', r.material?.name || '—', formatHours(r.totalHours),
+        currency.format(r.materialCost), currency.format(r.energyCost),
+        currency.format(r.maintenanceCost), currency.format(r.amortCost),
+        r.extraCost > 0 ? currency.format(r.extraCost) : '—',
+        currency.format(r.subtotal),
+      ],
+    });
+    if (r.extraCost > 0 && r.job.extraMaterialLabel) {
+      rows.push({ cells: [`↳ ${r.job.extraMaterialLabel} × ${r.job.unitCount}`, '', '', '', '', '', '', '', '', ''], italic: true, small: true, color: C.indigoD, indent: 3 });
+    }
+    if (is3d && r.totalGrams > 0) {
+      rows.push({ cells: [`Materiale 3D totale: ${num.format(r.totalGrams)} g  ·  Ore/piatto: ${formatHours(r.hoursPerUnit)}`, '', '', '', '', '', '', '', '', ''], italic: true, small: true, color: C.muted, indent: 3 });
+    }
+  });
   const totalExtra = (result.jobResults || []).reduce((s, r) => s + r.extraCost, 0);
-  p2body.innerHTML += `<tr class="rs"><td><strong>TOTALE LAVORAZIONI</strong></td><td></td><td></td><td></td>
-    <td>${currency.format(result.materialCostTotal)}</td><td>${currency.format(result.energyCostTotal)}</td>
-    <td>${currency.format(result.maintenanceCostTotal)}</td><td>${currency.format(result.machineAmortCostTotal)}</td>
-    <td>${totalExtra > 0 ? currency.format(totalExtra) : '—'}</td>
-    <td style="font-weight:900;">${currency.format(result.baseTechnicalTotal)}</td></tr>`;
+  rows.push({
+    cells: [
+      'TOTALE LAVORAZIONI', '', '', '',
+      currency.format(result.materialCostTotal), currency.format(result.energyCostTotal),
+      currency.format(result.maintenanceCostTotal), currency.format(result.machineAmortCostTotal),
+      totalExtra > 0 ? currency.format(totalExtra) : '—',
+      currency.format(result.baseTechnicalTotal),
+    ],
+    bold: true, fill: C.bgPurple,
+  });
 
+  const cw = tableW / 100;
+  y = drawTable(doc, {
+    x: MARGIN, y, fontSize: 6.6, lineH: 3.2,
+    columns: [
+      { label: 'Lavorazione', width: cw * 22, align: 'left' },
+      { label: 'Macchina',    width: cw * 12, align: 'left' },
+      { label: 'Materiale',   width: cw * 12, align: 'left' },
+      { label: 'Durata',      width: cw * 10, align: 'left' },
+      { label: 'Mat.€',       width: cw * 8.5, align: 'right' },
+      { label: 'Energ.€',     width: cw * 8.5, align: 'right' },
+      { label: 'Manut.€',     width: cw * 8.5, align: 'right' },
+      { label: 'Ammort.€',    width: cw * 9,   align: 'right' },
+      { label: 'Extra€',      width: cw * 8,   align: 'right' },
+      { label: 'Subtot.€',    width: cw * 9.5, align: 'right' },
+    ],
+    rows,
+  });
+
+  y += 8;
+  y = ensureSpace(doc, y, 60);
+
+  const cbW = (PAGE_W - MARGIN * 2 - 6) / 2;
   const minApplied = result.priceAfterMinimum > result.priceAfterDiscount + 0.005;
-  document.getElementById('p2CalcBoxes').innerHTML = `
-    <div class="p2-cbox"><h4>Struttura del costo reale</h4>
-      <div class="p2-cr"><span class="ck">Subtotale lavorazioni</span><span class="cv">${currency.format(result.baseTechnicalTotal)}</span></div>
-      <div class="p2-cr"><span class="ck">+ Manodopera (${num.format(result.manualHours)}h × ${currency.format(result.laborRate)})</span><span class="cv">${currency.format(result.manualLaborCost)}</span></div>
-      <div class="p2-cr"><span class="ck">+ Fallimento ${num.format(result.failureMargin)}%</span><span class="cv">${currency.format(result.failureCost)}</span></div>
-      <div class="p2-cr hi"><span class="ck">COSTO REALE</span><span class="cv">${currency.format(result.adjustedTotal)}</span></div>
-    </div>
-    <div class="p2-cbox"><h4>Prezzo al cliente</h4>
-      <div class="p2-cr"><span class="ck">Costo reale</span><span class="cv">${currency.format(result.adjustedTotal)}</span></div>
-      <div class="p2-cr"><span class="ck">+ Rincaro ${num.format(result.profitMargin)}%</span><span class="cv">+${currency.format(result.profitValue)}</span></div>
-      <div class="p2-cr"><span class="ck">− Sconto</span><span class="cv">−${currency.format(result.discountValue)}</span></div>
-      ${minApplied ? `<div class="p2-cr"><span class="ck">Prezzo minimo</span><span class="cv">${currency.format(result.minimumPrice)}</span></div>` : ''}
-      <div class="p2-cr"><span class="ck">+ IVA ${num.format(result.vatPercent)}%</span><span class="cv">${result.includeVat ? '+' + currency.format(result.vatValue) : 'esclusa'}</span></div>
-      ${result.includeShipping ? `<div class="p2-cr"><span class="ck">+ Spedizione</span><span class="cv">+${currency.format(result.shippingTotal)}</span></div>` : ''}
-      <div class="p2-cr hi"><span class="ck">TOTALE FINALE</span><span class="cv">${currency.format(result.finalRecommendedPrice)}</span></div>
-    </div>`;
+
+  function calcBox(x, title, lines, highlight) {
+    let by = y;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7); setText(doc, C.muted);
+    doc.text(title.toUpperCase(), x, by);
+    by += 5;
+    lines.forEach(([k, v]) => {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); setText(doc, C.muted);
+      const kLines = wrapText(doc, k, cbW - 28, 7.5);
+      doc.text(kLines, x, by);
+      doc.setFont('helvetica', 'bold'); setText(doc, C.text);
+      doc.text(v, x + cbW - 2, by, { align: 'right' });
+      by += Math.max(4.5, kLines.length * 3.6);
+    });
+    setFill(doc, C.bgPurple);
+    doc.rect(x - 1, by, cbW + 2, 6.5, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); setText(doc, [76, 29, 149]);
+    doc.text(highlight[0], x, by + 4.3);
+    doc.text(highlight[1], x + cbW - 2, by + 4.3, { align: 'right' });
+    return by + 9;
+  }
+
+  const y1 = calcBox(MARGIN, 'Struttura del costo reale', [
+    ['Subtotale lavorazioni', currency.format(result.baseTechnicalTotal)],
+    [`+ Manodopera (${num.format(result.manualHours)}h × ${currency.format(result.laborRate)})`, currency.format(result.manualLaborCost)],
+    [`+ Fallimento ${num.format(result.failureMargin)}%`, currency.format(result.failureCost)],
+  ], ['COSTO REALE', currency.format(result.adjustedTotal)]);
+
+  const priceLines = [
+    ['Costo reale', currency.format(result.adjustedTotal)],
+    [`+ Rincaro ${num.format(result.profitMargin)}%`, '+' + currency.format(result.profitValue)],
+    ['− Sconto', '−' + currency.format(result.discountValue)],
+  ];
+  if (minApplied) priceLines.push(['Prezzo minimo', currency.format(result.minimumPrice)]);
+  priceLines.push([`+ IVA ${num.format(result.vatPercent)}%`, result.includeVat ? '+' + currency.format(result.vatValue) : 'esclusa']);
+  if (result.includeShipping) priceLines.push(['+ Spedizione', '+' + currency.format(result.shippingTotal)]);
+
+  const y2 = calcBox(MARGIN + cbW + 6, 'Prezzo al cliente', priceLines, ['TOTALE FINALE', currency.format(result.finalRecommendedPrice)]);
+
+  y = Math.max(y1, y2) + 6;
+  y = ensureSpace(doc, y, 40);
 
   const marginNet = result.priceAfterMinimum - result.adjustedTotal;
   const marginPct = result.adjustedTotal > 0 ? (marginNet / result.adjustedTotal * 100) : 0;
-  document.getElementById('p2TotalsGrid').innerHTML = `
-    <div class="p2-ti"><div class="tik">Costo reale</div><div class="tiv">${currency.format(result.adjustedTotal)}</div></div>
-    <div class="p2-ti"><div class="tik">Margine netto</div><div class="tiv">${currency.format(marginNet)} (${num.format(marginPct)}%)</div></div>
-    ${result.totalPiecesAll > 1 && result.unitPriceClient ? `<div class="p2-ti"><div class="tik">Prezzo/pezzo</div><div class="tiv">${currency.format(result.unitPriceClient)}</div></div>` : '<div class="p2-ti"><div class="tik">Pezzi</div><div class="tiv">—</div></div>'}
-    ${result.includeShipping ? `<div class="p2-ti"><div class="tik">Spedizione</div><div class="tiv">${currency.format(result.shippingTotal)}</div></div>` : ''}
-    <div class="p2-ti fin"><div class="tik">TOTALE CLIENTE</div><div class="tiv">${currency.format(result.finalRecommendedPrice)}</div></div>`;
 
-  document.getElementById('p2GeneratedOn').textContent = 'Generato il ' + genDate;
+  setDraw(doc, [216, 180, 254]); setFill(doc, [250, 245, 255]);
+  doc.setLineWidth(0.5);
+  const sumBoxH = 26;
+  doc.roundedRect(MARGIN, y, PAGE_W - MARGIN * 2, sumBoxH, 2, 2, 'FD');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); setText(doc, [124, 58, 237]);
+  doc.text('RIEPILOGO FINALE', MARGIN + 4, y + 6);
+
+  const tiles = [
+    ['Costo reale', currency.format(result.adjustedTotal)],
+    ['Margine netto', `${currency.format(marginNet)} (${num.format(marginPct)}%)`],
+    result.totalPiecesAll > 1 && result.unitPriceClient
+      ? ['Prezzo/pezzo', currency.format(result.unitPriceClient)]
+      : ['Pezzi totali', String(result.totalPiecesAll || '—')],
+  ];
+  if (result.includeShipping) tiles.push(['Spedizione' + (result.includeInsurance ? ' + ass.' : ''), currency.format(result.shippingTotal)]);
+
+  const tileW = (PAGE_W - MARGIN * 2 - 8 - tiles.length * 3) / (tiles.length + 1);
+  let tx = MARGIN + 4;
+  tiles.forEach(([k, v]) => {
+    setDraw(doc, [233, 213, 255]); setFill(doc, C.white);
+    doc.roundedRect(tx, y + 9, tileW, 14, 1.5, 1.5, 'FD');
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); setText(doc, [124, 58, 237]);
+    doc.text(k, tx + 2.5, y + 13.5);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); setText(doc, [30, 27, 75]);
+    doc.text(v, tx + 2.5, y + 19.5);
+    tx += tileW + 3;
+  });
+  setFill(doc, [124, 58, 237]);
+  doc.roundedRect(tx, y + 9, tileW, 14, 1.5, 1.5, 'F');
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); setText(doc, [196, 181, 253]);
+  doc.text('TOTALE CLIENTE', tx + 2.5, y + 13.5);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); setText(doc, C.white);
+  doc.text(currency.format(result.finalRecommendedPrice), tx + 2.5, y + 19.8);
+
+  setFill(doc, C.purpleD);
+  doc.rect(0, PAGE_H - 12, PAGE_W, 12, 'F');
+  setText(doc, [167, 139, 250]);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+  doc.text('Documento ad uso interno — non divulgare al cliente', MARGIN, PAGE_H - 5);
+  doc.text('Generato il ' + genDate, PAGE_W - MARGIN, PAGE_H - 5, { align: 'right' });
 }
 
-// ── Generazione PDF reale ─────────────────────────────────────────────────────
+// ── Generazione PDF ───────────────────────────────────────────────────────────
 
 function showOverlay(visible) {
   const el = document.getElementById('pdfOverlay');
@@ -182,115 +565,50 @@ function showOverlay(visible) {
   el.style.display = visible ? 'flex' : 'none';
 }
 
-/**
- * Controlla che jsPDF e html2canvas siano disponibili.
- * Entrambi vengono caricati come script UMD prima del modulo.
- */
 function librariesAvailable() {
-  return typeof window.jspdf !== 'undefined' && typeof window.html2canvas !== 'undefined';
+  return typeof window.jspdf !== 'undefined';
 }
 
-/**
- * Renderizza un elemento DOM con html2canvas e restituisce una immagine JPEG base64.
- * @param {HTMLElement} el       - Elemento da renderizzare
- * @param {number}      scale    - Fattore di scala (2 = alta risoluzione)
- */
-async function renderPageToImage(el, scale = 2) {
-  const canvas = await window.html2canvas(el, {
-    scale,
-    useCORS: true,
-    allowTaint: false,
-    logging: false,
-    backgroundColor: '#ffffff',
-    // larghezza A4 a 96 DPI
-    windowWidth: 794,
-    width:  el.scrollWidth,
-    height: el.scrollHeight,
-  });
-  return canvas.toDataURL('image/jpeg', 0.92);
-}
-
-/**
- * Genera e scarica il PDF con jsPDF + html2canvas.
- * Se le librerie non sono disponibili, fa fallback a window.print().
- */
 export async function generatePdf(result) {
   if (!librariesAvailable()) {
-    console.warn('[PDF] Librerie non disponibili, fallback a window.print()');
-    await buildPdf(result);
-    window.print();
+    alert('Libreria PDF non disponibile. Verifica che vendor/jspdf.umd.min.js sia presente nel repository (vedi README).');
     return;
   }
 
   showOverlay(true);
-
   try {
-    // 1. Popola il DOM
-    await buildPdf(result);
-
-    // 2. Rendi visibile il printArea fuori dallo schermo per html2canvas
-    const printArea = document.getElementById('printArea');
-    printArea.classList.add('rendering');
-
-    // 3. Attendi un frame per assicurarsi che il DOM sia aggiornato
-    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    await new Promise(resolve => setTimeout(resolve, 150));
-
-    // 4. Renderizza le due pagine
-    const p1El = document.getElementById('p1');
-    const p2El = document.getElementById('p2');
-    const [img1, img2] = await Promise.all([
-      renderPageToImage(p1El),
-      renderPageToImage(p2El),
-    ]);
-
-    // 5. Nascondi nuovamente
-    printArea.classList.remove('rendering');
-
-    // 6. Crea il PDF A4
+    const profile = await getProfile();
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-    // A4: 210 × 297 mm — immagine adattata alla larghezza piena
-    const addPage = (imgData, addNewPage = false) => {
-      if (addNewPage) pdf.addPage();
-      // Calcola altezza proporzionale: l'immagine è larga 794px, alta h px
-      // Convertiamo in mm: 794px / 3.7795px/mm ≈ 210mm
-      // La proporzione è mantenuta
-      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
-    };
+    // QR code opzionale: enhancement progressivo, non blocca la generazione se offline
+    const qrPayload = profile.Sito || (profile.Email ? 'mailto:' + profile.Email : null);
+    const qrDataUrl = await fetchQrDataUrl(qrPayload);
 
-    addPage(img1, false);
-    addPage(img2, true);
+    buildPage1(doc, result, profile, qrDataUrl);
+    doc.addPage();
+    buildPage2(doc, result, profile);
 
-    // 7. Metadati PDF
-    pdf.setProperties({
+    doc.setProperties({
       title:    `Preventivo — ${result.jobName || 'senza nome'}`,
       subject:  `Preventivo stampa 3D/laser — ${result.clientName || 'cliente'}`,
       creator:  'Preventivator',
       keywords: 'preventivo, stampa 3D, laser',
     });
 
-    // 8. Scarica il file
     const safeName = (result.jobName || 'preventivo')
-      .replace(/[^a-z0-9àèéìòù]/gi, '_')
-      .replace(/_+/g, '_')
-      .toLowerCase();
-    const dateStr  = new Date().toISOString().slice(0, 10);
-    pdf.save(`preventivo-${safeName}-${dateStr}.pdf`);
-
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_').toLowerCase();
+    const dateStr = new Date().toISOString().slice(0, 10);
+    doc.save(`preventivo-${safeName}-${dateStr}.pdf`);
   } catch (err) {
     console.error('[PDF] Errore generazione:', err);
-    // Fallback pulito a window.print()
-    document.getElementById('printArea')?.classList.remove('rendering');
-    alert('Errore nella generazione del PDF. Verrà aperta la finestra di stampa del browser come alternativa.');
-    window.print();
+    alert('Errore nella generazione del PDF: ' + err.message);
   } finally {
     showOverlay(false);
   }
 }
 
-// ── Init handler ──────────────────────────────────────────────────────────────
 export function initPdfHandler() {
   const btn = document.getElementById('exportPdfBtn');
   btn.addEventListener('click', async () => {

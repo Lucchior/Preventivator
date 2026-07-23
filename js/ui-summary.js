@@ -4,6 +4,7 @@
  */
 
 import { currency, num, escapeHtml, formatHours } from './utils.js';
+import { loadData, saveData, STORAGE_KEYS }       from './storage.js';
 
 export function renderSummary(result) {
   const quoteSummary       = document.getElementById('quoteSummary');
@@ -97,4 +98,97 @@ export function renderSummary(result) {
 
   quoteSummary.innerHTML          = html;
   recommendedPriceBox.textContent = currency.format(result.finalRecommendedPrice);
+}
+
+// ── Confronto Scenario A/B ────────────────────────────────────────────────────
+
+async function getScenario(key) {
+  return loadData(key, null);
+}
+
+function scenarioSnapshot(result) {
+  return {
+    label: result.jobName || 'Senza nome',
+    savedAt: new Date().toISOString(),
+    adjustedTotal: result.adjustedTotal,
+    profitMargin: result.profitMargin,
+    discountValue: result.discountValue,
+    vatPercent: result.vatPercent,
+    includeVat: result.includeVat,
+    shippingTotal: result.shippingTotal || 0,
+    finalRecommendedPrice: result.finalRecommendedPrice,
+    netMargin: result.priceAfterMinimum - result.adjustedTotal,
+    netMarginPct: result.adjustedTotal > 0 ? ((result.priceAfterMinimum - result.adjustedTotal) / result.adjustedTotal) * 100 : 0,
+  };
+}
+
+async function renderScenarioCompare() {
+  const box = document.getElementById('scenarioCompareBox');
+  if (!box) return;
+  const [a, b] = await Promise.all([getScenario(STORAGE_KEYS.scenarioA), getScenario(STORAGE_KEYS.scenarioB)]);
+
+  if (!a && !b) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+  box.classList.remove('hidden');
+
+  const rows = [
+    ['Nome preventivo', a?.label, b?.label],
+    ['Costo reale', a && currency.format(a.adjustedTotal), b && currency.format(b.adjustedTotal)],
+    ['Rincaro %', a && num.format(a.profitMargin) + '%', b && num.format(b.profitMargin) + '%'],
+    ['Sconto', a && currency.format(a.discountValue), b && currency.format(b.discountValue)],
+    ['IVA', a && (a.includeVat ? num.format(a.vatPercent) + '%' : 'esclusa'), b && (b.includeVat ? num.format(b.vatPercent) + '%' : 'esclusa')],
+    ['Spedizione', a && currency.format(a.shippingTotal), b && currency.format(b.shippingTotal)],
+    ['Margine netto', a && `${currency.format(a.netMargin)} (${num.format(a.netMarginPct)}%)`, b && `${currency.format(b.netMargin)} (${num.format(b.netMarginPct)}%)`],
+    ['Totale finale', a && currency.format(a.finalRecommendedPrice), b && currency.format(b.finalRecommendedPrice)],
+  ];
+
+  box.innerHTML = `
+    <div class="summary-block" style="border-left:3px solid var(--accent, #5b5ee0);">
+      <div class="summary-block-head"><span class="icon">🔀</span><span class="title">Confronto Scenario A / B</span></div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:6px 8px;color:var(--muted);font-size:11px;text-transform:uppercase;">Voce</th>
+              <th style="text-align:right;padding:6px 8px;color:var(--muted);font-size:11px;text-transform:uppercase;">Scenario A</th>
+              <th style="text-align:right;padding:6px 8px;color:var(--muted);font-size:11px;text-transform:uppercase;">Scenario B</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(([k, va, vb]) => `
+              <tr style="border-top:1px solid var(--border, #e2e8f0);">
+                <td style="padding:6px 8px;color:var(--muted);">${escapeHtml(k)}</td>
+                <td style="padding:6px 8px;text-align:right;font-weight:600;">${va !== undefined && va !== null ? escapeHtml(String(va)) : '—'}</td>
+                <td style="padding:6px 8px;text-align:right;font-weight:600;">${vb !== undefined && vb !== null ? escapeHtml(String(vb)) : '—'}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="actions" style="margin-top:10px;">
+        <button class="secondary" type="button" id="clearScenariosBtn" style="font-size:12px;padding:6px 12px;">🗑️ Cancella scenari</button>
+      </div>
+    </div>`;
+
+  document.getElementById('clearScenariosBtn')?.addEventListener('click', async () => {
+    await saveData(STORAGE_KEYS.scenarioA, null);
+    await saveData(STORAGE_KEYS.scenarioB, null);
+    await renderScenarioCompare();
+  });
+}
+
+export function initScenarioHandlers() {
+  document.getElementById('saveScenarioABtn')?.addEventListener('click', async () => {
+    const result = window.__lastQuoteResult;
+    if (!result) { alert('Calcola prima un preventivo per poterlo salvare come scenario.'); return; }
+    await saveData(STORAGE_KEYS.scenarioA, scenarioSnapshot(result));
+    await renderScenarioCompare();
+  });
+
+  document.getElementById('saveScenarioBBtn')?.addEventListener('click', async () => {
+    const result = window.__lastQuoteResult;
+    if (!result) { alert('Calcola prima un preventivo per poterlo salvare come scenario.'); return; }
+    await saveData(STORAGE_KEYS.scenarioB, scenarioSnapshot(result));
+    await renderScenarioCompare();
+  });
+
+  renderScenarioCompare();
 }

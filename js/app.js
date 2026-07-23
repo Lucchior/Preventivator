@@ -5,12 +5,12 @@
 
 import { loadData, saveData, STORAGE_KEYS, initStorage } from './storage.js';
 import { getMachines, getMaterials, getJobs }             from './models.js';
-import { computeJobCost }                                  from './calc.js';
+import { computeJobCost, computeQuote }                    from './calc.js';
 import { todayString, showInlineError, hideInlineError } from './utils.js';
 import { renderMachines, initMachinesHandlers }            from './ui-machines.js';
 import { renderMaterials, initMaterialsHandlers, updateMaterialFormUI } from './ui-materials.js';
 import { renderJobs, initJobsHandlers }                    from './ui-jobs.js';
-import { renderSummary }                                   from './ui-summary.js';
+import { renderSummary, initScenarioHandlers }             from './ui-summary.js';
 import { restoreProfile, initProfileHandlers }             from './ui-profile.js';
 import { initPdfHandler, generatePdf }                     from './ui-pdf.js';
 import { initIoHandlers }                                  from './ui-io.js';
@@ -19,7 +19,11 @@ import { initTheme }                                        from './ui-theme.js'
 
 // ── Tab navigation ────────────────────────────────────────────────────────────
 export function activateTab(id) {
-  document.querySelectorAll('.tab-btn').forEach(b  => b.classList.toggle('active', b.dataset.tab === id));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    const isActive = b.dataset.tab === id;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === id));
 }
 
@@ -107,40 +111,30 @@ function initJobFormHandler() {
     const deliveryDaysMin   = includeShipping ? Number(g('deliveryDaysMin').value || 1) : 0;
     const deliveryDaysMax   = includeShipping ? Number(g('deliveryDaysMax').value || 1) : 0;
     const shippingNotes     = includeShipping ? g('shippingNotes').value.trim()         : '';
-    const shippingTotal     = shippingCost + insuranceCost;
 
-    const baseTechnicalTotal  = jobResults.reduce((s, r) => s + r.subtotal, 0);
-    const manualLaborCost     = manualHours * laborRate;
-    const baseTotal           = baseTechnicalTotal + manualLaborCost;
-    const failureCost         = baseTotal * (failureMargin / 100);
-    const adjustedTotal       = baseTotal + failureCost;
-    const profitValue         = adjustedTotal * (profitMargin / 100);
-    const priceBeforeDiscount = adjustedTotal + profitValue;
-    const discountValue       = Math.min(discountAmount, priceBeforeDiscount);
-    const priceAfterDiscount  = priceBeforeDiscount - discountValue;
-    const priceAfterMinimum   = Math.max(priceAfterDiscount, minimumPrice);
-    const vatValue            = includeVat ? priceAfterMinimum * (vatPercent / 100) : 0;
-    const priceWithVat        = priceAfterMinimum + vatValue;
-    const finalRecommendedPrice = priceWithVat + shippingTotal;
-    const totalPiecesAll      = jobResults.reduce((s, r) => s + r.totalPieces, 0);
-    const unitPriceClient     = totalPiecesAll > 0 ? priceWithVat / totalPiecesAll : null;
+    const shippingParams = {
+      manualHours, laborRate, failureMargin, profitMargin,
+      discountAmount, minimumPrice, vatPercent, includeVat,
+      includeShipping, shippingCost, includeInsurance, insuranceCost,
+    };
+    const q = computeQuote(jobResults, shippingParams);
 
     const result = {
       version: 'hybrid-v3',
       jobName: g('jobName').value.trim(), clientName: g('clientName').value.trim(),
       clientContact: g('clientContact').value.trim(), quoteDate: g('quoteDate').value || todayString(),
-      jobResults, totalPiecesAll, unitPriceClient,
-      manualHours, laborRate, manualLaborCost,
+      jobResults, totalPiecesAll: q.totalPiecesAll, unitPriceClient: q.unitPriceClient,
+      manualHours, laborRate, manualLaborCost: q.manualLaborCost,
       failureMargin, profitMargin, discountAmount, minimumPrice, vatPercent, includeVat,
       includeShipping, shippingCost, shippingType, includeInsurance, insuranceCost,
-      shippingTotal, deliveryDaysMin, deliveryDaysMax, shippingNotes,
-      materialCostTotal:     jobResults.reduce((s, r) => s + r.materialCost,    0),
-      energyCostTotal:       jobResults.reduce((s, r) => s + r.energyCost,      0),
-      maintenanceCostTotal:  jobResults.reduce((s, r) => s + r.maintenanceCost, 0),
-      machineAmortCostTotal: jobResults.reduce((s, r) => s + r.amortCost,       0),
-      baseTechnicalTotal, baseTotal, failureCost, adjustedTotal, profitValue,
-      priceBeforeDiscount, discountValue, priceAfterDiscount, priceAfterMinimum,
-      vatValue, priceWithVat, finalRecommendedPrice,
+      shippingTotal: q.shippingTotal, deliveryDaysMin, deliveryDaysMax, shippingNotes,
+      materialCostTotal: q.materialCostTotal, energyCostTotal: q.energyCostTotal,
+      maintenanceCostTotal: q.maintenanceCostTotal, machineAmortCostTotal: q.machineAmortCostTotal,
+      baseTechnicalTotal: q.baseTechnicalTotal, baseTotal: q.baseTotal,
+      failureCost: q.failureCost, adjustedTotal: q.adjustedTotal, profitValue: q.profitValue,
+      priceBeforeDiscount: q.priceBeforeDiscount, discountValue: q.discountValue,
+      priceAfterDiscount: q.priceAfterDiscount, priceAfterMinimum: q.priceAfterMinimum,
+      vatValue: q.vatValue, priceWithVat: q.priceWithVat, finalRecommendedPrice: q.finalRecommendedPrice,
     };
 
     await saveData(STORAGE_KEYS.currentJob, {
@@ -191,6 +185,7 @@ async function init() {
   initJobsHandlers();
   initProfileHandlers();
   initPdfHandler();
+  initScenarioHandlers();
   initArchiveHandlers({ restoreCurrentJob, renderJobs, activateTab, generatePdf });
   initIoHandlers({ renderMachines, renderMaterials, restoreProfile, renderJobs, restoreCurrentJob, activateTab });
   initJobFormHandler();
@@ -221,6 +216,15 @@ async function init() {
     if (TAB_MAP[e.key]) { e.preventDefault(); activateTab(TAB_MAP[e.key]); return; }
     if (e.key === 's') { e.preventDefault(); document.getElementById('jobForm')?.requestSubmit(); return; }
     if (e.key === 'p') { e.preventDefault(); if (window.__lastQuoteResult) document.getElementById('exportPdfBtn')?.click(); return; }
+  });
+
+  // Deep-link da PWA shortcut o link diretto (es. #tab-lavoro)
+  const validTabs = ['tab-profilo','tab-macchine','tab-lavoro','tab-riepilogo','tab-archivio','tab-dati'];
+  const hashTab = window.location.hash.replace('#', '');
+  if (validTabs.includes(hashTab)) activateTab(hashTab);
+  window.addEventListener('hashchange', () => {
+    const t = window.location.hash.replace('#', '');
+    if (validTabs.includes(t)) activateTab(t);
   });
 }
 
@@ -257,13 +261,14 @@ function showUpdateBanner(newWorker) {
   banner.id    = 'updateBanner';
   banner.innerHTML = `
     <span>🔄 Nuova versione disponibile</span>
-    <button id="updateNowBtn">Aggiorna ora</button>
+    <button id="updateNowBtn" class="primary" style="padding:6px 14px;font-size:13px;">Aggiorna ora</button>
   `;
   banner.style.cssText = `
     position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-    background:#166534;color:#dcfce7;padding:12px 20px;border-radius:12px;
+    background:var(--surface);color:var(--text);padding:12px 20px;border-radius:12px;
     display:flex;align-items:center;gap:14px;z-index:9998;
-    box-shadow:0 4px 20px rgba(0,0,0,.4);font-size:14px;font-weight:600;
+    box-shadow:var(--shadow-lg);font-size:14px;font-weight:600;
+    border:1px solid var(--border);
   `;
   document.body.appendChild(banner);
 
