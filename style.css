@@ -237,6 +237,15 @@ input, select, textarea {
   width: 100%;
   -webkit-appearance: none;
 }
+input[type="checkbox"], input[type="radio"] {
+  -webkit-appearance: auto;
+  appearance: auto;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: none;
+}
 input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg-2); }
 input::placeholder { color: var(--muted); }
 select { cursor: pointer; }
@@ -269,7 +278,7 @@ select { cursor: pointer; }
 .danger:hover { background: rgba(224,57,62,.16); }
 .file-btn { display: inline-flex; align-items: center; cursor: pointer; }
 .checkbox-wrap { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-2); cursor: pointer; }
-input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+input[type=checkbox] { accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
 .radio-opt {
   display: flex; align-items: center; gap: 8px; padding: 10px 16px;
   border-radius: var(--r-sm); border: 1px solid var(--input-border); background: var(--input-bg);
