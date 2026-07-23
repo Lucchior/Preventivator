@@ -107,13 +107,22 @@ export function showUndoToast(message, onUndo, duration = 5000) {
   const undo    = async () => { dismiss(); if (onUndo) await onUndo(); };
 
   toast.innerHTML = `
-    <span class="undo-msg">${escapeHtml(message)}</span>
-    <button class="undo-btn" type="button">Annulla</button>
+    <div class="undo-toast-row">
+      <span class="undo-msg">${escapeHtml(message)}</span>
+      <button class="undo-btn" type="button">Annulla</button>
+    </div>
+    <div class="undo-progress-track"><div class="undo-progress-bar"></div></div>
   `;
   toast.querySelector('.undo-btn').addEventListener('click', undo);
   container.appendChild(toast);
 
-  requestAnimationFrame(() => toast.classList.add('visible'));
+  requestAnimationFrame(() => {
+    toast.classList.add('visible');
+    const bar = toast.querySelector('.undo-progress-bar');
+    // Avvia la barra a piena larghezza e la fa scorrere a zero in `duration` ms
+    bar.style.transitionDuration = duration + 'ms';
+    requestAnimationFrame(() => { bar.style.width = '0%'; });
+  });
   timer = setTimeout(dismiss, duration);
 }
 
