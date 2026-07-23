@@ -85,7 +85,11 @@ function initJobFormHandler() {
     }
 
     const [machines, materials] = await Promise.all([getMachines(), getMaterials()]);
-    const jobResults = jobs.map(j => computeJobCost(j, machines, materials));
+    const jobResults = jobs.map(j => {
+      const machine  = machines.find(m => m.id === j.machineId);
+      const material = materials.find(m => m.id === j.materialId);
+      return computeJobCost(j, machine, material);
+    });
     const invalid    = jobResults.findIndex(r => r === null);
     if (invalid !== -1) {
       const j = jobs[invalid];

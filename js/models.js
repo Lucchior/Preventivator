@@ -15,14 +15,8 @@ export const UNIT_LABELS = {
 };
 
 export const defaults = {
-  machines: [
-    { id: crypto.randomUUID(), type: '3d',    name: 'Stampante esempio',  machineCost: 1200, lifetimeHours: 8000,  energyCost: 0.28, powerKwh: 1, powerEveryH: 3, maintenanceCost: 120 },
-    { id: crypto.randomUUID(), type: 'laser', name: 'Laser CO2 esempio',  machineCost: 2200, lifetimeHours: 10000, energyCost: 0.32, powerKwh: 1, powerEveryH: 1, maintenanceCost: 180 },
-  ],
-  materials: [
-    { id: crypto.randomUUID(), type: '3d',    unit: 'kg',     name: 'PLA',             unitCost: 22  },
-    { id: crypto.randomUUID(), type: 'laser', unit: 'foglio', name: 'Compensato 3 mm', unitCost: 5.5 },
-  ],
+  machines: [],
+  materials: [],
 };
 
 // ── Normalizzatori (puri, sincroni) ───────────────────────────────────────────
