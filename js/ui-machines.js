@@ -10,6 +10,7 @@ import { renderJobs }                         from './ui-jobs.js';
 
 export async function renderMachines() {
   const machines    = await getMachines();
+  console.log('[DEBUG] renderMachines() legge dallo storage:', machines.map(m => `${m.name} (${m.id})`));
   const machineList = document.getElementById('machineList');
 
   machineList.innerHTML = machines.length
@@ -48,11 +49,17 @@ export function initMachinesHandlers() {
     const machines  = await getMachines();
     const target    = machines.find(m => m.id === btn.dataset.machineRemove);
     if (!target) return;
-    const confirmed = await showUndoToast(`Macchina "${target.name}" eliminata.`);
-    if (confirmed) {
-      await saveData(STORAGE_KEYS.machines, machines.filter(m => m.id !== target.id));
+    console.log('[DEBUG] Eliminazione avviata per:', target.name, target.id);
+    const afterDelete = machines.filter(m => m.id !== target.id);
+    await saveData(STORAGE_KEYS.machines, afterDelete);
+    console.log('[DEBUG] Salvato dopo eliminazione, lista ora:', afterDelete.map(m => m.name));
+    await renderMachines();
+    showUndoToast(`Macchina "${target.name}" eliminata.`, async () => {
+      console.log('[DEBUG] ⚠️ RIPRISTINO ESEGUITO (hai cliccato Annulla) per:', target.name);
+      const current = await getMachines();
+      await saveData(STORAGE_KEYS.machines, [...current, target]);
       await renderMachines();
-    }
+    });
   });
 
   machineForm.addEventListener('submit', async (e) => {
@@ -77,7 +84,12 @@ export function initMachinesHandlers() {
   });
 
   document.getElementById('resetMachines').addEventListener('click', async () => {
-    const confirmed = await showUndoToast('Tutte le macchine eliminate.');
-    if (confirmed) { await saveData(STORAGE_KEYS.machines, []); await renderMachines(); }
+    const backup = await getMachines();
+    await saveData(STORAGE_KEYS.machines, []);
+    await renderMachines();
+    showUndoToast('Tutte le macchine eliminate.', async () => {
+      await saveData(STORAGE_KEYS.machines, backup);
+      await renderMachines();
+    });
   });
 }
