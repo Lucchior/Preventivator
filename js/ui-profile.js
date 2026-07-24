@@ -31,6 +31,25 @@ function readProfileForm() {
   return p;
 }
 
+/**
+ * Validazione "soft": segnala eventuali formati sospetti senza bloccare il
+ * salvataggio (l'utente resta libero di inserire dati esteri o particolari).
+ * @returns {string[]} elenco di avvisi (vuoto se tutto ok)
+ */
+function validateProfileFormat(p) {
+  const warnings = [];
+  if (p.type === 'piva' && p.PartitaIva && !/^[A-Za-z]{0,2}\d{11}$/.test(p.PartitaIva.replace(/\s/g, ''))) {
+    warnings.push('La Partita IVA di solito ha 11 cifre (es. IT12345678901).');
+  }
+  if (p.CodiceFiscale && !/^[A-Za-z0-9]{11,16}$/.test(p.CodiceFiscale.replace(/\s/g, ''))) {
+    warnings.push('Il Codice Fiscale ha di norma 16 caratteri (11 per le aziende).');
+  }
+  if (p.Email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.Email)) {
+    warnings.push('L\'indirizzo email non sembra valido.');
+  }
+  return warnings;
+}
+
 export function applyProfileVisibility(type) {
   document.querySelectorAll('.profile-piva-only').forEach(el =>
     el.classList.toggle('hidden-field', type !== 'piva'));
@@ -74,6 +93,10 @@ export async function restoreProfile() {
     if (el && p[key] !== undefined) el.value = p[key];
   });
   renderProfilePreview(p);
+
+  const hasData = Boolean(p.Nome || p.RagioneSociale || p.Cognome);
+  const saveBtn = document.getElementById('saveProfileBtn');
+  if (saveBtn) saveBtn.textContent = hasData ? 'Aggiorna profilo' : 'Salva profilo';
 }
 
 export function initProfileHandlers() {
@@ -85,5 +108,17 @@ export function initProfileHandlers() {
     await saveData(STORAGE_KEYS.profile, p);
     renderProfilePreview(p);
     showSaved('profileSaved');
+    document.getElementById('saveProfileBtn').textContent = 'Aggiorna profilo';
+
+    const warnings = validateProfileFormat(p);
+    const warnBox = document.getElementById('profileFormatWarning');
+    if (warnBox) {
+      if (warnings.length) {
+        warnBox.innerHTML = '⚠️ ' + warnings.join('<br>⚠️ ');
+        warnBox.classList.remove('hidden');
+      } else {
+        warnBox.classList.add('hidden');
+      }
+    }
   });
 }

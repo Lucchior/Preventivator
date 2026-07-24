@@ -269,26 +269,82 @@ if ('serviceWorker' in navigator) {
 }
 
 function showUpdateBanner(newWorker) {
-  const banner = document.createElement('div');
-  banner.id    = 'updateBanner';
-  banner.innerHTML = `
-    <span>🔄 Nuova versione disponibile</span>
-    <button id="updateNowBtn" class="primary" style="padding:6px 14px;font-size:13px;">Aggiorna ora</button>
+  const overlay = document.createElement('div');
+  overlay.id = 'updateOverlay';
+  overlay.innerHTML = `
+    <div class="update-modal">
+      <div class="update-icon">🔄</div>
+      <h2>Nuova versione disponibile</h2>
+      <p class="update-warning">
+        ⚠️ <strong>Prima di aggiornare</strong>, esporta i tuoi dati per non perdere profilo, macchine, materiali e preventivi salvati.
+        L'aggiornamento richiede di svuotare la cache del browser, che può cancellare i dati non esportati.
+      </p>
+
+      <div class="update-export-actions">
+        <button id="updateExportBaseBtn" class="primary">⬇️ Esporta dati base (profilo, macchine, materiali)</button>
+        <button id="updateExportJobBtn" class="secondary">⬇️ Esporta lavorazione corrente</button>
+      </div>
+
+      <details class="update-instructions">
+        <summary>📖 Come svuotare la cache e ricaricare (per browser)</summary>
+        <div class="browser-guides">
+          <div class="browser-guide">
+            <h4>🧭 Safari</h4>
+            <ol>
+              <li>Safari → Impostazioni → scheda Avanzate</li>
+              <li>Clicca "Gestisci dati siti web…"</li>
+              <li>Cerca il nome del sito e clicca Rimuovi</li>
+              <li>Ricarica la pagina</li>
+            </ol>
+          </div>
+          <div class="browser-guide">
+            <h4>🌐 Chrome / Edge / Brave</h4>
+            <ol>
+              <li>Menu (⋮) → Altri strumenti → Cancella dati di navigazione</li>
+              <li>Seleziona "Immagini e file memorizzati nella cache"</li>
+              <li>Clicca "Cancella dati"</li>
+              <li>Ricarica la pagina</li>
+            </ol>
+          </div>
+          <div class="browser-guide">
+            <h4>🦊 Firefox</h4>
+            <ol>
+              <li>Impostazioni → Privacy e sicurezza</li>
+              <li>Sezione "Cookie e dati dei siti" → Gestisci dati</li>
+              <li>Cerca il sito e clicca Rimuovi, poi Salva modifiche</li>
+              <li>Ricarica la pagina</li>
+            </ol>
+          </div>
+        </div>
+      </details>
+
+      <div class="update-final-actions">
+        <button id="updateNowBtn" class="primary">✅ Ho esportato i dati, aggiorna ora</button>
+        <button id="updateLaterBtn" class="secondary">Più tardi</button>
+      </div>
+
+      <p class="update-reimport-hint">💡 Dopo l'aggiornamento, vai su "📦 Dati &amp; Backup" per reimportare i file appena esportati.</p>
+    </div>
   `;
-  banner.style.cssText = `
-    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-    background:var(--surface);color:var(--text);padding:12px 20px;border-radius:12px;
-    display:flex;align-items:center;gap:14px;z-index:9998;
-    box-shadow:var(--shadow-lg);font-size:14px;font-weight:600;
-    border:1px solid var(--border);
-  `;
-  document.body.appendChild(banner);
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+
+  document.getElementById('updateExportBaseBtn').addEventListener('click', () => {
+    document.getElementById('exportBaseBtn')?.click();
+  });
+  document.getElementById('updateExportJobBtn').addEventListener('click', () => {
+    document.getElementById('exportJobBtn')?.click();
+  });
+
+  const close = () => { overlay.remove(); document.body.style.overflow = ''; };
+
+  document.getElementById('updateLaterBtn').addEventListener('click', close);
 
   document.getElementById('updateNowBtn').addEventListener('click', () => {
     newWorker.postMessage('skipWaiting');
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       window.location.reload();
     });
-    banner.remove();
+    close();
   });
 }
