@@ -35,13 +35,16 @@
     <header class="app-header">
       <div class="header-inner">
         <div class="header-brand">
-          <span class="header-icon">🖨️</span>
+          <img src="icons/icon-192.png" alt="Preventivator" class="header-icon" width="40" height="40" />
           <div class="header-text">
             <h1>Preventivator</h1>
-            <p class="header-sub">Stampa 3D &amp; Laser · Ludwing's Creations</p>
+            <p class="header-sub">Preventivi Stampa 3D &amp; Laser</p>
           </div>
         </div>
-        <button id="themeToggleBtn" class="theme-btn" title="Cambia tema" aria-label="Cambia tema">☀️</button>
+        <div class="header-right">
+          <span class="header-brand-tag">Ludwing's Creations</span>
+          <button id="themeToggleBtn" class="theme-btn" title="Cambia tema" aria-label="Cambia tema">☀️</button>
+        </div>
       </div>
     </header>
 
@@ -61,7 +64,7 @@
         <div class="card">
           <span class="zone-tag quote">👤 Il mio profilo</span>
           <h2>Dati del fornitore</h2>
-          <p class="subtitle">Questi dati vengono usati nell'intestazione del PDF inviato al cliente. Seleziona il tipo di soggetto per mostrare i campi pertinenti.</p>
+          <p class="subtitle">Questi dati vengono usati nell'intestazione del PDF inviato al cliente. Seleziona il tipo di soggetto per mostrare i campi pertinenti. È un profilo unico: se cambi email, telefono o altri dati, modifica i campi e premi di nuovo "Salva profilo" — aggiornerà questo stesso profilo, non ne creerà uno nuovo.</p>
 
           <div class="form-grid">
             <div class="field full">
@@ -167,7 +170,7 @@
       <div class="grid">
         <div class="card zone-resources">
           <span class="zone-tag">📦 Risorse: parco macchine</span>
-          <h2>Aggiungi macchina</h2>
+          <h2 id="machineFormTitle">Aggiungi macchina</h2>
           <p class="subtitle">Puoi salvare sia stampanti 3D sia incisori laser, con i relativi costi, consumo orario e vita utile stimata, da riutilizzare nei preventivi singoli o combinati. Il costo energia viene calcolato come ore di lavoro × consumo (kW/h) × costo energia (€/kWh); il costo macchina (acquisto) viene ammortizzato come ore di lavoro × (costo macchina ÷ vita utile in ore).</p>
           <form id="machineForm">
             <div class="form-grid">
@@ -210,7 +213,8 @@
               </div>
             </div>
             <div class="actions">
-              <button class="primary" type="submit">Salva macchina</button>
+              <button class="primary" type="submit" id="machineSubmitBtn">Salva macchina</button>
+              <button class="secondary" type="button" id="cancelMachineEdit" style="display:none;">Annulla modifica</button>
               <button class="secondary" type="button" id="resetMachines">Azzera elenco</button>
             </div>
             <div class="ok" id="machineSaved">Macchina salvata correttamente.</div>
@@ -386,7 +390,7 @@
 
         <div class="card zone-resources">
           <span class="zone-tag">📦 Risorse: materiali</span>
-          <h3>Aggiungi materiale</h3>
+          <h3 id="materialFormTitle">Aggiungi materiale</h3>
           <p class="subtitle">Puoi salvare materiali per stampa 3D e materiali per laser. Per il laser puoi scegliere l’unità di costo.</p>
           <form id="materialForm">
             <div class="form-grid">
@@ -417,7 +421,8 @@
               </div>
             </div>
             <div class="actions">
-              <button class="primary" type="submit">Salva materiale</button>
+              <button class="primary" type="submit" id="materialSubmitBtn">Salva materiale</button>
+              <button class="secondary" type="button" id="cancelMaterialEdit" style="display:none;">Annulla modifica</button>
               <button class="secondary" type="button" id="resetMaterials">Azzera materiali</button>
             </div>
             <div class="ok" id="materialSaved">Materiale salvato correttamente.</div>
@@ -551,6 +556,23 @@
     </section>
 
     </main>
+
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <span class="footer-copy">
+          Realizzato da <strong>Ludwing's Creations</strong>. Tutti i diritti riservati.
+          Vietata la copia o la distribuzione non autorizzata — uso consentito solo per scopo personale.
+        </span>
+        <div class="footer-links">
+          <a href="https://paypal.me/Lucchior" target="_blank" rel="noopener noreferrer" class="footer-donate" title="Donazione libera via PayPal">
+            💛 Se ti piace il progetto, sostienilo con una donazione
+          </a>
+          <a href="mailto:ddusnoblogo@gmail.com?subject=Preventivator%20%E2%80%94%20Bug%20o%20licenza%20commerciale" class="footer-bug">
+            🐛 Segnala un bug o richiedi la licenza commerciale
+          </a>
+        </div>
+      </div>
+    </footer>
   </div>
 
 
