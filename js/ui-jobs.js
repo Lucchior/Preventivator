@@ -107,7 +107,6 @@ export async function renderJobs() {
   const [jobs, machines, materials] = await Promise.all([
     getJobs(), getMachines(), getMaterials(),
   ]);
-  console.log('[DEBUG] renderJobs() popola i menu con:', machines.map(m => `${m.name} (${m.id})`));
   const container = document.getElementById('jobsList');
   if (!jobs.length) {
     container.innerHTML = '<div class="jobs-empty">Nessuna lavorazione aggiunta. Usa i pulsanti qui sotto per aggiungerne una.</div>';
