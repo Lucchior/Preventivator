@@ -211,6 +211,11 @@
                 <label for="maintenanceCost">Manutenzione ogni 1000h (€)</label>
                 <input id="maintenanceCost" type="number" min="0" step="0.01" placeholder="0.00" required />
               </div>
+              <div class="field full">
+                <label for="rapidFeedMmMin">Velocità spostamenti a vuoto (mm/min) — solo laser</label>
+                <input id="rapidFeedMmMin" type="number" min="1" step="1" placeholder="4000" value="4000" />
+                <div class="field-hint">Usata solo per stimare il tempo dai file .gcode laser (LightBurn): la velocità dei movimenti "a vuoto" tra un taglio e l'altro. Se non la conosci, lascia il valore predefinito.</div>
+              </div>
             </div>
             <div class="actions">
               <button class="primary" type="submit" id="machineSubmitBtn">Salva macchina</button>

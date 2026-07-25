@@ -7,6 +7,7 @@ import { getJobs, saveJobs, newJob, getMachines, getMaterials, UNIT_LABELS } fro
 import { escapeHtml, showUndoToast } from './utils.js';
 import { loadData, saveData, STORAGE_KEYS } from './storage.js';
 import { parse3mfFile } from './ui-3mf.js';
+import { parseLaserGcodeFile } from './ui-laser-gcode.js';
 
 // ── Template lavorazione ──────────────────────────────────────────────────────
 async function getTemplates() {
@@ -75,7 +76,16 @@ function buildJobCard(job, index, machines, materials) {
           <div class="mf3-status" data-3mf-status="${job.id}"></div>
           <div class="mf3-preview hidden" data-3mf-preview="${job.id}"><img alt="Anteprima oggetto" /></div>
           <div class="mf3-plates hidden" data-3mf-plates="${job.id}"></div>
-        </div>` : ''}
+        </div>` : `
+        <div class="field full">
+          <div class="mf3-import-box">
+            <label class="secondary file-btn" for="lg-${job.id}">📂 Importa da file .gcode (LightBurn)</label>
+            <input type="file" accept=".gcode,.gco,.g,.gc,.nc" style="display:none;" data-lg-input="${job.id}" id="lg-${job.id}" />
+            <span class="mf3-filename" data-lg-filename="${job.id}">Nessun file selezionato</span>
+          </div>
+          <p class="mf3-hint">💡 Calcolo il <strong>tempo</strong> simulando il percorso di taglio/incisione (LightBurn non lo scrive nel file). La <strong>quantità di materiale</strong> non viene compilata automaticamente: dipende dalla tua unità di misura (fogli, metri, pezzi...); ti mostro però l'area lavorata come riferimento.</p>
+          <div class="mf3-status" data-lg-status="${job.id}"></div>
+        </div>`}
         <div class="field">
           <label>Pezzi per ${unitLabel}</label>
           <input type="number" min="1" step="1" data-field="piecesPerUnit" data-id="${job.id}" value="${job.piecesPerUnit || 1}" />
@@ -280,6 +290,39 @@ export function initJobsHandlers() {
   }
 
   container.addEventListener('change', async (e) => {
+    // ── Import G-code laser (LightBurn) ──
+    const lgInput = e.target.closest('[data-lg-input]');
+    if (lgInput) {
+      const jobId = lgInput.dataset.lgInput;
+      const file  = lgInput.files?.[0];
+      if (!file) return;
+
+      const filenameEl = container.querySelector(`[data-lg-filename="${jobId}"]`);
+      const statusEl    = container.querySelector(`[data-lg-status="${jobId}"]`);
+      if (filenameEl) filenameEl.textContent = file.name;
+      if (statusEl) { statusEl.textContent = 'Analisi del percorso in corso…'; statusEl.className = 'mf3-status'; }
+
+      const { hours, widthMm, heightMm, warning } = await (async () => {
+        const jobsNow = await getJobs();
+        const job     = jobsNow.find(j => j.id === jobId);
+        let rapidFeed;
+        if (job?.machineId) {
+          const machines = await getMachines();
+          const machine  = machines.find(m => m.id === job.machineId);
+          if (machine) rapidFeed = machine.rapidFeedMmMin;
+        }
+        return parseLaserGcodeFile(file, rapidFeed);
+      })();
+      await applyGramsHoursToJob(jobId, null, hours);
+
+      if (statusEl) {
+        statusEl.textContent = (hours !== null ? '✅ ' : '⚠️ ') + (warning || '');
+        statusEl.classList.add(hours !== null ? 'mf3-ok' : 'mf3-warn');
+      }
+      lgInput.value = '';
+      return;
+    }
+
     const fileInput = e.target.closest('[data-3mf-input]');
     if (!fileInput) return;
     const jobId = fileInput.dataset['3mfInput'];

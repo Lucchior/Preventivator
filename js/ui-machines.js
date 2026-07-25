@@ -34,6 +34,7 @@ export async function renderMachines() {
             <div class="stat"><div class="k">Consumo</div><div class="v">${num.format(Number(m.powerKwh || 0))} kWh ogni ${num.format(Number(m.powerEveryH || 1))} h</div></div>
             <div class="stat"><div class="k">Costo energia/h</div><div class="v">${currency.format(energyH)}</div></div>
             <div class="stat"><div class="k">Manut. 1000h</div><div class="v">${currency.format(Number(m.maintenanceCost || 0))}</div></div>
+            ${m.type === 'laser' ? `<div class="stat"><div class="k">Velocità rapida</div><div class="v">${num.format(Number(m.rapidFeedMmMin || 4000))} mm/min</div></div>` : ''}
           </div>
         </div>`;
       }).join('')
@@ -51,6 +52,7 @@ function fillMachineForm(m) {
   document.getElementById('powerKwh').value             = m.powerKwh;
   document.getElementById('powerEveryH').value          = m.powerEveryH;
   document.getElementById('maintenanceCost').value      = m.maintenanceCost;
+  document.getElementById('rapidFeedMmMin').value       = m.rapidFeedMmMin || 4000;
 }
 
 function enterEditMode(m) {
@@ -113,6 +115,7 @@ export function initMachinesHandlers() {
       powerKwh:        Number(document.getElementById('powerKwh').value),
       powerEveryH:     Number(document.getElementById('powerEveryH').value) || 1,
       maintenanceCost: Number(document.getElementById('maintenanceCost').value),
+      rapidFeedMmMin:  Number(document.getElementById('rapidFeedMmMin').value) || 4000,
     };
 
     if (editingMachineId) {

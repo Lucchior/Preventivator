@@ -31,6 +31,7 @@ export function normalizeMachine(m) {
     powerKwh:        Number(m.powerKwh       ?? m.powerConsumption ?? 0),
     powerEveryH:     Number(m.powerEveryH    ?? 1),
     maintenanceCost: Number(m.maintenanceCost ?? 0),
+    rapidFeedMmMin:  Number(m.rapidFeedMmMin ?? 4000), // solo per macchine laser: velocità spostamenti a vuoto (G0)
   };
 }
 
