@@ -67,10 +67,11 @@ function buildJobCard(job, index, machines, materials) {
         ${is3d ? `
         <div class="field full">
           <div class="mf3-import-box">
-            <label class="secondary file-btn" for="mf3-${job.id}">📂 Importa da file .3mf già sezionato</label>
-            <input type="file" accept=".3mf" style="display:none;" data-3mf-input="${job.id}" id="mf3-${job.id}" />
+            <label class="secondary file-btn" for="mf3-${job.id}">📂 Importa da file .3mf o .gcode</label>
+            <input type="file" accept=".3mf,.gcode,.gco,.g" style="display:none;" data-3mf-input="${job.id}" id="mf3-${job.id}" />
             <span class="mf3-filename" data-3mf-filename="${job.id}">Nessun file selezionato</span>
           </div>
+          <p class="mf3-hint">💡 Il .gcode è più affidabile: quasi ogni slicer scrive lì i dati di peso/tempo. Alcuni slicer (es. Anycubic Slicer Next) non li includono nel .3mf.</p>
           <div class="mf3-status" data-3mf-status="${job.id}"></div>
           <div class="mf3-preview hidden" data-3mf-preview="${job.id}"><img alt="Anteprima oggetto" /></div>
         </div>` : ''}

@@ -63,11 +63,33 @@ function extractFromGcodeText(text) {
 }
 
 /**
- * Analizza un file .3mf già sezionato.
+ * Analizza un file .3mf già sezionato oppure un file .gcode esportato dallo slicer.
+ * Il G-code è il formato più affidabile in assoluto: quasi ogni slicer (Bambu Studio,
+ * OrcaSlicer, Anycubic Slicer Next, PrusaSlicer, Cura...) scrive peso e tempo stimato
+ * nei commenti di intestazione del G-code stesso. Il .3mf invece NON sempre li include
+ * (dipende dallo slicer: alcuni, come Anycubic Slicer Next, non incorporano il G-code
+ * dentro il progetto .3mf, quindi in quel caso non c'è nulla da estrarre).
+ *
  * @param {File} file
  * @returns {Promise<{grams:number|null, hours:number|null, thumbnail:string|null, warning:string|null}>}
  */
 export async function parse3mfFile(file) {
+  const isGcode = /\.(gcode|gco|g)$/i.test(file.name);
+
+  // ── Percorso 1: file .gcode diretto — nessun ZIP necessario ──────────
+  if (isGcode) {
+    const text = await file.text();
+    const found = extractFromGcodeText(text);
+    let warning = null;
+    if (found.grams === null && found.hours === null) {
+      warning = 'Non ho trovato dati di slicing nei commenti di questo G-code. Verifica che sia il file esportato direttamente dallo slicer (non modificato).';
+    } else if (found.grams === null || found.hours === null) {
+      warning = 'Ho trovato solo uno dei due dati (grammi o ore): completa manualmente il campo mancante.';
+    }
+    return { ...found, warning };
+  }
+
+  // ── Percorso 2: file .3mf — proviamo ad aprirlo come archivio ZIP ────
   if (typeof window.JSZip === 'undefined') {
     return { grams: null, hours: null, thumbnail: null,
       warning: 'Libreria di lettura .3mf non disponibile (verifica che vendor/jszip.min.js sia presente nel sito).' };
@@ -114,7 +136,7 @@ export async function parse3mfFile(file) {
 
   let warning = null;
   if (grams === null && hours === null) {
-    warning = 'Non ho trovato dati di slicing in questo file (grammi/ore). Probabile causa: il file non è stato sezionato con Bambu Studio/OrcaSlicer, o è un modello grezzo non ancora sezionato. Inserisci i valori manualmente.';
+    warning = 'Questo file .3mf non contiene dati di slicing incorporati (dipende dallo slicer usato: alcuni, come Anycubic Slicer Next, non li includono nel progetto .3mf). Prova a caricare il file .gcode esportato dallo stesso slicer — di solito li contiene sempre.';
   } else if (grams === null || hours === null) {
     warning = 'Ho trovato solo uno dei due dati (grammi o ore): completa manualmente il campo mancante.';
   }
