@@ -580,3 +580,21 @@ input[type=checkbox] { accent-color: var(--accent); cursor: pointer; flex-shrink
 @media (min-width: 480px) {
   .browser-guides { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* ── Import file .3mf sezionato (stampa 3D) ─────────────────────── */
+.mf3-import-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: var(--surface-2);
+  border: 1px dashed var(--border-2);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+}
+.mf3-filename { font-size: 12.5px; color: var(--muted); }
+.mf3-status { font-size: 12.5px; margin-top: 6px; min-height: 16px; }
+.mf3-status.mf3-ok   { color: var(--green); }
+.mf3-status.mf3-warn { color: var(--orange); }
+.mf3-preview { margin-top: 8px; }
+.mf3-preview img { max-width: 140px; max-height: 140px; border-radius: var(--r-sm); border: 1px solid var(--border); display: block; }

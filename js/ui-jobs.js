@@ -6,6 +6,7 @@
 import { getJobs, saveJobs, newJob, getMachines, getMaterials, UNIT_LABELS } from './models.js';
 import { escapeHtml, showUndoToast } from './utils.js';
 import { loadData, saveData, STORAGE_KEYS } from './storage.js';
+import { parse3mfFile } from './ui-3mf.js';
 
 // ── Template lavorazione ──────────────────────────────────────────────────────
 async function getTemplates() {
@@ -63,6 +64,16 @@ function buildJobCard(job, index, machines, materials) {
             <option value="">— Seleziona —</option>${materialOptions}
           </select>
         </div>
+        ${is3d ? `
+        <div class="field full">
+          <div class="mf3-import-box">
+            <label class="secondary file-btn" for="mf3-${job.id}">📂 Importa da file .3mf già sezionato</label>
+            <input type="file" accept=".3mf" style="display:none;" data-3mf-input="${job.id}" id="mf3-${job.id}" />
+            <span class="mf3-filename" data-3mf-filename="${job.id}">Nessun file selezionato</span>
+          </div>
+          <div class="mf3-status" data-3mf-status="${job.id}"></div>
+          <div class="mf3-preview hidden" data-3mf-preview="${job.id}"><img alt="Anteprima oggetto" /></div>
+        </div>` : ''}
         <div class="field">
           <label>Pezzi per ${unitLabel}</label>
           <input type="number" min="1" step="1" data-field="piecesPerUnit" data-id="${job.id}" value="${job.piecesPerUnit || 1}" />
@@ -187,6 +198,59 @@ function initDragAndDrop(container) {
 
 export function initJobsHandlers() {
   const container = document.getElementById('jobsList');
+
+  container.addEventListener('change', async (e) => {
+    const fileInput = e.target.closest('[data-3mf-input]');
+    if (!fileInput) return;
+    const jobId = fileInput.dataset['3mfInput'];
+    const file  = fileInput.files?.[0];
+    if (!file) return;
+
+    const filenameEl = container.querySelector(`[data-3mf-filename="${jobId}"]`);
+    const statusEl    = container.querySelector(`[data-3mf-status="${jobId}"]`);
+    const previewWrap = container.querySelector(`[data-3mf-preview="${jobId}"]`);
+    if (filenameEl) filenameEl.textContent = file.name;
+    if (statusEl) { statusEl.textContent = 'Analisi del file in corso…'; statusEl.className = 'mf3-status'; }
+    if (previewWrap) previewWrap.classList.add('hidden');
+
+    const { grams, hours, thumbnail, warning } = await parse3mfFile(file);
+
+    // Aggiorna direttamente i campi visibili (niente re-render, per non perdere anteprima/stato)
+    const jobs = await getJobs();
+    const job  = jobs.find(j => j.id === jobId);
+    if (job) {
+      if (grams !== null) {
+        job.gramsPerUnit = Math.round(grams * 100) / 100;
+        const el = container.querySelector(`[data-field="gramsPerUnit"][data-id="${jobId}"]`);
+        if (el) el.value = job.gramsPerUnit;
+      }
+      if (hours !== null) {
+        const totalMin = Math.round(hours * 60);
+        job.days    = Math.floor(totalMin / 1440);
+        job.hours   = Math.floor((totalMin % 1440) / 60);
+        job.minutes = totalMin % 60;
+        const dEl = container.querySelector(`[data-field="days"][data-id="${jobId}"]`);
+        const hEl = container.querySelector(`[data-field="hours"][data-id="${jobId}"]`);
+        const mEl = container.querySelector(`[data-field="minutes"][data-id="${jobId}"]`);
+        if (dEl) dEl.value = job.days;
+        if (hEl) hEl.value = job.hours;
+        if (mEl) mEl.value = job.minutes;
+      }
+      await saveJobs(jobs);
+    }
+
+    if (thumbnail && previewWrap) {
+      previewWrap.querySelector('img').src = thumbnail;
+      previewWrap.classList.remove('hidden');
+    }
+
+    if (statusEl) {
+      if (warning) { statusEl.textContent = '⚠️ ' + warning; statusEl.classList.add('mf3-warn'); }
+      else         { statusEl.textContent = '✅ Grammi e ore compilati automaticamente dal file.'; statusEl.classList.add('mf3-ok'); }
+    }
+
+    fileInput.value = '';
+  });
 
   container.addEventListener('click', async (e) => {
     // ── Salva come template ──
