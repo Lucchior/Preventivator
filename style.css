@@ -599,3 +599,26 @@ input[type=checkbox] { accent-color: var(--accent); cursor: pointer; flex-shrink
 .mf3-status.mf3-warn { color: var(--orange); }
 .mf3-preview { margin-top: 8px; }
 .mf3-preview img { max-width: 140px; max-height: 140px; border-radius: var(--r-sm); border: 1px solid var(--border); display: block; }
+
+/* ── Selettore piatti da file .3mf multi-piatto ─────────────────── */
+.mf3-plates { margin-top: 10px; }
+.mf3-plates-title { font-size: 12.5px; color: var(--text-2); margin-bottom: 8px; }
+.mf3-plates-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; }
+.mf3-plate-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 6px;
+  cursor: pointer;
+  transition: border-color .15s, transform .1s;
+  font-family: var(--font);
+}
+.mf3-plate-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+.mf3-plate-card img { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 4px; background: var(--surface-2); }
+.mf3-plate-noimg { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--muted); background: var(--surface-2); border-radius: 4px; text-align: center; }
+.mf3-plate-label { font-size: 11px; font-weight: 600; color: var(--text); }
+.mf3-plate-meta { font-size: 10px; color: var(--muted); }

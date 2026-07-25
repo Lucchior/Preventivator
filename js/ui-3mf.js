@@ -1,34 +1,36 @@
 /**
  * ui-3mf.js — Preventivator
- * Estrazione automatica di grammi/ore (e miniatura, se presente) da un file
- * .gcode esportato dallo slicer dopo il sezionamento.
+ * Estrazione automatica di grammi/ore (e miniatura) da:
+ *  - un file .gcode esportato dallo slicer dopo il sezionamento (formato
+ *    universale, funziona con quasi ogni slicer)
+ *  - un file .3mf esportato con l'opzione "Esporta tutti i piatti elaborati"
+ *    di Anycubic Slicer Next / OrcaSlicer (NON il "salva progetto" standard,
+ *    che non contiene questi dati). Questo formato "pacchetto multi-piatto"
+ *    include un G-code per piatto, miniature PNG separate per piatto, e un
+ *    riepilogo XML (slice_info.config) con peso/tempo già pronti per ognuno.
  *
- * Il G-code è l'unico formato supportato: è quello che quasi ogni slicer
- * (Bambu Studio, OrcaSlicer, Anycubic Slicer Next, PrusaSlicer, Cura...)
- * scrive sempre con peso e tempo stimato nei commenti di intestazione/coda.
- * Il formato .3mf è stato abbandonato: verificato che né Bambu Studio né
- * Anycubic Slicer Next incorporano in modo affidabile questi dati lì dentro.
+ * Il .3mf richiede JSZip (vendorizzata in vendor/jszip.min.js) per aprire
+ * l'archivio. Il .gcode invece è testo puro, nessuna libreria necessaria.
  */
 
 // ── Pattern di ricerca in un G-code testuale (multi-slicer) ──────────────────
-// L'ordine conta: proviamo prima i pattern più specifici/affidabili.
 const GRAMS_PATTERNS = [
-  /total\s+filament\s+used\s*\[g\]\s*[:=]\s*([\d.]+)/i,             // Bambu/Orca/Anycubic — riga "totale"
-  /total\s+filament\s+weight\s*\[g\]\s*[:=]\s*([\d.]+)/i,           // varianti alternative
-  /;\s*Filament\s+used\s*:\s*([\d.]+)\s*g/i,                        // Cura (varianti)
+  /total\s+filament\s+used\s*\[g\]\s*[:=]\s*([\d.]+)/i,
+  /total\s+filament\s+weight\s*\[g\]\s*[:=]\s*([\d.]+)/i,
+  /;\s*Filament\s+used\s*:\s*([\d.]+)\s*g/i,
   /filament\s+weight\s*\[g\]\s*[:=]\s*([\d.]+)/i,
-  /filament\s+used\s*\[g\]\s*[:=]\s*([\d.]+)/i,                     // fallback generico (usato solo se nessuna riga "totale" è presente)
+  /filament\s+used\s*\[g\]\s*[:=]\s*([\d.]+)/i,
 ];
 const TIME_PATTERNS = [
-  /model\s+printing\s+time[^:=]*[:=]\s*([^\n;]+)/i,                 // Bambu/Orca
-  /estimated\s+printing\s+time[^=]*=\s*([^\n;]+)/i,                 // PrusaSlicer/Slic3r/Anycubic
-  /;\s*TIME\s*:\s*(\d+)/i,                                          // Cura (secondi)
+  /model\s+printing\s+time[^:=]*[:=]\s*([^\n;]+)/i,
+  /estimated\s+printing\s+time[^=]*=\s*([^\n;]+)/i,
+  /;\s*TIME\s*:\s*(\d+)/i,
 ];
 
 function parseDurationToHours(raw) {
   if (!raw) return null;
   const text = String(raw).trim();
-  if (/^\d+$/.test(text)) return Number(text) / 3600; // solo secondi (Cura)
+  if (/^\d+$/.test(text)) return Number(text) / 3600;
   let totalSeconds = 0;
   const d = text.match(/(\d+(?:\.\d+)?)\s*d/i);
   const h = text.match(/(\d+(?:\.\d+)?)\s*h/i);
@@ -50,7 +52,6 @@ function extractFromGcodeText(text) {
   for (const p of GRAMS_PATTERNS) { const m = text.match(p); if (m) { grams = Number(m[1]); break; } }
   for (const p of TIME_PATTERNS)  { const m = text.match(p); if (m) { hours = parseDurationToHours(m[1]); if (hours !== null) break; } }
 
-  // Miniatura incorporata nel gcode (formato standard Bambu/Orca/Anycubic/PrusaSlicer)
   let thumbnail = null;
   const blocks = [...text.matchAll(/;\s*thumbnail(?:_QOI)?\s+begin\s+(\d+)x(\d+)\s+\d+[^\n]*\n([\s\S]*?);\s*thumbnail(?:_QOI)?\s+end/gi)];
   if (blocks.length) {
@@ -66,11 +67,10 @@ function extractFromGcodeText(text) {
 }
 
 /**
- * Analizza un file .gcode esportato dallo slicer.
- * @param {File} file
- * @returns {Promise<{grams:number|null, hours:number|null, thumbnail:string|null, warning:string|null}>}
+ * Analizza un file .gcode singolo.
+ * @returns {Promise<{mode:'single', grams, hours, thumbnail, warning}>}
  */
-export async function parse3mfFile(file) {
+async function parseGcodeFile(file) {
   const text = await file.text();
   const found = extractFromGcodeText(text);
   let warning = null;
@@ -79,5 +79,74 @@ export async function parse3mfFile(file) {
   } else if (found.grams === null || found.hours === null) {
     warning = 'Ho trovato solo uno dei due dati (grammi o ore): completa manualmente il campo mancante.';
   }
-  return { ...found, warning };
+  return { mode: 'single', ...found, warning };
+}
+
+/**
+ * Analizza un file .3mf "pacchetto multi-piatto" (slice_info.config con più
+ * blocchi <plate>). Restituisce l'elenco dei piatti trovati, ognuno con peso,
+ * ore e miniatura — l'utente sceglierà quale importare nella card corrente.
+ * @returns {Promise<{mode:'plates', plates:Array, warning:string|null}>}
+ */
+async function parse3mfPackage(file) {
+  if (typeof window.JSZip === 'undefined') {
+    return { mode: 'plates', plates: [],
+      warning: 'Libreria di lettura .3mf non disponibile (verifica che vendor/jszip.min.js sia presente nel sito).' };
+  }
+
+  let zip;
+  try {
+    zip = await window.JSZip.loadAsync(await file.arrayBuffer());
+  } catch {
+    return { mode: 'plates', plates: [], warning: 'Il file non sembra un archivio .3mf valido.' };
+  }
+
+  const names = Object.keys(zip.files);
+  const infoEntry = names.find(n => /slice_info\.config$/i.test(n));
+  if (!infoEntry) {
+    return { mode: 'plates', plates: [],
+      warning: 'Questo .3mf non contiene un riepilogo piatti riconoscibile. Usa l\'opzione "Esporta tutti i piatti elaborati" dello slicer (non il "salva progetto" standard), oppure carica direttamente il file .gcode.' };
+  }
+
+  const xml = await zip.files[infoEntry].async('text');
+  const plateBlocks = [...xml.matchAll(/<plate>([\s\S]*?)<\/plate>/gi)];
+  if (!plateBlocks.length) {
+    return { mode: 'plates', plates: [],
+      warning: 'Nessun dato di peso/tempo trovato in questo .3mf. Usa l\'opzione "Esporta tutti i piatti elaborati" dello slicer, oppure carica il file .gcode.' };
+  }
+
+  const plates = [];
+  for (const [, block] of plateBlocks) {
+    const idxM = block.match(/key="index"\s+value="(\d+)"/i);
+    const wM   = block.match(/key="weight"\s+value="([\d.]+)"/i);
+    const pM   = block.match(/key="prediction"\s+value="([\d.]+)"/i);
+    if (!idxM) continue;
+    const index  = Number(idxM[1]);
+    const grams  = wM ? Number(wM[1]) : null;
+    const hours  = pM ? Number(pM[1]) / 3600 : null;
+
+    // Miniatura: preferiamo il file piccolo (più leggero, sufficiente come anteprima)
+    let thumbnail = null;
+    const thumbName = names.find(n => new RegExp(`plate_${index}_small\\.png$`, 'i').test(n))
+      || names.find(n => new RegExp(`plate_${index}\\.png$`, 'i').test(n));
+    if (thumbName) {
+      const b64 = await zip.files[thumbName].async('base64');
+      thumbnail = `data:image/png;base64,${b64}`;
+    }
+
+    plates.push({ index, grams, hours, thumbnail });
+  }
+
+  plates.sort((a, b) => a.index - b.index);
+  return { mode: 'plates', plates, warning: plates.length ? null : 'Nessun piatto valido trovato in questo file.' };
+}
+
+/**
+ * Punto di ingresso: instrada in base all'estensione del file.
+ * @param {File} file
+ * @returns {Promise<{mode:'single'|'plates', ...}>}
+ */
+export async function parse3mfFile(file) {
+  const isGcode = /\.(gcode|gco|g)$/i.test(file.name);
+  return isGcode ? parseGcodeFile(file) : parse3mfPackage(file);
 }

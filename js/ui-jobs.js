@@ -67,13 +67,14 @@ function buildJobCard(job, index, machines, materials) {
         ${is3d ? `
         <div class="field full">
           <div class="mf3-import-box">
-            <label class="secondary file-btn" for="mf3-${job.id}">📂 Importa da file .gcode</label>
-            <input type="file" accept=".gcode,.gco,.g" style="display:none;" data-3mf-input="${job.id}" id="mf3-${job.id}" />
+            <label class="secondary file-btn" for="mf3-${job.id}">📂 Importa da file .gcode o .3mf</label>
+            <input type="file" accept=".gcode,.gco,.g,.3mf" style="display:none;" data-3mf-input="${job.id}" id="mf3-${job.id}" />
             <span class="mf3-filename" data-3mf-filename="${job.id}">Nessun file selezionato</span>
           </div>
-          <p class="mf3-hint">💡 Serve il file <strong>.gcode</strong> esportato dal tuo slicer dopo il sezionamento (non il .3mf: verificato che né Bambu Studio né Anycubic Slicer Next salvano lì peso e tempo in modo affidabile).</p>
+          <p class="mf3-hint">💡 Il <strong>.gcode</strong> funziona sempre. Per il <strong>.3mf</strong> usa l'opzione slicer "Esporta tutti i piatti elaborati" (non il "salva progetto" standard, che non contiene questi dati).</p>
           <div class="mf3-status" data-3mf-status="${job.id}"></div>
           <div class="mf3-preview hidden" data-3mf-preview="${job.id}"><img alt="Anteprima oggetto" /></div>
+          <div class="mf3-plates hidden" data-3mf-plates="${job.id}"></div>
         </div>` : ''}
         <div class="field">
           <label>Pezzi per ${unitLabel}</label>
@@ -200,6 +201,57 @@ function initDragAndDrop(container) {
 export function initJobsHandlers() {
   const container = document.getElementById('jobsList');
 
+  /** Scrive grammi/ore nei campi visibili e nei dati del job, senza re-render completo. */
+  async function applyGramsHoursToJob(jobId, grams, hours) {
+    const jobs = await getJobs();
+    const job  = jobs.find(j => j.id === jobId);
+    if (!job) return;
+    if (grams !== null && grams !== undefined) {
+      job.gramsPerUnit = Math.round(grams * 100) / 100;
+      const el = container.querySelector(`[data-field="gramsPerUnit"][data-id="${jobId}"]`);
+      if (el) el.value = job.gramsPerUnit;
+    }
+    if (hours !== null && hours !== undefined) {
+      const totalMin = Math.round(hours * 60);
+      job.days    = Math.floor(totalMin / 1440);
+      job.hours   = Math.floor((totalMin % 1440) / 60);
+      job.minutes = totalMin % 60;
+      const dEl = container.querySelector(`[data-field="days"][data-id="${jobId}"]`);
+      const hEl = container.querySelector(`[data-field="hours"][data-id="${jobId}"]`);
+      const mEl = container.querySelector(`[data-field="minutes"][data-id="${jobId}"]`);
+      if (dEl) dEl.value = job.days;
+      if (hEl) hEl.value = job.hours;
+      if (mEl) mEl.value = job.minutes;
+    }
+    await saveJobs(jobs);
+  }
+
+  function renderPlatePicker(jobId, plates) {
+    const platesWrap = container.querySelector(`[data-3mf-plates="${jobId}"]`);
+    if (!platesWrap) return;
+    if (!plates.length) { platesWrap.classList.add('hidden'); return; }
+
+    platesWrap.innerHTML = `
+      <p class="mf3-plates-title">Questo file contiene ${plates.length} piatti — scegli quello da importare in questa lavorazione:</p>
+      <div class="mf3-plates-grid">
+        ${plates.map(p => `
+          <button type="button" class="mf3-plate-card" data-3mf-plate-pick="${jobId}" data-plate-index="${p.index}">
+            ${p.thumbnail ? `<img src="${p.thumbnail}" alt="Piatto ${p.index}" />` : '<div class="mf3-plate-noimg">Nessuna anteprima</div>'}
+            <div class="mf3-plate-label">Piatto ${p.index}</div>
+            <div class="mf3-plate-meta">${p.grams !== null ? p.grams.toFixed(2) + ' g' : '—'} · ${p.hours !== null ? formatHoursShort(p.hours) : '—'}</div>
+          </button>
+        `).join('')}
+      </div>`;
+    platesWrap.classList.remove('hidden');
+    platesWrap._platesData = plates; // conserviamo i dati per il click handler
+  }
+
+  function formatHoursShort(hours) {
+    const totalMin = Math.round(hours * 60);
+    const h = Math.floor(totalMin / 60), m = totalMin % 60;
+    return h > 0 ? `${h}h ${m}min` : `${m}min`;
+  }
+
   container.addEventListener('change', async (e) => {
     const fileInput = e.target.closest('[data-3mf-input]');
     if (!fileInput) return;
@@ -210,50 +262,61 @@ export function initJobsHandlers() {
     const filenameEl = container.querySelector(`[data-3mf-filename="${jobId}"]`);
     const statusEl    = container.querySelector(`[data-3mf-status="${jobId}"]`);
     const previewWrap = container.querySelector(`[data-3mf-preview="${jobId}"]`);
+    const platesWrap  = container.querySelector(`[data-3mf-plates="${jobId}"]`);
     if (filenameEl) filenameEl.textContent = file.name;
     if (statusEl) { statusEl.textContent = 'Analisi del file in corso…'; statusEl.className = 'mf3-status'; }
     if (previewWrap) previewWrap.classList.add('hidden');
+    if (platesWrap) platesWrap.classList.add('hidden');
 
-    const { grams, hours, thumbnail, warning } = await parse3mfFile(file);
+    const result = await parse3mfFile(file);
 
-    // Aggiorna direttamente i campi visibili (niente re-render, per non perdere anteprima/stato)
-    const jobs = await getJobs();
-    const job  = jobs.find(j => j.id === jobId);
-    if (job) {
-      if (grams !== null) {
-        job.gramsPerUnit = Math.round(grams * 100) / 100;
-        const el = container.querySelector(`[data-field="gramsPerUnit"][data-id="${jobId}"]`);
-        if (el) el.value = job.gramsPerUnit;
+    if (result.mode === 'plates') {
+      // .3mf multi-piatto: mostriamo il selettore, l'utente sceglie quale importare
+      if (result.warning && !result.plates.length) {
+        if (statusEl) { statusEl.textContent = '⚠️ ' + result.warning; statusEl.classList.add('mf3-warn'); }
+      } else {
+        if (statusEl) { statusEl.textContent = `✅ Trovati ${result.plates.length} piatti nel file. Scegli quello giusto qui sotto.`; statusEl.classList.add('mf3-ok'); }
+        renderPlatePicker(jobId, result.plates);
       }
-      if (hours !== null) {
-        const totalMin = Math.round(hours * 60);
-        job.days    = Math.floor(totalMin / 1440);
-        job.hours   = Math.floor((totalMin % 1440) / 60);
-        job.minutes = totalMin % 60;
-        const dEl = container.querySelector(`[data-field="days"][data-id="${jobId}"]`);
-        const hEl = container.querySelector(`[data-field="hours"][data-id="${jobId}"]`);
-        const mEl = container.querySelector(`[data-field="minutes"][data-id="${jobId}"]`);
-        if (dEl) dEl.value = job.days;
-        if (hEl) hEl.value = job.hours;
-        if (mEl) mEl.value = job.minutes;
-      }
-      await saveJobs(jobs);
+      fileInput.value = '';
+      return;
     }
 
-    if (thumbnail && previewWrap) {
-      previewWrap.querySelector('img').src = thumbnail;
+    // mode === 'single' (.gcode)
+    await applyGramsHoursToJob(jobId, result.grams, result.hours);
+    if (result.thumbnail && previewWrap) {
+      previewWrap.querySelector('img').src = result.thumbnail;
       previewWrap.classList.remove('hidden');
     }
-
     if (statusEl) {
-      if (warning) { statusEl.textContent = '⚠️ ' + warning; statusEl.classList.add('mf3-warn'); }
-      else         { statusEl.textContent = '✅ Grammi e ore compilati dal file (sono il totale di tutto ciò che contiene: se il G-code include più piatti insieme, lascia "Numero piatti" a 1 per non raddoppiare il calcolo).'; statusEl.classList.add('mf3-ok'); }
+      if (result.warning) { statusEl.textContent = '⚠️ ' + result.warning; statusEl.classList.add('mf3-warn'); }
+      else { statusEl.textContent = '✅ Grammi e ore compilati dal file (sono il totale di tutto ciò che contiene: se il G-code include più piatti insieme, lascia "Numero piatti" a 1 per non raddoppiare il calcolo).'; statusEl.classList.add('mf3-ok'); }
     }
-
     fileInput.value = '';
   });
 
   container.addEventListener('click', async (e) => {
+    // ── Selezione piatto da .3mf multi-piatto ──
+    const plateBtn = e.target.closest('[data-3mf-plate-pick]');
+    if (plateBtn) {
+      const jobId = plateBtn.dataset['3mfPlatePick'];
+      const platesWrap = container.querySelector(`[data-3mf-plates="${jobId}"]`);
+      const plates = platesWrap?._platesData || [];
+      const chosen = plates.find(p => p.index === Number(plateBtn.dataset.plateIndex));
+      if (!chosen) return;
+
+      await applyGramsHoursToJob(jobId, chosen.grams, chosen.hours);
+      const previewWrap = container.querySelector(`[data-3mf-preview="${jobId}"]`);
+      if (chosen.thumbnail && previewWrap) {
+        previewWrap.querySelector('img').src = chosen.thumbnail;
+        previewWrap.classList.remove('hidden');
+      }
+      const statusEl = container.querySelector(`[data-3mf-status="${jobId}"]`);
+      if (statusEl) { statusEl.textContent = `✅ Piatto ${chosen.index} importato: ${chosen.grams?.toFixed(2) ?? '—'} g, ${chosen.hours ? formatHoursShort(chosen.hours) : '—'}.`; statusEl.className = 'mf3-status mf3-ok'; }
+      platesWrap.classList.add('hidden');
+      return;
+    }
+
     // ── Salva come template ──
     const tplBtn = e.target.closest('[data-save-template]');
     if (tplBtn) {
