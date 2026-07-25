@@ -231,8 +231,17 @@ export function initJobsHandlers() {
     if (!platesWrap) return;
     if (!plates.length) { platesWrap.classList.add('hidden'); return; }
 
+    const totalGrams = plates.reduce((s, p) => s + (p.grams || 0), 0);
+    const totalHours  = plates.reduce((s, p) => s + (p.hours || 0), 0);
+
     platesWrap.innerHTML = `
-      <p class="mf3-plates-title">Questo file contiene ${plates.length} piatti — scegli quello da importare in questa lavorazione:</p>
+      <p class="mf3-plates-title">Questo file contiene ${plates.length} piatti.</p>
+      <div class="mf3-plates-actions">
+        <button type="button" class="secondary" data-3mf-import-all="${jobId}">
+          📥 Importa tutti i ${plates.length} piatti (somma: ${totalGrams.toFixed(2)} g, ${formatHoursShort(totalHours)})
+        </button>
+      </div>
+      <p class="mf3-plates-title" style="margin-top:10px;">…oppure scegli un singolo piatto da importare:</p>
       <div class="mf3-plates-grid">
         ${plates.map(p => `
           <button type="button" class="mf3-plate-card" data-3mf-plate-pick="${jobId}" data-plate-index="${p.index}">
@@ -243,7 +252,25 @@ export function initJobsHandlers() {
         `).join('')}
       </div>`;
     platesWrap.classList.remove('hidden');
-    platesWrap._platesData = plates; // conserviamo i dati per il click handler
+    platesWrap._platesData = plates; // conserviamo i dati per i click handler
+  }
+
+  function renderThumbnailStrip(jobId, thumbnails) {
+    const previewWrap = container.querySelector(`[data-3mf-preview="${jobId}"]`);
+    if (!previewWrap) return;
+    if (!thumbnails.length) { previewWrap.classList.add('hidden'); return; }
+    previewWrap.innerHTML = `
+      <div class="mf3-thumb-strip">
+        ${thumbnails.map(t => `<img src="${t}" alt="Anteprima piatto" />`).join('')}
+      </div>`;
+    previewWrap.classList.remove('hidden');
+  }
+
+  function showSingleThumbnail(jobId, thumbnail) {
+    const previewWrap = container.querySelector(`[data-3mf-preview="${jobId}"]`);
+    if (!previewWrap || !thumbnail) return;
+    previewWrap.innerHTML = `<img alt="Anteprima oggetto" src="${thumbnail}" />`;
+    previewWrap.classList.remove('hidden');
   }
 
   function formatHoursShort(hours) {
@@ -284,10 +311,7 @@ export function initJobsHandlers() {
 
     // mode === 'single' (.gcode)
     await applyGramsHoursToJob(jobId, result.grams, result.hours);
-    if (result.thumbnail && previewWrap) {
-      previewWrap.querySelector('img').src = result.thumbnail;
-      previewWrap.classList.remove('hidden');
-    }
+    if (result.thumbnail) showSingleThumbnail(jobId, result.thumbnail);
     if (statusEl) {
       if (result.warning) { statusEl.textContent = '⚠️ ' + result.warning; statusEl.classList.add('mf3-warn'); }
       else { statusEl.textContent = '✅ Grammi e ore compilati dal file (sono il totale di tutto ciò che contiene: se il G-code include più piatti insieme, lascia "Numero piatti" a 1 per non raddoppiare il calcolo).'; statusEl.classList.add('mf3-ok'); }
@@ -306,13 +330,33 @@ export function initJobsHandlers() {
       if (!chosen) return;
 
       await applyGramsHoursToJob(jobId, chosen.grams, chosen.hours);
-      const previewWrap = container.querySelector(`[data-3mf-preview="${jobId}"]`);
-      if (chosen.thumbnail && previewWrap) {
-        previewWrap.querySelector('img').src = chosen.thumbnail;
-        previewWrap.classList.remove('hidden');
-      }
+      if (chosen.thumbnail) showSingleThumbnail(jobId, chosen.thumbnail);
       const statusEl = container.querySelector(`[data-3mf-status="${jobId}"]`);
       if (statusEl) { statusEl.textContent = `✅ Piatto ${chosen.index} importato: ${chosen.grams?.toFixed(2) ?? '—'} g, ${chosen.hours ? formatHoursShort(chosen.hours) : '—'}.`; statusEl.className = 'mf3-status mf3-ok'; }
+      platesWrap.classList.add('hidden');
+      return;
+    }
+
+    // ── Importa tutti i piatti sommati ──
+    const importAllBtn = e.target.closest('[data-3mf-import-all]');
+    if (importAllBtn) {
+      const jobId = importAllBtn.dataset['3mfImportAll'];
+      const platesWrap = container.querySelector(`[data-3mf-plates="${jobId}"]`);
+      const plates = platesWrap?._platesData || [];
+      if (!plates.length) return;
+
+      const totalGrams = plates.reduce((s, p) => s + (p.grams || 0), 0);
+      const totalHours  = plates.reduce((s, p) => s + (p.hours || 0), 0);
+      await applyGramsHoursToJob(jobId, totalGrams, totalHours);
+
+      const thumbnails = plates.map(p => p.thumbnail).filter(Boolean);
+      renderThumbnailStrip(jobId, thumbnails);
+
+      const statusEl = container.querySelector(`[data-3mf-status="${jobId}"]`);
+      if (statusEl) {
+        statusEl.textContent = `✅ Importati tutti i ${plates.length} piatti: ${totalGrams.toFixed(2)} g totali, ${formatHoursShort(totalHours)} totali. Lascia "Numero piatti" a 1: il totale è già calcolato.`;
+        statusEl.className = 'mf3-status mf3-ok';
+      }
       platesWrap.classList.add('hidden');
       return;
     }
