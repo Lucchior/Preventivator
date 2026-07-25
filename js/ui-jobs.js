@@ -247,7 +247,7 @@ export function initJobsHandlers() {
 
     if (statusEl) {
       if (warning) { statusEl.textContent = '⚠️ ' + warning; statusEl.classList.add('mf3-warn'); }
-      else         { statusEl.textContent = '✅ Grammi e ore compilati automaticamente dal file.'; statusEl.classList.add('mf3-ok'); }
+      else         { statusEl.textContent = '✅ Grammi e ore compilati dal file (sono il totale di tutto ciò che contiene: se il G-code include più piatti insieme, lascia "Numero piatti" a 1 per non raddoppiare il calcolo).'; statusEl.classList.add('mf3-ok'); }
     }
 
     fileInput.value = '';

@@ -11,10 +11,11 @@
 // ── Pattern di ricerca in un G-code testuale (multi-slicer) ──────────────────
 // L'ordine conta: proviamo prima i pattern più specifici/affidabili.
 const GRAMS_PATTERNS = [
-  /total\s+filament\s+weight\s*\[g\]\s*[:=]\s*([\d.]+)/i,          // Bambu/Orca
-  /filament\s+used\s*\[g\]\s*[:=]\s*([\d.]+)/i,                     // PrusaSlicer/Slic3r
+  /total\s+filament\s+used\s*\[g\]\s*[:=]\s*([\d.]+)/i,             // Bambu/Orca/Anycubic — riga "totale"
+  /total\s+filament\s+weight\s*\[g\]\s*[:=]\s*([\d.]+)/i,           // varianti alternative
   /;\s*Filament\s+used\s*:\s*([\d.]+)\s*g/i,                        // Cura (varianti)
   /filament\s+weight\s*\[g\]\s*[:=]\s*([\d.]+)/i,
+  /filament\s+used\s*\[g\]\s*[:=]\s*([\d.]+)/i,                     // fallback generico (usato solo se nessuna riga "totale" è presente)
 ];
 const TIME_PATTERNS = [
   /model\s+printing\s+time[^:=]*[:=]\s*([^\n;]+)/i,                 // Bambu/Orca
@@ -49,7 +50,7 @@ function extractFromGcodeText(text) {
 
   // Miniatura incorporata nel gcode (formato standard Bambu/Orca/PrusaSlicer)
   let thumbnail = null;
-  const blocks = [...text.matchAll(/;\s*thumbnail(?:_QOI)?\s+begin\s+(\d+)x(\d+)\s+\d+([\s\S]*?);\s*thumbnail(?:_QOI)?\s+end/gi)];
+  const blocks = [...text.matchAll(/;\s*thumbnail(?:_QOI)?\s+begin\s+(\d+)x(\d+)\s+\d+[^\n]*\n([\s\S]*?);\s*thumbnail(?:_QOI)?\s+end/gi)];
   if (blocks.length) {
     let best = null, bestArea = 0;
     for (const b of blocks) {
