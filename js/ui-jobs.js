@@ -67,11 +67,11 @@ function buildJobCard(job, index, machines, materials) {
         ${is3d ? `
         <div class="field full">
           <div class="mf3-import-box">
-            <label class="secondary file-btn" for="mf3-${job.id}">📂 Importa da file .3mf o .gcode</label>
-            <input type="file" accept=".3mf,.gcode,.gco,.g" style="display:none;" data-3mf-input="${job.id}" id="mf3-${job.id}" />
+            <label class="secondary file-btn" for="mf3-${job.id}">📂 Importa da file .gcode</label>
+            <input type="file" accept=".gcode,.gco,.g" style="display:none;" data-3mf-input="${job.id}" id="mf3-${job.id}" />
             <span class="mf3-filename" data-3mf-filename="${job.id}">Nessun file selezionato</span>
           </div>
-          <p class="mf3-hint">💡 Il .gcode è più affidabile: quasi ogni slicer scrive lì i dati di peso/tempo. Alcuni slicer (es. Anycubic Slicer Next) non li includono nel .3mf.</p>
+          <p class="mf3-hint">💡 Serve il file <strong>.gcode</strong> esportato dal tuo slicer dopo il sezionamento (non il .3mf: verificato che né Bambu Studio né Anycubic Slicer Next salvano lì peso e tempo in modo affidabile).</p>
           <div class="mf3-status" data-3mf-status="${job.id}"></div>
           <div class="mf3-preview hidden" data-3mf-preview="${job.id}"><img alt="Anteprima oggetto" /></div>
         </div>` : ''}
