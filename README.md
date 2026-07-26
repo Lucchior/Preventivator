@@ -8,7 +8,9 @@ Web-app responsive per la creazione di preventivi professionali per lavorazioni 
 
 ## 📜 Licenza
 
-Progetto personale — tutti i diritti riservati. Puoi usarlo liberamente per **uso personale**. Vietata la copia o la distribuzione non autorizzata. Per **uso commerciale** contattami tramite [mail](mailto:ddusnoblogo@gmail.com?subject=Preventivator%20%E2%80%94%20Bug%20o%20licenza%20commerciale) per ottenere una licenza.
+Progetto personale — tutti i diritti riservati. Puoi usarlo liberamente per **uso personale**. Vietata la copia, il fork pubblico, la ridistribuzione o l'uso commerciale non autorizzato. Per **uso commerciale** contattami tramite [mail](mailto:ddusnoblogo@gmail.com?subject=Preventivator%20%E2%80%94%20Bug%20o%20licenza%20commerciale) per ottenere una licenza.
+
+📄 Testo completo della licenza (italiano/inglese): [LICENSE.md](./LICENSE.md)
 
 ### 💛 Sostieni il progetto
 
@@ -190,6 +192,7 @@ Preventivator/
 ├── service-worker.js        # Cache offline e gestione aggiornamenti
 ├── package.json
 ├── README.md
+├── LICENSE.md                # Licenza d'uso (italiano/inglese)
 ├── js/
 │   ├── app.js                # Inizializzazione, routing tab, orchestrazione
 │   ├── calc.js               # Logica di calcolo pura (testata)
