@@ -6,7 +6,7 @@
 import { loadData, saveData, STORAGE_KEYS, initStorage } from './storage.js';
 import { getMachines, getMaterials, getJobs, seedDefaultsIfFirstRun, getNextQuoteNumber, quoteIdentityKey, getLaborEntries, saveLaborEntries } from './models.js';
 import { computeJobCost, computeQuote }                    from './calc.js';
-import { todayString, showInlineError, hideInlineError } from './utils.js';
+import { todayString, showInlineError, hideInlineError, currency, num } from './utils.js';
 import { renderMachines, initMachinesHandlers }            from './ui-machines.js';
 import { renderMaterials, initMaterialsHandlers, updateMaterialFormUI } from './ui-materials.js';
 import { renderJobs, initJobsHandlers }                    from './ui-jobs.js';
@@ -27,6 +27,13 @@ export function activateTab(id) {
     b.setAttribute('aria-selected', isActive ? 'true' : 'false');
   });
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === id));
+
+  const floatingTotal = document.getElementById('floatingTotal');
+  if (floatingTotal) {
+    floatingTotal.classList.toggle('hidden', id !== 'tab-lavoro');
+    if (id === 'tab-lavoro') updateFloatingTotal();
+    else document.getElementById('floatingTotalPanel')?.classList.add('hidden');
+  }
 }
 
 // ── Restore job form ──────────────────────────────────────────────────────────
@@ -233,6 +240,90 @@ async function migrateLegacyLaborIfNeeded() {
   }
 }
 
+// ── Bolla totale fluttuante (tab Lavoro) ───────────────────────────────────────
+// Calcolo "permissivo": a differenza del submit ufficiale, salta in silenzio le
+// lavorazioni ancora incomplete (nessun blocco, nessun errore) — è solo un'anteprima.
+async function computeLiveResult() {
+  const jobs = await getJobs();
+  const [machines, materials, laborEntries] = await Promise.all([getMachines(), getMaterials(), getLaborEntries()]);
+  const jobResults = jobs
+    .map(j => {
+      const machine  = machines.find(m => m.id === j.machineId);
+      const material = materials.find(m => m.id === j.materialId);
+      return computeJobCost(j, machine, material);
+    })
+    .filter(r => r !== null);
+
+  const g = id => document.getElementById(id);
+  const val = (id, fallback = 0) => { const el = g(id); return el ? Number(el.value) || fallback : fallback; };
+  const chk = id => { const el = g(id); return el ? el.checked : false; };
+
+  const includeShipping = chk('includeShipping');
+  const shippingParams = {
+    laborEntries,
+    failureMargin:     val('failureMargin'),
+    profitMargin:      val('profitMargin'),
+    discountAmount:    val('discountAmount'),
+    discountPercent:   val('discountPercent'),
+    minimumPrice:      val('minimumPrice'),
+    vatPercent:        val('vatPercent'),
+    includeVat:        chk('includeVat'),
+    roundingEnabled:   chk('roundingEnabled'),
+    roundingDirection: document.querySelector('input[name="roundingDirection"]:checked')?.value || 'up',
+    includeShipping,
+    shippingCost:      includeShipping ? val('shippingCost') : 0,
+    includeInsurance:  includeShipping && chk('includeInsurance'),
+    insuranceCost:     includeShipping && chk('includeInsurance') ? val('insuranceCost') : 0,
+  };
+  return computeQuote(jobResults, shippingParams);
+}
+
+let _floatingTotalSeq = 0;
+async function updateFloatingTotal() {
+  const mySeq = ++_floatingTotalSeq;
+  try {
+    const q = await computeLiveResult();
+    if (mySeq !== _floatingTotalSeq) return; // una chiamata più recente è già in corso: scarta questo risultato ormai superato
+    const netMargin    = q.finalRecommendedPrice - q.adjustedTotal - (q.vatValue || 0) - (q.shippingTotal || 0);
+    const netMarginPct = q.adjustedTotal > 0 ? (netMargin / q.adjustedTotal) * 100 : 0;
+    document.getElementById('ftBubbleValue').textContent  = currency.format(q.finalRecommendedPrice || 0);
+    document.getElementById('ftCostoReale').textContent   = currency.format(q.adjustedTotal || 0);
+    document.getElementById('ftManodopera').textContent   = currency.format(q.manualLaborCost || 0);
+    document.getElementById('ftMargine').textContent      = num.format(netMarginPct) + '%';
+    document.getElementById('ftTotale').textContent       = currency.format(q.finalRecommendedPrice || 0);
+  } catch {
+    // Dati non ancora sufficienti per un calcolo: bolla resta con valori placeholder
+  }
+}
+
+function initFloatingTotal() {
+  const toggle = document.getElementById('floatingTotalToggle');
+  const panel  = document.getElementById('floatingTotalPanel');
+  const goBtn  = document.getElementById('ftGoToSummary');
+  if (!toggle || !panel) return;
+
+  toggle.addEventListener('click', () => {
+    panel.classList.toggle('hidden');
+    if (!panel.classList.contains('hidden')) updateFloatingTotal();
+  });
+
+  goBtn?.addEventListener('click', () => {
+    document.getElementById('jobForm')?.requestSubmit();
+  });
+
+  const lavoroPanel = document.getElementById('tab-lavoro');
+  if (lavoroPanel) {
+    lavoroPanel.addEventListener('input',  () => setTimeout(updateFloatingTotal, 60));
+    lavoroPanel.addEventListener('change', () => setTimeout(updateFloatingTotal, 60));
+    // Aggiunta/rimozione lavorazioni e voci manodopera avviene tramite click
+    // (pulsanti "+ Aggiungi..."/"Rimuovi"): aggiorniamo anche lì, con un piccolo
+    // ritardo per lasciare che la lista finisca di ri-renderizzare prima di leggerla.
+    lavoroPanel.addEventListener('click', (e) => {
+      if (e.target.closest('button')) setTimeout(updateFloatingTotal, 120);
+    });
+  }
+}
+
 async function init() {
   // 1. Storage + tema (prima di tutto per evitare flash)
   await initStorage();
@@ -257,6 +348,7 @@ async function init() {
   initPdfHandler();
   initScenarioHandlers();
   initHelpHandler();
+  initFloatingTotal();
   initArchiveHandlers({ restoreCurrentJob, renderJobs, renderLaborEntries, activateTab, generatePdf });
   initIoHandlers({ renderMachines, renderMaterials, restoreProfile, renderJobs, restoreCurrentJob, activateTab });
   initJobFormHandler();

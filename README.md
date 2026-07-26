@@ -4,7 +4,7 @@
 
 **🔗 App live: [https://lucchior.github.io/Preventivator/](https://lucchior.github.io/Preventivator/)**
 
-Web-app responsive per la creazione di preventivi professionali per lavorazioni di stampa 3D e incisione laser, singole o combinate. Gira interamente nel browser, **installabile come app** (PWA), funziona **offline** dopo il primo caricamento, senza server, senza account e senza tracciamento.
+Web-app responsive per la creazione di preventivi professionali per lavorazioni di stampa 3D e incisione laser, singole o combinate. Gira interamente nel browser, **installabile come app** (PWA), funziona **offline** dopo il primo caricamento, senza server, senza account e senza tracciamento. Interfaccia con navigazione laterale, tema chiaro/scuro e font Manrope + JetBrains Mono per i valori numerici.
 
 ---
 
@@ -38,6 +38,8 @@ Invece di calcolare a mano grammi e ore, puoi importarli direttamente dal file c
 **Laser** — carica un file **.gcode esportato da LightBurn**. A differenza degli slicer 3D, LightBurn non scrive un tempo stimato nel file: Preventivator lo calcola **simulando il percorso reale** (somma delle distanze percorse divise per la velocità dichiarata riga per riga), gestendo correttamente anche i **passaggi multipli** di taglio. Il materiale non viene compilato automaticamente (dipende dalla tua unità di misura), ma viene mostrata l'area lavorata come riferimento.
 
 ### 📋 Preventivo con lavorazioni multiple
+Mentre compili il tab Lavoro, una **bolla fluttuante in basso a destra** mostra il totale stimato in tempo reale (aggiornato a ogni modifica), con un mini-riepilogo (costo reale, manodopera, margine netto) e un pulsante per saltare direttamente al Riepilogo completo — comodo per avere sempre sott'occhio l'andamento del preventivo senza dover ricalcolare ogni volta.
+
 Il campo **Cliente** suggerisce automaticamente i nomi già visti nei preventivi passati (rubrica automatica, nessuna gestione manuale) e completa da solo il contatto quando ne scegli uno.
 
 Crea preventivi con una o più lavorazioni in lista unica, ognuna configurabile con:
@@ -175,6 +177,7 @@ L'app ti avviserà con una schermata dedicata che ti guida a: esportare i dati, 
 - **Service Worker** — precaching e funzionamento offline, PWA installabile
 - **File API** — import/export JSON e CSV lato client, nessun upload su server
 - **Intl.NumberFormat** — formattazione valuta e numeri in italiano
+- **Manrope + JetBrains Mono** (Google Fonts) — font dell'interfaccia e dei valori numerici/prezzi
 
 ### ✅ Qualità e test
 La logica di calcolo (`js/calc.js`) è isolata e coperta da **58 test automatici** (`tests/calc.test.js`), eseguibili con:
