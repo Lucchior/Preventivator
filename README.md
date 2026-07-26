@@ -1,4 +1,4 @@
-![icona](https://github.com/Lucchior/Preventivator/blob/main/icons/icon-180.png?raw=true) 
+![icona](https://github.com/Lucchior/Preventivator/blob/main/icons/icon-180.png?raw=true)
 
 # Preventivator — Preventivi Stampa 3D e Laser
 
