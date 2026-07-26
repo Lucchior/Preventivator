@@ -22,9 +22,16 @@ Se lo usi e ti piace, puoi offrirmi un caffè con una donazione libera: **[paypa
 Inserisci una volta sola i tuoi dati: nome/ragione sociale, P.IVA, codice fiscale, regime fiscale, SDI, PEC, email, telefono, indirizzo, sito web. Distingue tra soggetto **privato** e **titolare di Partita IVA** mostrando solo i campi pertinenti. È un profilo unico: lo modifichi e sovrascrivi in qualsiasi momento, senza crearne di nuovi. I dati appaiono automaticamente nell'intestazione di ogni PDF generato.
 
 ### 🖨️ Gestione macchine e 🧵 materiali
-Configura stampanti 3D e incisori laser con tutti i parametri per il calcolo preciso dei costi: costo di acquisto e vita utile stimata (ammortamento orario), consumo energetico reale (X kWh ogni Y ore), costo di manutenzione ogni 1000 ore. Stesso trattamento per i materiali (filamenti, resine, lastre, ecc.), con unità di misura personalizzabili per tipo.
+Configura stampanti 3D e incisori laser con tutti i parametri per il calcolo preciso dei costi: costo di acquisto e vita utile stimata (ammortamento orario), consumo energetico reale (X kWh ogni Y ore), costo di manutenzione ogni 1000 ore, e per il laser anche la velocità degli spostamenti a vuoto (usata per stimare i tempi dai file G-code). Stesso trattamento per i materiali (filamenti, resine, lastre, ecc.), con unità di misura personalizzabili per tipo.
 
 Ogni macchina e materiale può essere **aggiunto, modificato ed eliminato** in qualsiasi momento (l'eliminazione mostra un conto alla rovescia di 5 secondi con opzione "Annulla" prima di essere definitiva).
+
+### 📥 Import automatico dei dati di stampa/incisione
+Invece di calcolare a mano grammi e ore, puoi importarli direttamente dal file che hai già usato per produrre il pezzo:
+
+**Stampa 3D** — carica un file **.gcode** (funziona con qualunque slicer: Bambu Studio, OrcaSlicer, Anycubic Slicer Next, PrusaSlicer, Cura...) oppure un **.3mf** esportato con l'opzione slicer "Esporta tutti i piatti elaborati" (non il "salva progetto" standard, che non contiene questi dati). Se il file contiene più piatti, puoi scegliere quale importare singolarmente oppure importarli **tutti insieme sommati** (comodo per lavorazioni con tanti pezzi piccoli), con relative miniature.
+
+**Laser** — carica un file **.gcode esportato da LightBurn**. A differenza degli slicer 3D, LightBurn non scrive un tempo stimato nel file: Preventivator lo calcola **simulando il percorso reale** (somma delle distanze percorse divise per la velocità dichiarata riga per riga), gestendo correttamente anche i **passaggi multipli** di taglio. Il materiale non viene compilato automaticamente (dipende dalla tua unità di misura), ma viene mostrata l'area lavorata come riferimento.
 
 ### 📋 Preventivo con lavorazioni multiple
 Crea preventivi con una o più lavorazioni in lista unica, ognuna configurabile con:
@@ -132,10 +139,11 @@ Da smartphone o desktop puoi installare Preventivator come una vera app (icona i
 ### Per ogni preventivo
 1. **Tab Lavoro** → inserisci nome preventivo e dati cliente
 2. **+ Aggiungi lavorazione 3D / Laser** (o richiama un template salvato) → configura ogni lavorazione
-3. Compila manodopera, margini, IVA, eventuale spedizione
-4. **Calcola riepilogo** → verifica i costi nel tab Riepilogo (viene salvato automaticamente in Archivio)
-5. **Esporta PDF** → scarica il documento a due pagine
-6. **Tab 📦 Dati & Backup** → esporta la lavorazione come JSON, se vuoi conservarla a parte
+3. Se hai già il file di stampa/incisione, usa **📂 Importa da file** per compilare grammi/ore automaticamente invece di inserirli a mano
+4. Compila manodopera, margini, IVA, eventuale spedizione
+5. **Calcola riepilogo** → verifica i costi nel tab Riepilogo (viene salvato automaticamente in Archivio)
+6. **Esporta PDF** → scarica il documento a due pagine
+7. **Tab 📦 Dati & Backup** → esporta la lavorazione come JSON, se vuoi conservarla a parte
 
 ### Quando esce un aggiornamento
 L'app ti avviserà con una schermata dedicata che ti guida a: esportare i dati, svuotare la cache (istruzioni per Safari/Chrome/Firefox), ricaricare, e reimportare tutto — per non perdere nulla durante l'aggiornamento.
@@ -146,7 +154,7 @@ L'app ti avviserà con una schermata dedicata che ti guida a: esportare i dati, 
 
 - **HTML5 / CSS3 / JavaScript ES2020+ (moduli nativi)** — zero framework
 - **IndexedDB** (wrapper nativo scritto su misura, zero dipendenze esterne) — i dati persistono nel browser sul dispositivo, con più capacità e affidabilità di localStorage
-- **jsPDF** (unica libreria vendorizzata localmente in `vendor/`) — genera i PDF come testo vettoriale vero, non immagini
+- **jsPDF** e **JSZip** (librerie vendorizzate localmente in `vendor/`) — jsPDF genera i PDF come testo vettoriale vero, JSZip legge i file .3mf per l'import automatico dei dati di stampa
 - **Service Worker** — precaching e funzionamento offline, PWA installabile
 - **File API** — import/export JSON e CSV lato client, nessun upload su server
 - **Intl.NumberFormat** — formattazione valuta e numeri in italiano
@@ -156,6 +164,13 @@ La logica di calcolo (`js/calc.js`) è isolata e coperta da **58 test automatici
 ```bash
 node tests/calc.test.js
 ```
+
+### 🔧 Setup da zero (solo se clonate il repository)
+`vendor/jspdf.umd.min.js` e `vendor/jszip.min.js` non sono generate automaticamente e vanno scaricate una volta sola:
+- jsPDF: https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js
+- JSZip: https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js
+
+Salvale con questi nomi esatti dentro la cartella `vendor/`.
 
 ---
 
@@ -184,14 +199,17 @@ Preventivator/
 │   ├── ui-profile.js          # Tab Profilo
 │   ├── ui-machines.js         # Tab Macchine
 │   ├── ui-materials.js        # Materiali
-│   ├── ui-jobs.js             # Lavorazioni, template, drag & drop
+│   ├── ui-jobs.js             # Lavorazioni, template, drag & drop, import file
+│   ├── ui-3mf.js               # Lettura .gcode/.3mf per import dati stampa 3D
+│   ├── ui-laser-gcode.js       # Stima tempo da .gcode laser (LightBurn)
 │   ├── ui-summary.js          # Riepilogo e confronto scenari
 │   ├── ui-archive.js          # Tab Archivio e statistiche
 │   ├── ui-io.js               # Import/export JSON e CSV
 │   ├── ui-pdf.js              # Generazione PDF vettoriale
 │   └── ui-theme.js            # Tema chiaro/scuro
 ├── vendor/
-│   └── jspdf.umd.min.js      # Libreria PDF vendorizzata (non nel CDN)
+│   ├── jspdf.umd.min.js      # Libreria PDF vendorizzata (non nel CDN)
+│   └── jszip.min.js           # Libreria lettura archivi .3mf (non nel CDN)
 ├── icons/
 │   ├── icon-180.png
 │   ├── icon-192.png
@@ -209,6 +227,7 @@ Preventivator/
 - **Margine fallimento**: tipicamente 5–15% per stampa 3D FDM, meno per laser. Copre le stampe da rifare.
 - **Prezzo minimo**: utile per lavorazioni brevi dove il costo fisso (imballaggio, gestione ordine) è rilevante.
 - **Template**: se ripeti spesso la stessa combinazione macchina+materiale+parametri, salvala come template dalla lavorazione — la richiami in un click nei preventivi futuri.
+- **Import automatico**: se il tuo slicer/LightBurn permette di esportare il file già sezionato, usalo — risparmi tempo e riduci gli errori di trascrizione rispetto a inserire grammi/ore a mano.
 - **Import/Export**: tieni sempre una copia dei dati base esportata — in caso di cambio dispositivo, pulizia del browser, o aggiornamento dell'app, li recuperi in un click.
 
 ---
