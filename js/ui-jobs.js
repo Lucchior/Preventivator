@@ -23,6 +23,19 @@ function extractTemplateFields(job) {
   return reusable;
 }
 
+const QTY_UNIT_INFO = {
+  kg:     { label: 'Quantità (kg)',            hint: 'Inserisci i kg di materiale consumati (es. 0,5 per mezzo kg).' },
+  metro:  { label: 'Metri di materiale usati', hint: 'Inserisci i metri consumati (es. 0,5 per mezzo metro).' },
+  pezzo:  { label: 'Numero di pezzi usati',    hint: 'Il costo è per pezzo intero: scrivi 1 per un pezzo, 2 per due, ecc. — non è un peso.' },
+  foglio: { label: 'Numero di fogli usati',    hint: 'Il costo è per foglio intero: scrivi 1 per un foglio, 2 per due, ecc.' },
+  lastra: { label: 'Numero di lastre usate',   hint: 'Il costo è per lastra intera: scrivi 1 per una lastra, 2 per due, ecc.' },
+};
+
+function qtyInfoForMaterial(materials, materialId) {
+  const mat = materials.find(m => m.id === materialId);
+  return mat ? (QTY_UNIT_INFO[mat.unit] || null) : null;
+}
+
 function buildJobCard(job, index, machines, materials) {
   const is3d          = job.type === '3d';
   const typeMachines  = machines.filter(m => m.type === job.type);
@@ -100,8 +113,9 @@ function buildJobCard(job, index, machines, materials) {
           <input type="number" min="0" step="0.01" data-field="gramsPerUnit" data-id="${job.id}" value="${job.gramsPerUnit || 0}" placeholder="0.00" />
         </div>` : `
         <div class="field">
-          <label>Quantità materiale per lavorazione</label>
+          <label data-qty-label="${job.id}">${qtyInfoForMaterial(materials, job.materialId)?.label || 'Quantità materiale per lavorazione'}</label>
           <input type="number" min="0" step="0.01" data-field="materialQtyPerUnit" data-id="${job.id}" value="${job.materialQtyPerUnit || 0}" placeholder="0.00" />
+          <div class="field-hint" data-qty-hint="${job.id}">${qtyInfoForMaterial(materials, job.materialId)?.hint || 'Seleziona prima un materiale per vedere l\'unità di misura corretta.'}</div>
         </div>`}
         <div class="field full">
           <label>Durata per ${unitLabel}</label>
@@ -160,6 +174,15 @@ async function handleJobFieldChange(e) {
   else if (el.type === 'checkbox') job[field] = el.checked;
   else                             job[field] = el.value;
   await saveJobs(jobs);
+
+  if (field === 'materialId') {
+    const materials = await getMaterials();
+    const info = qtyInfoForMaterial(materials, job.materialId);
+    const labelEl = document.querySelector(`[data-qty-label="${id}"]`);
+    const hintEl  = document.querySelector(`[data-qty-hint="${id}"]`);
+    if (labelEl) labelEl.textContent = info?.label || 'Quantità materiale per lavorazione';
+    if (hintEl)  hintEl.textContent  = info?.hint  || 'Seleziona prima un materiale per vedere l\'unità di misura corretta.';
+  }
 }
 
 // ── Drag & drop riordino ──────────────────────────────────────────────────────
