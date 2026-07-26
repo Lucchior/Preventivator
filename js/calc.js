@@ -81,9 +81,11 @@ export function computeQuote(jobResults, params) {
   const {
     manualHours      = 0,
     laborRate        = 0,
+    laborEntries     = null,
     failureMargin    = 0,
     profitMargin     = 0,
     discountAmount   = 0,
+    discountPercent  = 0,
     minimumPrice     = 0,
     vatPercent       = 22,
     includeVat       = true,
@@ -91,13 +93,18 @@ export function computeQuote(jobResults, params) {
     shippingCost     = 0,
     includeInsurance = false,
     insuranceCost    = 0,
+    roundingEnabled   = false,
+    roundingDirection = 'up', // 'up' (per eccesso) | 'down' (per difetto)
   } = params;
 
   // 1. Somma costi tecnici di tutte le lavorazioni
   const baseTechnicalTotal = jobResults.reduce((s, r) => s + r.subtotal, 0);
 
-  // 2. + Manodopera manuale
-  const manualLaborCost = Number(manualHours) * Number(laborRate);
+  // 2. + Manodopera manuale (una o più voci, ognuna con la propria tariffa;
+  //    se non è passata la lista, usa i vecchi campi singoli per compatibilità)
+  const manualLaborCost = (Array.isArray(laborEntries) && laborEntries.length)
+    ? laborEntries.reduce((s, e) => s + Number(e.hours || 0) * Number(e.rate || 0), 0)
+    : Number(manualHours) * Number(laborRate);
   const baseTotal       = baseTechnicalTotal + manualLaborCost;
 
   // 3. + Margine fallimento % (copre stampe da rifare)
@@ -108,9 +115,11 @@ export function computeQuote(jobResults, params) {
   const profitValue         = adjustedTotal * (Number(profitMargin) / 100);
   const priceBeforeDiscount = adjustedTotal + profitValue;
 
-  // 5. - Sconto cliente (non può rendere il prezzo negativo)
-  const discountValue      = Math.min(Number(discountAmount), priceBeforeDiscount);
-  const priceAfterDiscount = priceBeforeDiscount - discountValue;
+  // 5. - Sconto cliente: fisso (€) + percentuale (%), si sommano; non può rendere il prezzo negativo
+  const discountFixedValue   = Number(discountAmount);
+  const discountPercentValue = priceBeforeDiscount * (Number(discountPercent) / 100);
+  const discountValue        = Math.min(discountFixedValue + discountPercentValue, priceBeforeDiscount);
+  const priceAfterDiscount   = priceBeforeDiscount - discountValue;
 
   // 6. Prezzo minimo garantito (floor)
   const priceAfterMinimum = Math.max(priceAfterDiscount, Number(minimumPrice));
@@ -120,10 +129,21 @@ export function computeQuote(jobResults, params) {
   const priceWithVat = priceAfterMinimum + vatValue;
 
   // 8. + Spedizione (fuori dai margini: è un rimborso, non un ricavo)
-  const shippingTotal         = includeShipping
+  const shippingTotal    = includeShipping
     ? Number(shippingCost) + (includeInsurance ? Number(insuranceCost) : 0)
     : 0;
-  const finalRecommendedPrice = priceWithVat + shippingTotal;
+  const priceBeforeRounding = priceWithVat + shippingTotal;
+
+  // 9. Arrotondamento finale (opzionale, a multipli di 0,50€)
+  let finalRecommendedPrice = priceBeforeRounding;
+  let roundingAdjustment    = 0;
+  if (roundingEnabled) {
+    const rounded = roundingDirection === 'down'
+      ? Math.floor(priceBeforeRounding / 0.5) * 0.5
+      : Math.ceil(priceBeforeRounding / 0.5) * 0.5;
+    roundingAdjustment    = rounded - priceBeforeRounding;
+    finalRecommendedPrice = rounded;
+  }
 
   // Statistiche
   const totalPiecesAll  = jobResults.reduce((s, r) => s + r.totalPieces, 0);
@@ -140,10 +160,11 @@ export function computeQuote(jobResults, params) {
     manualLaborCost, baseTotal,
     failureCost, adjustedTotal,
     profitValue, priceBeforeDiscount,
-    discountValue, priceAfterDiscount,
+    discountValue, discountFixedValue, discountPercentValue, priceAfterDiscount,
     priceAfterMinimum,
     vatValue, priceWithVat,
-    shippingTotal, finalRecommendedPrice,
+    shippingTotal, priceBeforeRounding, roundingEnabled, roundingDirection, roundingAdjustment,
+    finalRecommendedPrice,
     totalPiecesAll, unitPriceClient,
   };
 }

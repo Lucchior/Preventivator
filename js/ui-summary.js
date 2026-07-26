@@ -66,7 +66,9 @@ export function renderSummary(result) {
 
   html += `
     <div class="summary-line" style="margin-top:4px;"><span>Subtotale lavorazioni</span><strong>${currency.format(result.baseTechnicalTotal)}</strong></div>
-    <div class="summary-line"><span>Manodopera (${num.format(result.manualHours)} h × ${currency.format(result.laborRate)})</span><strong>${currency.format(result.manualLaborCost)}</strong></div>
+    ${(result.laborEntries || []).filter(e => Number(e.hours) > 0 || Number(e.rate) > 0).map(e => `
+    <div class="summary-line sub"><span>${escapeHtml(e.label || 'Manodopera')} (${num.format(Number(e.hours) || 0)} h × ${currency.format(Number(e.rate) || 0)})</span><strong>${currency.format(Number(e.hours || 0) * Number(e.rate || 0))}</strong></div>`).join('')}
+    <div class="summary-line"><span>Manodopera totale</span><strong>${currency.format(result.manualLaborCost)}</strong></div>
     <div class="summary-line"><span>Totale base</span><strong>${currency.format(result.baseTotal)}</strong></div>
     <div class="summary-line"><span>Margine fallimento (${num.format(result.failureMargin)}%)</span><strong>+ ${currency.format(result.failureCost)}</strong></div>
     <div class="block-total"><span>Totale costo reale</span><span class="block-total-value">${currency.format(result.adjustedTotal)}</span></div>
@@ -81,7 +83,9 @@ export function renderSummary(result) {
     <div class="summary-line sub"><span>Costo reale di produzione</span><strong>${currency.format(result.adjustedTotal)}</strong></div>
     <div class="summary-line"><span>Rincaro / guadagno (${num.format(result.profitMargin)}%)</span><strong>+ ${currency.format(result.profitValue)}</strong></div>
     <div class="summary-line"><span>Prezzo con rincaro</span><strong>${currency.format(result.priceBeforeDiscount)}</strong></div>
-    <div class="summary-line deduct"><span>Sconto cliente</span><strong>− ${currency.format(result.discountValue)}</strong></div>
+    ${result.discountFixedValue > 0 ? `<div class="summary-line deduct sub"><span>Sconto fisso</span><strong>− ${currency.format(result.discountFixedValue)}</strong></div>` : ''}
+    ${result.discountPercentValue > 0 ? `<div class="summary-line deduct sub"><span>Sconto percentuale (${num.format(result.discountPercent || 0)}%)</span><strong>− ${currency.format(result.discountPercentValue)}</strong></div>` : ''}
+    <div class="summary-line deduct"><span>Sconto cliente totale${result.discountNote ? ' — ' + escapeHtml(result.discountNote) : ''}</span><strong>− ${currency.format(result.discountValue)}</strong></div>
     ${minimumApplied ? `<div class="summary-line"><span>Prezzo minimo applicato (${currency.format(result.minimumPrice)})</span><strong>${currency.format(result.priceAfterMinimum)}</strong></div>` : ''}
     <div class="summary-line"><span>IVA (${num.format(result.vatPercent)}%) ${vatBadge}</span><strong>${result.includeVat ? '+ ' + currency.format(result.vatValue) : '—'}</strong></div>
     <div class="summary-line"><span>Subtotale prodotto</span><strong>${currency.format(result.priceWithVat)}</strong></div>
@@ -90,6 +94,10 @@ export function renderSummary(result) {
     ${result.includeInsurance ? `<div class="summary-line"><span>Assicurazione spedizione</span><strong>+ ${currency.format(result.insuranceCost)}</strong></div>` : ''}
     <div class="summary-line sub"><span>Tempi consegna stimati*</span><strong>${result.deliveryDaysMin}–${result.deliveryDaysMax} gg lavorativi</strong></div>
     ${result.shippingNotes ? `<div class="summary-line sub"><span>Note spedizione</span><strong>${escapeHtml(result.shippingNotes)}</strong></div>` : ''}
+    ` : ''}
+    ${result.roundingEnabled && Math.abs(result.roundingAdjustment) > 0.001 ? `
+    <div class="summary-line sub"><span>Prezzo prima dell'arrotondamento</span><strong>${currency.format(result.priceBeforeRounding)}</strong></div>
+    <div class="summary-line"><span>Arrotondamento (${result.roundingDirection === 'down' ? 'per difetto' : 'per eccesso'})</span><strong>${result.roundingAdjustment >= 0 ? '+ ' : '− '}${currency.format(Math.abs(result.roundingAdjustment))}</strong></div>
     ` : ''}
     <div class="block-total"><span>Totale finale${result.includeShipping ? ' (spedizione inclusa)' : ''}</span><span class="block-total-value">${currency.format(result.finalRecommendedPrice)}</span></div>
     <div class="margin-chip">📈 Margine netto (senza spedizione): ${currency.format(netMargin)} (${num.format(netMarginPct)}%)</div>

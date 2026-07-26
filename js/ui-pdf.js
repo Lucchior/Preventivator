@@ -276,6 +276,11 @@ function buildPage1(doc, result, profile, qrDataUrl) {
       });
     }
   });
+  (result.laborEntries || []).forEach((entry, i) => {
+    const cost = Number(entry.hours || 0) * Number(entry.rate || 0);
+    if (cost <= 0 && !entry.label) return; // salta voci vuote
+    rows.push({ cells: [entry.label || `Manodopera ${i + 1}`, '—', '—', currency.format(cost)] });
+  });
 
   y = drawTable(doc, {
     x: MARGIN, y,
@@ -310,7 +315,10 @@ function buildPage1(doc, result, profile, qrDataUrl) {
 
   if (result.discountValue > 0) {
     priceLine('Imponibile', currency.format(result.priceBeforeDiscount));
-    priceLine('Sconto', '-' + currency.format(result.discountValue), { valueColor: C.red });
+    let discountLabel = 'Sconto';
+    if (result.discountNote) discountLabel += ` (${result.discountNote})`;
+    if (result.discountPercent > 0 && !(result.discountFixedValue > 0)) discountLabel += ` ${num.format(result.discountPercent)}%`;
+    priceLine(discountLabel, '-' + currency.format(result.discountValue), { valueColor: C.red });
   }
   if (result.includeVat) {
     priceLine('Imponibile netto', currency.format(result.priceAfterMinimum));
@@ -468,6 +476,30 @@ function buildPage2(doc, result, profile) {
   y += 8;
   y = ensureSpace(doc, y, 60);
 
+  // ── Dettaglio voci di manodopera (se presenti) ──
+  const laborRows = (result.laborEntries || [])
+    .filter(e => Number(e.hours) > 0 || Number(e.rate) > 0)
+    .map((e, i) => ({
+      cells: [e.label || `Voce ${i + 1}`, formatHours(Number(e.hours) || 0), currency.format(Number(e.rate) || 0), currency.format(Number(e.hours || 0) * Number(e.rate || 0))],
+    }));
+  if (laborRows.length) {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); setText(doc, [124, 58, 237]);
+    doc.text('DETTAGLIO MANODOPERA', MARGIN, y);
+    y += 4;
+    y = drawTable(doc, {
+      x: MARGIN, y, fontSize: 7, lineH: 3.4,
+      columns: [
+        { label: 'Voce',      width: tableW * 0.5,  align: 'left' },
+        { label: 'Ore',       width: tableW * 0.16, align: 'left' },
+        { label: 'Tariffa€',  width: tableW * 0.17, align: 'right' },
+        { label: 'Subtot.€',  width: tableW * 0.17, align: 'right' },
+      ],
+      rows: laborRows,
+    });
+    y += 8;
+    y = ensureSpace(doc, y, 60);
+  }
+
   const cbW = (PAGE_W - MARGIN * 2 - 6) / 2;
   const minApplied = result.priceAfterMinimum > result.priceAfterDiscount + 0.005;
 
@@ -494,18 +526,23 @@ function buildPage2(doc, result, profile) {
 
   const y1 = calcBox(MARGIN, 'Struttura del costo reale', [
     ['Subtotale lavorazioni', currency.format(result.baseTechnicalTotal)],
-    [`+ Manodopera (${num.format(result.manualHours)}h × ${currency.format(result.laborRate)})`, currency.format(result.manualLaborCost)],
+    ['+ Manodopera', currency.format(result.manualLaborCost)],
     [`+ Fallimento ${num.format(result.failureMargin)}%`, currency.format(result.failureCost)],
   ], ['COSTO REALE', currency.format(result.adjustedTotal)]);
 
   const priceLines = [
     ['Costo reale', currency.format(result.adjustedTotal)],
     [`+ Rincaro ${num.format(result.profitMargin)}%`, '+' + currency.format(result.profitValue)],
-    ['- Sconto', '-' + currency.format(result.discountValue)],
   ];
+  if (result.discountFixedValue > 0) priceLines.push(['- Sconto fisso', '-' + currency.format(result.discountFixedValue)]);
+  if (result.discountPercentValue > 0) priceLines.push([`- Sconto ${num.format(result.discountPercent)}%`, '-' + currency.format(result.discountPercentValue)]);
+  if (result.discountValue > 0) priceLines.push([`- Sconto totale${result.discountNote ? ' (' + result.discountNote + ')' : ''}`, '-' + currency.format(result.discountValue)]);
   if (minApplied) priceLines.push(['Prezzo minimo', currency.format(result.minimumPrice)]);
   priceLines.push([`+ IVA ${num.format(result.vatPercent)}%`, result.includeVat ? '+' + currency.format(result.vatValue) : 'esclusa']);
   if (result.includeShipping) priceLines.push(['+ Spedizione', '+' + currency.format(result.shippingTotal)]);
+  if (result.roundingEnabled && Math.abs(result.roundingAdjustment) > 0.001) {
+    priceLines.push([`Arrotondamento (${result.roundingDirection === 'down' ? 'per difetto' : 'per eccesso'})`, (result.roundingAdjustment >= 0 ? '+' : '-') + currency.format(Math.abs(result.roundingAdjustment))]);
+  }
 
   const y2 = calcBox(MARGIN + cbW + 6, 'Prezzo al cliente', priceLines, ['TOTALE FINALE', currency.format(result.finalRecommendedPrice)]);
 

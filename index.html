@@ -282,15 +282,10 @@
                 <div class="section-title">Preparazione e post-produzione</div>
                 <span class="badge green">Manodopera</span>
               </div>
-              <div class="form-grid">
-                <div class="field">
-                  <label for="manualHours">Ore lavoro manuale</label>
-                  <input id="manualHours" type="number" min="0" step="0.01" value="0" />
-                </div>
-                <div class="field">
-                  <label for="laborRate">Costo orario manodopera (€)</label>
-                  <input id="laborRate" type="number" min="0" step="0.01" value="0" />
-                </div>
+              <p class="subtitle" style="margin-top:-6px;">Aggiungi una o più voci di lavoro manuale (es. modellazione 3D, verniciatura, assemblaggio), ognuna con la propria durata e tariffa oraria.</p>
+              <div id="laborEntriesList"></div>
+              <div class="actions" style="margin-top:10px;">
+                <button class="secondary" type="button" id="addLaborEntry">＋ Aggiungi voce manodopera</button>
               </div>
             </div>
 
@@ -309,8 +304,17 @@
                   <input id="profitMargin" type="number" min="0" step="0.01" value="100" required />
                 </div>
                 <div class="field">
-                  <label for="discountAmount">Sconto cliente (€)</label>
+                  <label for="discountAmount">Sconto cliente (€ fisso)</label>
                   <input id="discountAmount" type="number" min="0" step="0.01" value="0" required />
+                </div>
+                <div class="field">
+                  <label for="discountPercent">Sconto cliente (%)</label>
+                  <input id="discountPercent" type="number" min="0" max="100" step="0.01" value="0" />
+                </div>
+                <div class="field full">
+                  <label for="discountNote">Nota sconto / Nome coupon (opzionale)</label>
+                  <input id="discountNote" type="text" placeholder="Es. BLACKFRIDAY15, Cliente storico..." />
+                  <div class="field-hint">Se compili sia l'importo fisso sia la percentuale, si sommano. La nota appare nel PDF accanto allo sconto.</div>
                 </div>
                 <div class="field">
                   <label for="minimumPrice">Prezzo minimo (€)</label>
@@ -325,6 +329,23 @@
                   <div class="checkbox-wrap">
                     <input id="includeVat" type="checkbox" checked />
                     <span>Includi IVA nel calcolo finale</span>
+                  </div>
+                </div>
+                <div class="field full">
+                  <label>Arrotondamento prezzo finale</label>
+                  <div class="checkbox-wrap">
+                    <input id="roundingEnabled" type="checkbox" />
+                    <span>Arrotonda il totale finale a multipli di 0,50€</span>
+                  </div>
+                  <div class="actions" id="roundingDirectionWrap" style="margin-top:8px;">
+                    <label class="radio-opt">
+                      <input type="radio" name="roundingDirection" value="up" checked />
+                      <span>⏫ Per eccesso</span>
+                    </label>
+                    <label class="radio-opt">
+                      <input type="radio" name="roundingDirection" value="down" />
+                      <span>⏬ Per difetto</span>
+                    </label>
                   </div>
                 </div>
               </div>

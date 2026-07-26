@@ -240,6 +240,91 @@ section('24. computeQuote — aggregati materiali/energia/manutenzione/ammort.')
   expect('machineAmortCostTotal', q.machineAmortCostTotal, jr3d.amortCost       + jrLas.amortCost);
 }
 
+section('25. computeQuote — arrotondamento disattivato (default)');
+{
+  const jr = computeJobCost(makeJob3d(), machine3d, material3d);
+  const q  = computeQuote([jr], defaultParams);
+  expect('priceBeforeRounding = finalRecommendedPrice', q.priceBeforeRounding, q.finalRecommendedPrice);
+  expect('roundingAdjustment = 0', q.roundingAdjustment, 0);
+}
+
+section('26. computeQuote — arrotondamento per eccesso a 0,50€');
+{
+  const jobResults = [{ subtotal: 47.23, totalPieces: 1, materialCost: 0, energyCost: 0, maintenanceCost: 0, amortCost: 0 }];
+  const q = computeQuote(jobResults, { ...defaultParams, includeVat: false, roundingEnabled: true, roundingDirection: 'up' });
+  expect('priceBeforeRounding = 47.23', q.priceBeforeRounding, 47.23);
+  expect('finalRecommendedPrice arrotondato a 47.50', q.finalRecommendedPrice, 47.50);
+  expect('roundingAdjustment = +0.27', round2(q.roundingAdjustment), 0.27);
+}
+
+section('27. computeQuote — arrotondamento per difetto a 0,50€');
+{
+  const jobResults = [{ subtotal: 47.23, totalPieces: 1, materialCost: 0, energyCost: 0, maintenanceCost: 0, amortCost: 0 }];
+  const q = computeQuote(jobResults, { ...defaultParams, includeVat: false, roundingEnabled: true, roundingDirection: 'down' });
+  expect('finalRecommendedPrice arrotondato a 47.00', q.finalRecommendedPrice, 47.00);
+  expect('roundingAdjustment = -0.23', round2(q.roundingAdjustment), -0.23);
+}
+
+section('28. computeQuote — arrotondamento su valore già multiplo di 0,50€ non cambia nulla');
+{
+  const jobResults = [{ subtotal: 50.00, totalPieces: 1, materialCost: 0, energyCost: 0, maintenanceCost: 0, amortCost: 0 }];
+  const q = computeQuote(jobResults, { ...defaultParams, includeVat: false, roundingEnabled: true, roundingDirection: 'up' });
+  expect('finalRecommendedPrice invariato a 50.00', q.finalRecommendedPrice, 50.00);
+  expect('roundingAdjustment = 0', q.roundingAdjustment, 0);
+}
+
+section('29. computeQuote — sconto percentuale da solo');
+{
+  const jobResults = [{ subtotal: 100, totalPieces: 1, materialCost: 0, energyCost: 0, maintenanceCost: 0, amortCost: 0 }];
+  const q = computeQuote(jobResults, { ...defaultParams, includeVat: false, discountAmount: 0, discountPercent: 15 });
+  expect('discountValue = 15 (15% di 100)', q.discountValue, 15);
+  expect('discountPercentValue = 15', q.discountPercentValue, 15);
+  expect('discountFixedValue = 0', q.discountFixedValue, 0);
+}
+
+section('30. computeQuote — sconto fisso + percentuale si sommano');
+{
+  const jobResults = [{ subtotal: 100, totalPieces: 1, materialCost: 0, energyCost: 0, maintenanceCost: 0, amortCost: 0 }];
+  const q = computeQuote(jobResults, { ...defaultParams, includeVat: false, discountAmount: 10, discountPercent: 15 });
+  expect('discountValue = 25 (10 + 15)', q.discountValue, 25);
+  expect('discountFixedValue = 10', q.discountFixedValue, 10);
+  expect('discountPercentValue = 15', q.discountPercentValue, 15);
+}
+
+section('31. computeQuote — sconto combinato eccessivo non rende il prezzo negativo');
+{
+  const jobResults = [{ subtotal: 100, totalPieces: 1, materialCost: 0, energyCost: 0, maintenanceCost: 0, amortCost: 0 }];
+  const q = computeQuote(jobResults, { ...defaultParams, includeVat: false, discountAmount: 90, discountPercent: 50 });
+  expect('discountValue limitato a 100 (base)', q.discountValue, 100);
+  expect('priceAfterDiscount = 0', q.priceAfterDiscount, 0);
+}
+
+section('32. computeQuote — manodopera: retrocompatibilità con manualHours/laborRate singoli');
+{
+  const jobResults = [{ subtotal: 0, totalPieces: 1, materialCost: 0, energyCost: 0, maintenanceCost: 0, amortCost: 0 }];
+  const q = computeQuote(jobResults, { ...defaultParams, includeVat: false, manualHours: 5, laborRate: 20 });
+  expect('manualLaborCost = 100 (5h × 20€)', q.manualLaborCost, 100);
+}
+
+section('33. computeQuote — manodopera: voci multiple con tariffa propria');
+{
+  const jobResults = [{ subtotal: 0, totalPieces: 1, materialCost: 0, energyCost: 0, maintenanceCost: 0, amortCost: 0 }];
+  const laborEntries = [
+    { label: 'Modellazione 3D', hours: 2, rate: 25 },
+    { label: 'Verniciatura',    hours: 3, rate: 15 },
+  ];
+  const q = computeQuote(jobResults, { ...defaultParams, includeVat: false, laborEntries });
+  expect('manualLaborCost = 95 (2×25 + 3×15)', q.manualLaborCost, 95);
+}
+
+section('34. computeQuote — manodopera: lista voci ha priorità sui campi singoli se presente');
+{
+  const jobResults = [{ subtotal: 0, totalPieces: 1, materialCost: 0, energyCost: 0, maintenanceCost: 0, amortCost: 0 }];
+  const laborEntries = [{ label: 'Test', hours: 1, rate: 10 }];
+  const q = computeQuote(jobResults, { ...defaultParams, includeVat: false, laborEntries, manualHours: 999, laborRate: 999 });
+  expect('manualLaborCost = 10 (usa la lista, ignora i campi singoli)', q.manualLaborCost, 10);
+}
+
 // ── Report ────────────────────────────────────────────────────────
 console.log('\n' + '═'.repeat(50));
 console.log(`  RISULTATO: ${passed} passed, ${failed} failed`);

@@ -65,6 +65,16 @@ export function newJob(type) {
   };
 }
 
+/** Una voce di manodopera: tipo di lavoro/nota + ore + tariffa oraria propria. */
+export function newLaborEntry() {
+  return {
+    id:    crypto.randomUUID(),
+    label: '',
+    hours: 0,
+    rate:  0,
+  };
+}
+
 // ── Accessor asincroni ────────────────────────────────────────────────────────
 
 /**
@@ -100,6 +110,14 @@ export async function getJobs() {
 
 export async function saveJobs(jobs) {
   return saveData(STORAGE_KEYS.jobs, jobs);
+}
+
+export async function getLaborEntries() {
+  return loadData(STORAGE_KEYS.laborEntries, []);
+}
+
+export async function saveLaborEntries(entries) {
+  return saveData(STORAGE_KEYS.laborEntries, entries);
 }
 
 export async function getProfile() {

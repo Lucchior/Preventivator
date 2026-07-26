@@ -282,7 +282,7 @@ async function findEntry(id) {
   return archive.find(e => e.id === id) || null;
 }
 
-async function loadEntry(entry, { restoreCurrentJob, renderJobs, activateTab }) {
+async function loadEntry(entry, { restoreCurrentJob, renderJobs, renderLaborEntries, activateTab }) {
   if (!entry.fullData) { alert('Dati non disponibili per questo preventivo.'); return; }
 
   // 1. Salva i dati del preventivo come currentJob
@@ -293,11 +293,17 @@ async function loadEntry(entry, { restoreCurrentJob, renderJobs, activateTab }) 
     await saveData(STORAGE_KEYS.jobs, entry.fullData.jobsList);
   }
 
+  // 2b. Ripristina le voci di manodopera (stesso principio delle lavorazioni)
+  if (entry.fullData.laborEntriesList) {
+    await saveData(STORAGE_KEYS.laborEntries, entry.fullData.laborEntriesList);
+  }
+
   // 3. Ripristina i campi form
   await restoreCurrentJob();
 
-  // 4. Aggiorna la lista lavorazioni
+  // 4. Aggiorna la lista lavorazioni e manodopera
   await renderJobs();
+  if (renderLaborEntries) await renderLaborEntries();
 
   // 5. Vai al tab Lavoro
   activateTab('tab-lavoro');

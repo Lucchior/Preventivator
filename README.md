@@ -57,13 +57,13 @@ Il calcolo segue una sequenza rigorosa, documentata e **coperta da 58 test autom
 1. Costo reale per ogni lavorazione
    = Materiale + Energia + Manutenzione + Ammortamento macchina + Componenti extra
 
-2. + Manodopera manuale (ore × tariffa oraria)
+2. + Manodopera manuale (una o più voci: tipo di lavoro, ore e tariffa oraria propria per voce)
 
 3. + Margine di fallimento % (copre stampe fallite o rilavorazioni)
 
 4. + Rincaro / guadagno %
 
-5. − Sconto cliente (importo fisso)
+5. − Sconto cliente (importo fisso € e/o percentuale %, si sommano — con nota/nome coupon opzionale)
 
 6. Prezzo minimo garantito (floor)
 
@@ -84,6 +84,12 @@ Il riepilogo è diviso in due blocchi chiari:
 - **💶 Prezzo per il cliente** — dal costo reale al prezzo finale, voce per voce; margine netto stimato e prezzo per singolo pezzo
 
 Include anche il **confronto Scenario A/B**: salva due varianti di margine/sconto/spedizione e confrontale fianco a fianco prima di scegliere quale proporre al cliente.
+
+**Manodopera con voci multiple**: nella sezione "Preparazione e post-produzione" puoi aggiungere una o più voci di lavoro manuale (es. "Modellazione 3D", "Verniciatura", "Assemblaggio"), ognuna con le proprie ore e una tariffa oraria indipendente dalle altre. Nel PDF pagina 1 il cliente vede solo il nome della voce e il relativo costo (niente ore/tariffa); il dettaglio completo resta in pagina 2 e nel Riepilogo.
+
+**Sconto cliente combinato**: puoi impostare uno sconto a importo fisso (€) e uno percentuale (%) insieme — si sommano automaticamente — più una nota/nome coupon opzionale (es. "BLACKFRIDAY15"). In pagina 1 del PDF appare come riga unica col totale combinato; il dettaglio con le due componenti separate resta in pagina 2.
+
+**Arrotondamento del totale finale** (opzionale): a multipli di 0,50€, per eccesso o per difetto. Il cliente vede solo il totale già arrotondato (pagina 1 del PDF); il dettaglio con il prezzo esatto pre-arrotondamento resta visibile nel Riepilogo e in pagina 2 del PDF (uso interno).
 
 ### 📄 Esportazione PDF a due pagine (testo vettoriale, non un'immagine)
 Il PDF è generato con testo vero, selezionabile e copiabile — non uno screenshot.
@@ -212,6 +218,7 @@ Preventivator/
 │   ├── ui-machines.js         # Tab Macchine
 │   ├── ui-materials.js        # Materiali
 │   ├── ui-jobs.js             # Lavorazioni, template, drag & drop, import file
+│   ├── ui-labor.js             # Voci di manodopera multiple
 │   ├── ui-3mf.js               # Lettura .gcode/.3mf per import dati stampa 3D
 │   ├── ui-laser-gcode.js       # Stima tempo da .gcode laser (LightBurn)
 │   ├── ui-summary.js          # Riepilogo e confronto scenari

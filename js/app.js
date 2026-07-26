@@ -4,12 +4,13 @@
  */
 
 import { loadData, saveData, STORAGE_KEYS, initStorage } from './storage.js';
-import { getMachines, getMaterials, getJobs, seedDefaultsIfFirstRun, getNextQuoteNumber, quoteIdentityKey } from './models.js';
+import { getMachines, getMaterials, getJobs, seedDefaultsIfFirstRun, getNextQuoteNumber, quoteIdentityKey, getLaborEntries, saveLaborEntries } from './models.js';
 import { computeJobCost, computeQuote }                    from './calc.js';
 import { todayString, showInlineError, hideInlineError } from './utils.js';
 import { renderMachines, initMachinesHandlers }            from './ui-machines.js';
 import { renderMaterials, initMaterialsHandlers, updateMaterialFormUI } from './ui-materials.js';
 import { renderJobs, initJobsHandlers }                    from './ui-jobs.js';
+import { renderLaborEntries, initLaborHandlers }           from './ui-labor.js';
 import { renderSummary, initScenarioHandlers }             from './ui-summary.js';
 import { restoreProfile, initProfileHandlers }             from './ui-profile.js';
 import { initPdfHandler, generatePdf }                     from './ui-pdf.js';
@@ -47,14 +48,18 @@ export async function restoreCurrentJob() {
   set('clientName',      saved.clientName     || '');
   set('clientContact',   saved.clientContact  || '');
   set('quoteDate',       saved.quoteDate      || todayString());
-  set('manualHours',     saved.manualHours,       0);
-  set('laborRate',       saved.laborRate,          0);
   set('failureMargin',   saved.failureMargin,      8);
   set('profitMargin',    saved.profitMargin,        100);
   set('discountAmount',  saved.discountAmount,     0);
+  set('discountPercent', saved.discountPercent,    0);
+  set('discountNote',    saved.discountNote        || '');
   set('minimumPrice',    saved.minimumPrice,        0);
   set('vatPercent',      saved.vatPercent,          22);
   set('includeVat',      saved.includeVat,          true);
+  set('roundingEnabled', saved.roundingEnabled,     false);
+  const dir = saved.roundingDirection || 'up';
+  const dirRadio = document.querySelector(`input[name="roundingDirection"][value="${dir}"]`);
+  if (dirRadio) dirRadio.checked = true;
   set('includeShipping', saved.includeShipping,     false);
   set('shippingCost',    saved.shippingCost,        0);
   set('shippingType',    saved.shippingType,        'standard');
@@ -100,14 +105,17 @@ function initJobFormHandler() {
     hideInlineError('jobFormError');
 
     const g = id => document.getElementById(id);
-    const manualHours       = Number(g('manualHours').value      || 0);
-    const laborRate         = Number(g('laborRate').value        || 0);
+    const laborEntries      = await getLaborEntries();
     const failureMargin     = Number(g('failureMargin').value    || 0);
     const profitMargin      = Number(g('profitMargin').value     || 0);
     const discountAmount    = Number(g('discountAmount').value   || 0);
+    const discountPercent   = Number(g('discountPercent').value  || 0);
+    const discountNote      = g('discountNote').value.trim();
     const minimumPrice      = Number(g('minimumPrice').value     || 0);
     const vatPercent        = Number(g('vatPercent').value       || 0);
     const includeVat        = g('includeVat').checked;
+    const roundingEnabled   = g('roundingEnabled').checked;
+    const roundingDirection = document.querySelector('input[name="roundingDirection"]:checked')?.value || 'up';
     const includeShipping   = g('includeShipping').checked;
     const shippingCost      = includeShipping ? Number(g('shippingCost').value     || 0) : 0;
     const shippingType      = includeShipping ? g('shippingType').value               : '';
@@ -118,8 +126,9 @@ function initJobFormHandler() {
     const shippingNotes     = includeShipping ? g('shippingNotes').value.trim()         : '';
 
     const shippingParams = {
-      manualHours, laborRate, failureMargin, profitMargin,
-      discountAmount, minimumPrice, vatPercent, includeVat,
+      laborEntries, failureMargin, profitMargin,
+      discountAmount, discountPercent, discountNote, minimumPrice, vatPercent, includeVat,
+      roundingEnabled, roundingDirection,
       includeShipping, shippingCost, includeInsurance, insuranceCost,
     };
     const q = computeQuote(jobResults, shippingParams);
@@ -141,8 +150,8 @@ function initJobFormHandler() {
       jobName: newJobName, clientName: newClientName,
       clientContact: g('clientContact').value.trim(), quoteDate: newQuoteDate,
       jobResults, totalPiecesAll: q.totalPiecesAll, unitPriceClient: q.unitPriceClient,
-      manualHours, laborRate, manualLaborCost: q.manualLaborCost,
-      failureMargin, profitMargin, discountAmount, minimumPrice, vatPercent, includeVat,
+      laborEntries, manualLaborCost: q.manualLaborCost,
+      failureMargin, profitMargin, discountAmount, discountPercent, discountNote, minimumPrice, vatPercent, includeVat,
       includeShipping, shippingCost, shippingType, includeInsurance, insuranceCost,
       shippingTotal: q.shippingTotal, deliveryDaysMin, deliveryDaysMax, shippingNotes,
       materialCostTotal: q.materialCostTotal, energyCostTotal: q.energyCostTotal,
@@ -150,16 +159,21 @@ function initJobFormHandler() {
       baseTechnicalTotal: q.baseTechnicalTotal, baseTotal: q.baseTotal,
       failureCost: q.failureCost, adjustedTotal: q.adjustedTotal, profitValue: q.profitValue,
       priceBeforeDiscount: q.priceBeforeDiscount, discountValue: q.discountValue,
+      discountFixedValue: q.discountFixedValue, discountPercentValue: q.discountPercentValue,
       priceAfterDiscount: q.priceAfterDiscount, priceAfterMinimum: q.priceAfterMinimum,
-      vatValue: q.vatValue, priceWithVat: q.priceWithVat, finalRecommendedPrice: q.finalRecommendedPrice,
+      vatValue: q.vatValue, priceWithVat: q.priceWithVat,
+      priceBeforeRounding: q.priceBeforeRounding, roundingEnabled: q.roundingEnabled,
+      roundingDirection: q.roundingDirection, roundingAdjustment: q.roundingAdjustment,
+      finalRecommendedPrice: q.finalRecommendedPrice,
     };
 
     await saveData(STORAGE_KEYS.currentJob, {
       version: 'hybrid-v3', jobName: result.jobName, clientName: result.clientName,
       clientContact: result.clientContact, quoteDate: result.quoteDate,
       quoteNumber: result.quoteNumber, quoteNumberKey: newIdentity,
-      manualHours, laborRate, failureMargin, profitMargin,
-      discountAmount, minimumPrice, vatPercent, includeVat,
+      failureMargin, profitMargin,
+      discountAmount, discountPercent, discountNote, minimumPrice, vatPercent, includeVat,
+      roundingEnabled, roundingDirection,
       includeShipping, shippingCost, shippingType, includeInsurance, insuranceCost,
       deliveryDaysMin, deliveryDaysMax, shippingNotes, result,
     });
@@ -172,11 +186,13 @@ function initJobFormHandler() {
       version: 'hybrid-v3', jobName: result.jobName, clientName: result.clientName,
       clientContact: result.clientContact, quoteDate: result.quoteDate,
       quoteNumber: result.quoteNumber, quoteNumberKey: newIdentity,
-      manualHours, laborRate, failureMargin, profitMargin,
-      discountAmount, minimumPrice, vatPercent, includeVat,
+      failureMargin, profitMargin,
+      discountAmount, discountPercent, discountNote, minimumPrice, vatPercent, includeVat,
+      roundingEnabled, roundingDirection,
       includeShipping, shippingCost, shippingType, includeInsurance, insuranceCost,
       deliveryDaysMin, deliveryDaysMax, shippingNotes,
       jobsList: jobs, // snapshot delle lavorazioni per ripristino futuro
+      laborEntriesList: laborEntries, // snapshot delle voci manodopera per ripristino futuro
       result,
     };
     archiveSave(currentJobData, result).then(() => { renderArchive(); renderKnownClientsList(); });
@@ -206,6 +222,17 @@ function initClientAutocomplete() {
   });
 }
 
+async function migrateLegacyLaborIfNeeded() {
+  const existing = await getLaborEntries();
+  if (existing.length) return; // già migrato o già in uso il nuovo formato
+  const savedJob = await loadData(STORAGE_KEYS.currentJob, null);
+  const h = Number(savedJob?.manualHours) || 0;
+  const r = Number(savedJob?.laborRate)   || 0;
+  if (h > 0 || r > 0) {
+    await saveLaborEntries([{ id: crypto.randomUUID(), label: '', hours: h, rate: r }]);
+  }
+}
+
 async function init() {
   // 1. Storage + tema (prima di tutto per evitare flash)
   await initStorage();
@@ -225,11 +252,12 @@ async function init() {
   initMachinesHandlers();
   initMaterialsHandlers();
   initJobsHandlers();
+  initLaborHandlers();
   initProfileHandlers();
   initPdfHandler();
   initScenarioHandlers();
   initHelpHandler();
-  initArchiveHandlers({ restoreCurrentJob, renderJobs, activateTab, generatePdf });
+  initArchiveHandlers({ restoreCurrentJob, renderJobs, renderLaborEntries, activateTab, generatePdf });
   initIoHandlers({ renderMachines, renderMaterials, restoreProfile, renderJobs, restoreCurrentJob, activateTab });
   initJobFormHandler();
 
@@ -248,6 +276,8 @@ async function init() {
   ]);
   initClientAutocomplete();
   await renderJobs();
+  await migrateLegacyLaborIfNeeded();
+  await renderLaborEntries();
   await restoreCurrentJob();
 
   // 6. Ripristina ultimo riepilogo calcolato
