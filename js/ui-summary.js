@@ -27,6 +27,7 @@ export function renderSummary(result) {
 
   let html = `
     <div class="summary-meta">
+      ${result.quoteNumber ? `<div class="meta-item"><div class="k">N. Preventivo</div><div class="v">${escapeHtml(result.quoteNumber)}</div></div>` : ''}
       <div class="meta-item"><div class="k">Preventivo</div><div class="v">${escapeHtml(result.jobName || 'Senza nome')}</div></div>
       <div class="meta-item"><div class="k">Cliente</div><div class="v">${escapeHtml(result.clientName || 'Non indicato')}</div></div>
       <div class="meta-item"><div class="k">Mail/telefono</div><div class="v">${escapeHtml(result.clientContact || 'Non indicato')}</div></div>

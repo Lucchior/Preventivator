@@ -228,7 +228,7 @@ function buildPage1(doc, result, profile, qrDataUrl) {
     title: name,
     subtitleLines,
     rightLines: [
-      { text: 'PREVENTIVO', size: 8, color: [199, 210, 254] },
+      { text: 'PREVENTIVO' + (result.quoteNumber ? ' N. ' + result.quoteNumber : ''), size: 8, color: [199, 210, 254] },
       { text: result.jobName || 'Senza nome', size: 13, bold: true },
       { text: 'Data: ' + (result.quoteDate || genDate), size: 8.5, color: [203, 213, 225] },
     ],

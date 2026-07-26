@@ -43,6 +43,7 @@
         </div>
         <div class="header-right">
           <span class="header-brand-tag">Ludwing's Creations</span>
+          <button id="helpBtn" class="theme-btn" title="Guida rapida" aria-label="Guida rapida">❓</button>
           <button id="themeToggleBtn" class="theme-btn" title="Cambia tema" aria-label="Cambia tema">☀️</button>
         </div>
       </div>
@@ -247,7 +248,8 @@
               </div>
               <div class="field">
                 <label for="clientName">Cliente</label>
-                <input id="clientName" type="text" placeholder="Es. Rossi Arredamenti" />
+                <input id="clientName" type="text" list="knownClientsList" placeholder="Es. Rossi Arredamenti" autocomplete="off" />
+                <datalist id="knownClientsList"></datalist>
               </div>
               <div class="field">
                 <label for="clientContact">Mail/telefono cliente</label>

@@ -31,11 +31,13 @@ Ogni macchina e materiale può essere **aggiunto, modificato ed eliminato** in q
 ### 📥 Import automatico dei dati di stampa/incisione
 Invece di calcolare a mano grammi e ore, puoi importarli direttamente dal file che hai già usato per produrre il pezzo:
 
-**Stampa 3D** — carica un file **.gcode** (funziona con qualunque slicer: Bambu Studio, OrcaSlicer, Anycubic Slicer Next, PrusaSlicer, Cura...) oppure un **.3mf** esportato con l'opzione slicer "Esporta tutti i piatti elaborati" (non il "salva progetto" standard, che non contiene questi dati). Se il file contiene più piatti, puoi scegliere quale importare singolarmente oppure importarli **tutti insieme sommati** (comodo per lavorazioni con tanti pezzi piccoli), con relative miniature.
+**Stampa 3D** — carica un file **.gcode** (funziona con qualunque slicer: Bambu Studio, OrcaSlicer, Anycubic Slicer Next, PrusaSlicer, Cura...) oppure un **.3mf** esportato con l'opzione slicer "Esporta tutti i piatti elaborati" (non il "salva progetto" standard, che non contiene questi dati). Se il file contiene più piatti, puoi scegliere quale importare singolarmente oppure importarli **tutti insieme sommati** (comodo per lavorazioni con tanti pezzi piccoli), con relative miniature. Se il file dichiara il tipo di filamento (es. "PLA"), l'app **suggerisce automaticamente** il materiale salvato più simile.
 
 **Laser** — carica un file **.gcode esportato da LightBurn**. A differenza degli slicer 3D, LightBurn non scrive un tempo stimato nel file: Preventivator lo calcola **simulando il percorso reale** (somma delle distanze percorse divise per la velocità dichiarata riga per riga), gestendo correttamente anche i **passaggi multipli** di taglio. Il materiale non viene compilato automaticamente (dipende dalla tua unità di misura), ma viene mostrata l'area lavorata come riferimento.
 
 ### 📋 Preventivo con lavorazioni multiple
+Il campo **Cliente** suggerisce automaticamente i nomi già visti nei preventivi passati (rubrica automatica, nessuna gestione manuale) e completa da solo il contatto quando ne scegli uno.
+
 Crea preventivi con una o più lavorazioni in lista unica, ognuna configurabile con:
 - Tipo (Stampa 3D o Laser) con macchina e materiale propri
 - Descrizione libera
@@ -73,6 +75,8 @@ Il calcolo segue una sequenza rigorosa, documentata e **coperta da 58 test autom
 Spedizione opzionale con tipologia (Standard / Espresso / Economy), assicurazione con costo separato, range di giorni di consegna stimati e note libere. Il disclaimer "tempi indicativi" è incluso automaticamente nel PDF.
 
 ### 📊 Riepilogo avanzato
+Ogni preventivo riceve un **numero progressivo automatico** (es. "2026-007", riparte da 1 a ogni nuovo anno), visibile nel riepilogo, in archivio e nel PDF — ricalcolare lo stesso preventivo mantiene il numero, un nuovo preventivo ne genera uno nuovo.
+
 Il riepilogo è diviso in due blocchi chiari:
 - **🛠️ Costo reale di produzione** — ogni lavorazione con subtotale e dettaglio costi (materiale, energia, manutenzione, ammortamento); poi manodopera e margine fallimento
 - **💶 Prezzo per il cliente** — dal costo reale al prezzo finale, voce per voce; margine netto stimato e prezzo per singolo pezzo
@@ -111,6 +115,9 @@ Segue automaticamente le preferenze del sistema operativo, con possibilità di f
 
 ### ⌨️ Scorciatoie da tastiera
 `Ctrl/Cmd+S` calcola il riepilogo, `Ctrl/Cmd+P` esporta il PDF, `Ctrl/Cmd+1…6` naviga tra i tab.
+
+### ❓ Guida rapida in-app
+Il pulsante ❓ nell'header apre una guida sintetica con una spiegazione di ogni tab e delle funzioni meno immediate — utile per chi usa l'app la prima volta o non ricorda un dettaglio.
 
 ### 📲 App installabile (PWA)
 Da smartphone o desktop puoi installare Preventivator come una vera app (icona in home screen, si apre senza barra del browser). Funziona anche **offline** una volta caricata la prima volta.
@@ -209,7 +216,8 @@ Preventivator/
 │   ├── ui-archive.js          # Tab Archivio e statistiche
 │   ├── ui-io.js               # Import/export JSON e CSV
 │   ├── ui-pdf.js              # Generazione PDF vettoriale
-│   └── ui-theme.js            # Tema chiaro/scuro
+│   ├── ui-theme.js            # Tema chiaro/scuro
+│   └── ui-help.js              # Guida rapida in-app
 ├── vendor/
 │   ├── jspdf.umd.min.js      # Libreria PDF vendorizzata (non nel CDN)
 │   └── jszip.min.js           # Libreria lettura archivi .3mf (non nel CDN)
@@ -231,6 +239,8 @@ Preventivator/
 - **Prezzo minimo**: utile per lavorazioni brevi dove il costo fisso (imballaggio, gestione ordine) è rilevante.
 - **Template**: se ripeti spesso la stessa combinazione macchina+materiale+parametri, salvala come template dalla lavorazione — la richiami in un click nei preventivi futuri.
 - **Import automatico**: se il tuo slicer/LightBurn permette di esportare il file già sezionato, usalo — risparmi tempo e riduci gli errori di trascrizione rispetto a inserire grammi/ore a mano.
+- **Numero preventivo**: se devi allinearlo alla tua numerazione contabile esistente, puoi comunque rinominare il preventivo/cliente per far scattare un nuovo numero, oppure ignorarlo e usare solo il tuo sistema esterno.
+- **Cliente**: la prima volta che scrivi un nuovo cliente, inserisci anche il contatto — la prossima volta ti verrà suggerito e completato da solo.
 - **Import/Export**: tieni sempre una copia dei dati base esportata — in caso di cambio dispositivo, pulizia del browser, o aggiornamento dell'app, li recuperi in un click.
 
 ---

@@ -52,6 +52,13 @@ function extractFromGcodeText(text) {
   for (const p of GRAMS_PATTERNS) { const m = text.match(p); if (m) { grams = Number(m[1]); break; } }
   for (const p of TIME_PATTERNS)  { const m = text.match(p); if (m) { hours = parseDurationToHours(m[1]); if (hours !== null) break; } }
 
+  // Tipo di filamento (es. "PLA", "PETG"): usato solo come suggerimento per il
+  // materiale, mai per compilare automaticamente costi — quelli restano quelli
+  // salvati dall'utente per il materiale scelto.
+  let filamentType = null;
+  const ftMatch = text.match(/filament_type\s*=\s*([A-Za-z0-9+]+)/i);
+  if (ftMatch) filamentType = ftMatch[1].toUpperCase();
+
   let thumbnail = null;
   const blocks = [...text.matchAll(/;\s*thumbnail(?:_QOI)?\s+begin\s+(\d+)x(\d+)\s+\d+[^\n]*\n([\s\S]*?);\s*thumbnail(?:_QOI)?\s+end/gi)];
   if (blocks.length) {
@@ -63,7 +70,7 @@ function extractFromGcodeText(text) {
     }
     if (best) thumbnail = `data:image/png;base64,${best}`;
   }
-  return { grams, hours, thumbnail };
+  return { grams, hours, thumbnail, filamentType };
 }
 
 /**

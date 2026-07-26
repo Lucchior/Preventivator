@@ -52,6 +52,7 @@ export async function archiveSave(currentJobData, result) {
     jobName:      currentJobData.jobName      || 'Senza nome',
     clientName:   currentJobData.clientName   || '',
     quoteDate:    currentJobData.quoteDate    || todayIso(),
+    quoteNumber:  currentJobData.quoteNumber  || result.quoteNumber || '',
     finalPrice:   result.finalRecommendedPrice || 0,
     includeVat:   result.includeVat           || false,
     jobCount:     (result.jobResults          || []).length,
@@ -88,7 +89,7 @@ function buildEntryCard(entry) {
   return `
     <div class="archive-card" data-archive-id="${entry.id}">
       <div class="archive-card-main">
-        <div class="archive-card-title">${escapeHtml(entry.jobName)}</div>
+        <div class="archive-card-title">${entry.quoteNumber ? `<span class="badge violet" style="margin-right:6px;">N. ${escapeHtml(entry.quoteNumber)}</span>` : ''}${escapeHtml(entry.jobName)}</div>
         <div class="archive-card-meta">
           ${entry.clientName ? `<span>👤 ${escapeHtml(entry.clientName)}</span>` : ''}
           <span>📅 ${formatDate(entry.quoteDate)}</span>
@@ -163,6 +164,28 @@ async function renderStats(archive) {
   grid.innerHTML = `<div class="summary-meta" style="grid-template-columns:repeat(2,1fr);">${
     tiles.map(([k, v]) => `<div class="meta-item"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')
   }</div>`;
+}
+
+/**
+ * Estrae l'elenco dei clienti unici visti nello storico preventivi, con il
+ * contatto più recente per ciascuno (rubrica automatica, nessuna gestione manuale).
+ * @returns {Promise<Array<{name:string, contact:string}>>}
+ */
+export async function getKnownClients() {
+  const archive = await getArchive();
+  const byName = new Map();
+  for (const entry of archive) {
+    const name = (entry.clientName || '').trim();
+    if (!name) continue;
+    const contact = entry.fullData?.clientContact || entry.fullData?.result?.clientContact || '';
+    const existing = byName.get(name);
+    if (!existing || new Date(entry.savedAt) > new Date(existing.savedAt)) {
+      byName.set(name, { name, contact, savedAt: entry.savedAt });
+    }
+  }
+  return [...byName.values()]
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(({ name, contact }) => ({ name, contact }));
 }
 
 export async function renderArchive(filterText = '') {
@@ -291,8 +314,10 @@ async function duplicateEntry(entry, ctx) {
   const clone = JSON.parse(JSON.stringify(entry.fullData));
   clone.jobName  = `${clone.jobName || 'Preventivo'} (copia)`;
   clone.quoteDate = todayIso();
+  delete clone.quoteNumber;
+  delete clone.quoteNumberKey;
   if (clone.result) {
-    clone.result = { ...clone.result, jobName: clone.jobName, quoteDate: clone.quoteDate };
+    clone.result = { ...clone.result, jobName: clone.jobName, quoteDate: clone.quoteDate, quoteNumber: null };
   }
   await loadEntry({ fullData: clone }, ctx);
 }

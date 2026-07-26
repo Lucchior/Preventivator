@@ -105,3 +105,23 @@ export async function saveJobs(jobs) {
 export async function getProfile() {
   return loadData(STORAGE_KEYS.profile, { type: 'privato' });
 }
+
+// ── Numerazione progressiva preventivi ─────────────────────────────────────────
+
+/**
+ * Genera il prossimo numero di preventivo, formato "AAAA-NNN" (es. "2026-007").
+ * Il contatore riparte da 1 automaticamente a ogni nuovo anno solare.
+ */
+export async function getNextQuoteNumber() {
+  const currentYear = new Date().getFullYear();
+  const counter = await loadData(STORAGE_KEYS.quoteCounter, { year: currentYear, lastNumber: 0 });
+  const next = counter.year === currentYear ? counter.lastNumber + 1 : 1;
+  await saveData(STORAGE_KEYS.quoteCounter, { year: currentYear, lastNumber: next });
+  return `${currentYear}-${String(next).padStart(3, '0')}`;
+}
+
+/** Costruisce la chiave identità di un preventivo (nome+cliente+data), usata sia
+ * per il dedup in archivio sia per capire se un preventivo ha già un numero. */
+export function quoteIdentityKey(jobName, clientName, quoteDate) {
+  return `${jobName || ''}|${clientName || ''}|${quoteDate || ''}`;
+}

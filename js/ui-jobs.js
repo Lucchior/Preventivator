@@ -355,9 +355,28 @@ export function initJobsHandlers() {
     // mode === 'single' (.gcode)
     await applyGramsHoursToJob(jobId, result.grams, result.hours);
     if (result.thumbnail) showSingleThumbnail(jobId, result.thumbnail);
+
+    // Suggerimento materiale in base al tipo di filamento rilevato (es. "PLA"),
+    // solo se non è già stato scelto un materiale per questa lavorazione.
+    let materialNote = '';
+    if (result.filamentType) {
+      const materialSelect = container.querySelector(`[data-field="materialId"][data-id="${jobId}"]`);
+      if (materialSelect && !materialSelect.value) {
+        const materials = await getMaterials();
+        const match = materials.find(m => m.type === '3d' && m.name.toUpperCase().includes(result.filamentType));
+        if (match) {
+          materialSelect.value = match.id;
+          const jobsNow = await getJobs();
+          const job = jobsNow.find(j => j.id === jobId);
+          if (job) { job.materialId = match.id; await saveJobs(jobsNow); }
+          materialNote = ` Materiale suggerito: "${match.name}" (rilevato ${result.filamentType} dal file).`;
+        }
+      }
+    }
+
     if (statusEl) {
       if (result.warning) { statusEl.textContent = '⚠️ ' + result.warning; statusEl.classList.add('mf3-warn'); }
-      else { statusEl.textContent = '✅ Grammi e ore compilati dal file (sono il totale di tutto ciò che contiene: se il G-code include più piatti insieme, lascia "Numero piatti" a 1 per non raddoppiare il calcolo).'; statusEl.classList.add('mf3-ok'); }
+      else { statusEl.textContent = '✅ Grammi e ore compilati dal file (sono il totale di tutto ciò che contiene: se il G-code include più piatti insieme, lascia "Numero piatti" a 1 per non raddoppiare il calcolo).' + materialNote; statusEl.classList.add('mf3-ok'); }
     }
     fileInput.value = '';
   });

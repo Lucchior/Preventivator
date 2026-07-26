@@ -4,7 +4,7 @@
  */
 
 import { loadData, saveData, STORAGE_KEYS, initStorage } from './storage.js';
-import { getMachines, getMaterials, getJobs, seedDefaultsIfFirstRun } from './models.js';
+import { getMachines, getMaterials, getJobs, seedDefaultsIfFirstRun, getNextQuoteNumber, quoteIdentityKey } from './models.js';
 import { computeJobCost, computeQuote }                    from './calc.js';
 import { todayString, showInlineError, hideInlineError } from './utils.js';
 import { renderMachines, initMachinesHandlers }            from './ui-machines.js';
@@ -14,8 +14,9 @@ import { renderSummary, initScenarioHandlers }             from './ui-summary.js
 import { restoreProfile, initProfileHandlers }             from './ui-profile.js';
 import { initPdfHandler, generatePdf }                     from './ui-pdf.js';
 import { initIoHandlers }                                  from './ui-io.js';
-import { archiveSave, renderArchive, initArchiveHandlers } from './ui-archive.js';
+import { archiveSave, renderArchive, initArchiveHandlers, getKnownClients } from './ui-archive.js';
 import { initTheme }                                        from './ui-theme.js';
+import { initHelpHandler }                                  from './ui-help.js';
 
 // ── Tab navigation ────────────────────────────────────────────────────────────
 export function activateTab(id) {
@@ -123,10 +124,22 @@ function initJobFormHandler() {
     };
     const q = computeQuote(jobResults, shippingParams);
 
+    // Numero preventivo: riusa quello esistente se stesso nome+cliente+data,
+    // altrimenti ne genera uno nuovo (nuovo preventivo = nuovo numero).
+    const newJobName    = g('jobName').value.trim();
+    const newClientName = g('clientName').value.trim();
+    const newQuoteDate  = g('quoteDate').value || todayString();
+    const newIdentity   = quoteIdentityKey(newJobName, newClientName, newQuoteDate);
+    const prevCurrentJob = await loadData(STORAGE_KEYS.currentJob, null);
+    const quoteNumber = (prevCurrentJob?.quoteNumberKey === newIdentity && prevCurrentJob?.quoteNumber)
+      ? prevCurrentJob.quoteNumber
+      : await getNextQuoteNumber();
+
     const result = {
       version: 'hybrid-v3',
-      jobName: g('jobName').value.trim(), clientName: g('clientName').value.trim(),
-      clientContact: g('clientContact').value.trim(), quoteDate: g('quoteDate').value || todayString(),
+      quoteNumber,
+      jobName: newJobName, clientName: newClientName,
+      clientContact: g('clientContact').value.trim(), quoteDate: newQuoteDate,
       jobResults, totalPiecesAll: q.totalPiecesAll, unitPriceClient: q.unitPriceClient,
       manualHours, laborRate, manualLaborCost: q.manualLaborCost,
       failureMargin, profitMargin, discountAmount, minimumPrice, vatPercent, includeVat,
@@ -144,6 +157,7 @@ function initJobFormHandler() {
     await saveData(STORAGE_KEYS.currentJob, {
       version: 'hybrid-v3', jobName: result.jobName, clientName: result.clientName,
       clientContact: result.clientContact, quoteDate: result.quoteDate,
+      quoteNumber: result.quoteNumber, quoteNumberKey: newIdentity,
       manualHours, laborRate, failureMargin, profitMargin,
       discountAmount, minimumPrice, vatPercent, includeVat,
       includeShipping, shippingCost, shippingType, includeInsurance, insuranceCost,
@@ -157,6 +171,7 @@ function initJobFormHandler() {
     const currentJobData = {
       version: 'hybrid-v3', jobName: result.jobName, clientName: result.clientName,
       clientContact: result.clientContact, quoteDate: result.quoteDate,
+      quoteNumber: result.quoteNumber, quoteNumberKey: newIdentity,
       manualHours, laborRate, failureMargin, profitMargin,
       discountAmount, minimumPrice, vatPercent, includeVat,
       includeShipping, shippingCost, shippingType, includeInsurance, insuranceCost,
@@ -164,11 +179,33 @@ function initJobFormHandler() {
       jobsList: jobs, // snapshot delle lavorazioni per ripristino futuro
       result,
     };
-    archiveSave(currentJobData, result).then(() => renderArchive());
+    archiveSave(currentJobData, result).then(() => { renderArchive(); renderKnownClientsList(); });
   });
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+async function renderKnownClientsList() {
+  const datalist = document.getElementById('knownClientsList');
+  if (!datalist) return;
+  const clients = await getKnownClients();
+  datalist.innerHTML = clients.map(c => `<option value="${c.name.replace(/"/g, '&quot;')}"></option>`).join('');
+  datalist._clientsData = clients;
+}
+
+function initClientAutocomplete() {
+  const nameInput    = document.getElementById('clientName');
+  const contactInput = document.getElementById('clientContact');
+  if (!nameInput || !contactInput) return;
+  nameInput.addEventListener('input', () => {
+    const datalist = document.getElementById('knownClientsList');
+    const clients  = datalist?._clientsData || [];
+    const match = clients.find(c => c.name.toLowerCase() === nameInput.value.trim().toLowerCase());
+    if (match && match.contact && !contactInput.value.trim()) {
+      contactInput.value = match.contact;
+    }
+  });
+}
+
 async function init() {
   // 1. Storage + tema (prima di tutto per evitare flash)
   await initStorage();
@@ -191,6 +228,7 @@ async function init() {
   initProfileHandlers();
   initPdfHandler();
   initScenarioHandlers();
+  initHelpHandler();
   initArchiveHandlers({ restoreCurrentJob, renderJobs, activateTab, generatePdf });
   initIoHandlers({ renderMachines, renderMaterials, restoreProfile, renderJobs, restoreCurrentJob, activateTab });
   initJobFormHandler();
@@ -206,7 +244,9 @@ async function init() {
     renderMaterials(),
     restoreProfile(),
     renderArchive(),
+    renderKnownClientsList(),
   ]);
+  initClientAutocomplete();
   await renderJobs();
   await restoreCurrentJob();
 
