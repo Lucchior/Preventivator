@@ -4,7 +4,7 @@
  */
 
 import { loadData, saveData, STORAGE_KEYS } from './storage.js';
-import { getMachines, getMaterials, getJobs, saveJobs, normalizeMachine, normalizeMaterial } from './models.js';
+import { getMachines, getMaterials, getJobs, saveJobs, normalizeMachine, normalizeMaterial, getLaborEntries, saveLaborEntries } from './models.js';
 import { todayIso, downloadJson, downloadText, showIoResult, toCsv, parseCsv } from './utils.js';
 
 const MACHINE_CSV_HEADERS = [
@@ -18,7 +18,7 @@ const MATERIAL_CSV_HEADERS = [
   { key: 'unit', label: 'Unità' }, { key: 'unitCost', label: 'Costo unitario (€)' },
 ];
 
-export function initIoHandlers({ renderMachines, renderMaterials, restoreProfile, renderJobs, restoreCurrentJob, activateTab }) {
+export function initIoHandlers({ renderMachines, renderMaterials, restoreProfile, renderJobs, renderLaborEntries, restoreCurrentJob, activateTab }) {
 
   document.getElementById('exportBaseBtn').addEventListener('click', async () => {
     const [profile, machines, materials] = await Promise.all([
@@ -50,14 +50,14 @@ export function initIoHandlers({ renderMachines, renderMaterials, restoreProfile
   });
 
   document.getElementById('exportJobBtn').addEventListener('click', async () => {
-    const [currentJob, jobs, machines, materials] = await Promise.all([
+    const [currentJob, jobs, machines, materials, laborEntries] = await Promise.all([
       loadData(STORAGE_KEYS.currentJob, null),
-      getJobs(), getMachines(), getMaterials(),
+      getJobs(), getMachines(), getMaterials(), getLaborEntries(),
     ]);
     if (!jobs.length && !currentJob) { alert('Nessuna lavorazione da esportare.'); return; }
     const jobName = (currentJob?.jobName || 'senza-nome').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    downloadJson({ _type: 'preventivi3d-job', _version: 1, _exported: new Date().toISOString(),
-      currentJob, jobs, machinesSnapshot: machines, materialsSnapshot: materials },
+    downloadJson({ _type: 'preventivi3d-job', _version: 2, _exported: new Date().toISOString(),
+      currentJob, jobs, laborEntries, machinesSnapshot: machines, materialsSnapshot: materials },
       `lavorazione-${jobName}-${todayIso()}.json`);
   });
 
@@ -67,9 +67,24 @@ export function initIoHandlers({ renderMachines, renderMaterials, restoreProfile
     try {
       const data = JSON.parse(await file.text());
       if (data._type !== 'preventivi3d-job') throw new Error('File non valido: non è un file di lavorazione.');
-      if (data.jobs)       await saveJobs(data.jobs);
+      if (data.jobs) await saveJobs(data.jobs);
+
+      // Voci di manodopera: presenti dai file v2 in poi. Nei file più vecchi
+      // (v1) la manodopera era un unico campo ore+tariffa dentro currentJob:
+      // in quel caso la convertiamo in una voce singola, così non va persa.
+      if (Array.isArray(data.laborEntries)) {
+        await saveLaborEntries(data.laborEntries);
+      } else {
+        const h = Number(data.currentJob?.manualHours) || 0;
+        const r = Number(data.currentJob?.laborRate)   || 0;
+        if (h > 0 || r > 0) {
+          await saveLaborEntries([{ id: crypto.randomUUID(), label: 'Lavoro manuale', hours: h, rate: r }]);
+        }
+      }
+
       if (data.currentJob) { await saveData(STORAGE_KEYS.currentJob, data.currentJob); await restoreCurrentJob(); }
       await renderJobs();
+      if (renderLaborEntries) await renderLaborEntries();
       activateTab('tab-lavoro');
       showIoResult('importJobResult', `✅ Lavorazione "${data.currentJob?.jobName || 'senza nome'}" importata con ${(data.jobs || []).length} lavorazione/i.`, true);
     } catch (err) {

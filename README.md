@@ -4,7 +4,7 @@
 
 **🔗 App live: [https://lucchior.github.io/Preventivator/](https://lucchior.github.io/Preventivator/)**
 
-Web-app responsive per la creazione di preventivi professionali per lavorazioni di stampa 3D e incisione laser, singole o combinate. Gira interamente nel browser, **installabile come app** (PWA), funziona **offline** dopo il primo caricamento, senza server, senza account e senza tracciamento. Interfaccia con navigazione laterale, tema chiaro/scuro e font Manrope + JetBrains Mono per i valori numerici.
+Web-app responsive per la creazione di preventivi professionali per lavorazioni di stampa 3D e incisione laser, singole o combinate. Gira interamente nel browser, **installabile come app** (PWA), funziona **offline** dopo il primo caricamento, senza server, senza account e senza tracciamento. Interfaccia con navigazione laterale, tema chiaro/scuro e font Space Grotesk + JetBrains Mono per i valori numerici.
 
 ---
 
@@ -117,7 +117,7 @@ Ogni preventivo calcolato viene **salvato automaticamente** nello storico. Da qu
 
 ### 📦 Import / Export dati
 - **Dati base** (Profilo + Macchine + Materiali) in JSON — per portarli su un altro dispositivo
-- **Lavorazione completa** in JSON — per riprendere un preventivo in futuro
+- **Lavorazione completa** in JSON — per riprendere un preventivo in futuro, incluse le voci di manodopera. I file esportati con versioni precedenti (che salvavano la manodopera come singolo campo ore+tariffa) vengono convertiti automaticamente all'import, senza perdita di dati
 - **Macchine e materiali anche in CSV**, compatibile Excel/Fogli Google
 
 ### 🌗 Tema chiaro/scuro
@@ -128,6 +128,9 @@ Segue automaticamente le preferenze del sistema operativo, con possibilità di f
 
 ### ❓ Guida rapida in-app
 Il pulsante ❓ nell'header apre una guida sintetica con una spiegazione di ogni tab e delle funzioni meno immediate — utile per chi usa l'app la prima volta o non ricorda un dettaglio.
+
+### 🖥️ Ottimizzata per desktop
+L'interfaccia è pensata per lo schermo grande (navigazione laterale sempre visibile, due colonne affiancate). Resta comunque **pienamente utilizzabile da smartphone e tablet**: sotto i 900px la barra laterale diventa orizzontale e le colonne si impilano. Su schermo piccolo compare un avviso richiudibile che segnala che l'esperienza migliore è da computer.
 
 ### 📲 App installabile (PWA)
 Da smartphone o desktop puoi installare Preventivator come una vera app (icona in home screen, si apre senza barra del browser). Funziona anche **offline** una volta caricata la prima volta.
@@ -177,7 +180,7 @@ L'app ti avviserà con una schermata dedicata che ti guida a: esportare i dati, 
 - **Service Worker** — precaching e funzionamento offline, PWA installabile
 - **File API** — import/export JSON e CSV lato client, nessun upload su server
 - **Intl.NumberFormat** — formattazione valuta e numeri in italiano
-- **Manrope + JetBrains Mono** (Google Fonts) — font dell'interfaccia e dei valori numerici/prezzi
+- **Space Grotesk + JetBrains Mono** (Google Fonts) — font dell'interfaccia e dei valori numerici/prezzi
 
 ### ✅ Qualità e test
 La logica di calcolo (`js/calc.js`) è isolata e coperta da **58 test automatici** (`tests/calc.test.js`), eseguibili con:

@@ -76,6 +76,7 @@ export const STORAGE_KEYS = {
   scenarioB:  'preventivi3d_scenario_b',
   quoteCounter: 'preventivi3d_quote_counter',
   laborEntries: 'preventivi3d_labor_entries',
+  desktopHintDismissed: 'preventivi3d_desktop_hint_dismissed',
 };
 
 // ── DB singleton ──────────────────────────────────────────────────────────────

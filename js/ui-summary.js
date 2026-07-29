@@ -151,7 +151,7 @@ async function renderScenarioCompare() {
   ];
 
   box.innerHTML = `
-    <div class="summary-block" style="border-left:3px solid var(--accent, #5b5ee0);">
+    <div class="summary-block" style="border-left:3px solid var(--accent);">
       <div class="summary-block-head"><span class="icon">🔀</span><span class="title">Confronto Scenario A / B</span></div>
       <div style="overflow-x:auto;">
         <table style="width:100%;border-collapse:collapse;font-size:13px;">

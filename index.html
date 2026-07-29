@@ -6,7 +6,7 @@
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#5b5ee0">
+  <meta name="theme-color" content="#1f1d1c">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -27,7 +27,7 @@
     <!-- Inter font: fallback SF Pro-like per non-Apple -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -37,9 +37,11 @@
         <img src="icons/icon-192.png" alt="Preventivator" class="sidebar-icon" width="34" height="34" />
         <div class="sidebar-title-group">
           <div class="sidebar-title">Preventivator</div>
-          <div class="sidebar-subtitle">Stampa 3D &amp; Laser</div>
+          <div class="sidebar-subtitle">Mod. 3D · Laser</div>
         </div>
       </div>
+
+      <div class="sidebar-divider"></div>
 
       <nav class="tabs" aria-label="Navigazione sezioni" role="tablist">
         <button class="tab-btn active" data-tab="tab-profilo" role="tab" aria-selected="true" aria-controls="tab-profilo" id="tabbtn-tab-profilo">
@@ -80,6 +82,11 @@
     </aside>
 
     <div class="app-content">
+    <div id="desktopHintBanner" class="desktop-hint hidden">
+      <span>💡 Preventivator dà il meglio su computer: da smartphone resta usabile, ma alcune schermate sono più comode su schermo grande.</span>
+      <button type="button" id="desktopHintClose" aria-label="Chiudi avviso">✕</button>
+    </div>
+
     <main id="appMain">
 
     <section id="tab-profilo" class="tab-panel active" role="tabpanel" aria-labelledby="tabbtn-tab-profilo">

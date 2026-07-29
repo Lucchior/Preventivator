@@ -324,6 +324,19 @@ function initFloatingTotal() {
   }
 }
 
+function initDesktopHint() {
+  const banner = document.getElementById('desktopHintBanner');
+  const close  = document.getElementById('desktopHintClose');
+  if (!banner || !close) return;
+  loadData(STORAGE_KEYS.desktopHintDismissed, false).then(dismissed => {
+    if (!dismissed) banner.classList.remove('hidden');
+  });
+  close.addEventListener('click', async () => {
+    banner.classList.add('hidden');
+    await saveData(STORAGE_KEYS.desktopHintDismissed, true);
+  });
+}
+
 async function init() {
   // 1. Storage + tema (prima di tutto per evitare flash)
   await initStorage();
@@ -348,9 +361,10 @@ async function init() {
   initPdfHandler();
   initScenarioHandlers();
   initHelpHandler();
+  initDesktopHint();
   initFloatingTotal();
   initArchiveHandlers({ restoreCurrentJob, renderJobs, renderLaborEntries, activateTab, generatePdf });
-  initIoHandlers({ renderMachines, renderMaterials, restoreProfile, renderJobs, restoreCurrentJob, activateTab });
+  initIoHandlers({ renderMachines, renderMaterials, restoreProfile, renderJobs, renderLaborEntries, restoreCurrentJob, activateTab });
   initJobFormHandler();
 
   // 5. Render iniziale (parallelo dove possibile)
