@@ -1,5 +1,3 @@
-![icona](https://github.com/Lucchior/Preventivator/blob/main/icons/icon-180.png)
-
 # Preventivator — Preventivi Stampa 3D e Laser
 
 **🔗 App live: [https://lucchior.github.io/Preventivator/](https://lucchior.github.io/Preventivator/)**
