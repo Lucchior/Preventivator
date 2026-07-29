@@ -1,3 +1,5 @@
+![icona](https://github.com/Lucchior/Preventivator/blob/main/icons/icon-180-v2.png?raw=true)
+
 # Preventivator — Preventivi Stampa 3D e Laser
 
 **🔗 App live: [https://lucchior.github.io/Preventivator/](https://lucchior.github.io/Preventivator/)**
@@ -235,9 +237,9 @@ Preventivator/
 │   ├── jspdf.umd.min.js      # Libreria PDF vendorizzata (non nel CDN)
 │   └── jszip.min.js           # Libreria lettura archivi .3mf (non nel CDN)
 ├── icons/
-│   ├── icon-180.png
-│   ├── icon-192.png
-│   └── icon-512.png
+│   ├── icon-180-v2.png
+│   ├── icon-192-v2.png
+│   └── icon-512-v2.png
 └── tests/
     └── calc.test.js           # 58 test della logica di calcolo
 ```

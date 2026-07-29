@@ -6,7 +6,7 @@
  * IMPORTANTE: aggiornare CACHE_VERSION ad ogni deploy che modifica i file.
  */
 
-const CACHE_VERSION  = 'v3.2.0';
+const CACHE_VERSION  = 'v3.2.1';
 const CACHE_NAME     = `preventivator-${CACHE_VERSION}`;
 const CACHE_CDN_NAME = `preventivator-cdn-${CACHE_VERSION}`;
 
@@ -36,9 +36,9 @@ const LOCAL_ASSETS = [
   './js/ui-help.js',
   './vendor/jspdf.umd.min.js',
   './vendor/jszip.min.js',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-180.png',
+  './icons/icon-192-v2.png',
+  './icons/icon-512-v2.png',
+  './icons/icon-180-v2.png',
 ];
 
 // Origini CDN da cachare al primo utilizzo
