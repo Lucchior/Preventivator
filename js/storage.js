@@ -57,13 +57,6 @@ const DB_NAME    = 'preventivator';
 const DB_VERSION = 1;
 const STORE      = 'keyval';
 
-export const DATA_VERSION = 1;
-
-export const MIGRATIONS = {
-  // Esempio di migrazione futura:
-  // 2: (data) => ({ ...data, nuovoCampo: valoreDefault }),
-};
-
 export const STORAGE_KEYS = {
   machines:   'preventivi3d_machines',
   materials:  'preventivi3d_materials',
@@ -106,15 +99,6 @@ export async function loadData(key, fallback = []) {
     const db  = await getDb();
     const val = await db.get(STORE, key);
     if (val === undefined) return fallback;
-
-    // Migrazione automatica se i dati hanno version schema obsoleto
-    if (val && typeof val === 'object' && !Array.isArray(val) && val._v && val._v < DATA_VERSION) {
-      const migrated = migrateData(val, val._v);
-      migrated._v    = DATA_VERSION;
-      await saveData(key, migrated);
-      return migrated.data ?? fallback;
-    }
-
     return val;
   } catch (e) {
     console.warn(`[Storage] Errore lettura (${key}):`, e);
@@ -149,33 +133,6 @@ export async function saveData(key, data) {
   } catch (e) {
     console.error(`[Storage] Errore scrittura (${key}):`, e);
   }
-}
-
-/**
- * Elimina una chiave dall'IndexedDB.
- */
-export async function deleteData(key) {
-  try {
-    const db = await getDb();
-    await db.delete(STORE, key);
-  } catch (e) {
-    console.error(`[Storage] Errore eliminazione (${key}):`, e);
-  }
-}
-
-// ── Migrazione schema dati ────────────────────────────────────────────────────
-export function migrateData(data, fromVersion) {
-  let current  = fromVersion;
-  let migrated = { ...data };
-  while (current < DATA_VERSION) {
-    const next = current + 1;
-    if (MIGRATIONS[next]) {
-      migrated = MIGRATIONS[next](migrated);
-      console.info(`[Preventivator] Migrazione schema v${current} → v${next}`);
-    }
-    current = next;
-  }
-  return migrated;
 }
 
 // ── Migrazione da localStorage ────────────────────────────────────────────────

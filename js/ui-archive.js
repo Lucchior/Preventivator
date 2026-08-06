@@ -5,7 +5,6 @@
  */
 
 import { loadData, saveData, STORAGE_KEYS } from './storage.js';
-import { saveJobs }                          from './models.js';
 import { currency, num, escapeHtml, todayIso, showUndoToast } from './utils.js';
 
 // ── Struttura di un record archivio ──────────────────────────────────────────
