@@ -506,14 +506,20 @@
         </div>
         <div class="card">
           <h3>Formula prezzo</h3>
-          <div class="summary">
-            <div class="summary-line"><span>Subtotale 3D</span><strong>materiale + energia + manutenzione + ammortamento</strong></div>
-            <div class="summary-line"><span>Subtotale laser</span><strong>materiale + energia + manutenzione + ammortamento</strong></div>
-            <div class="summary-line"><span>Manodopera</span><strong>ore manuali × costo orario</strong></div>
-            <div class="summary-line"><span>Totale tecnico</span><strong>3D + laser + manodopera</strong></div>
-            <div class="summary-line"><span>Costo con fallimento</span><strong>totale base × (1 + fallimento %)</strong></div>
-            <div class="summary-line"><span>Prezzo finale</span><strong>rincaro, sconto, minimo e IVA opzionale</strong></div>
-          </div>
+          <p class="subtitle" style="margin-top:6px;">Come si arriva dal costo tecnico al prezzo finale, passo per passo.</p>
+          <ol class="formula-steps">
+            <li><div class="step-body"><strong>Costo per lavorazione</strong><span class="step-desc">materiale + energia + manutenzione + ammortamento macchina + eventuali extra, per ogni lavorazione 3D o laser</span></div></li>
+            <li><div class="step-body"><strong>+ Manodopera</strong><span class="step-desc">somma di tutte le voci inserite (ognuna con la propria durata e tariffa oraria)</span></div></li>
+            <li><div class="step-body"><strong>+ Margine di fallimento %</strong><span class="step-desc">copre eventuali stampe da rifare</span></div></li>
+            <li><div class="step-body"><strong>= Costo reale totale</strong></div></li>
+            <li><div class="step-body"><strong>+ Rincaro / guadagno %</strong></div></li>
+            <li><div class="step-body"><strong>− Sconto cliente</strong><span class="step-desc">importo fisso e/o percentuale, si sommano</span></div></li>
+            <li><div class="step-body"><strong>Prezzo minimo garantito</strong><span class="step-desc">se impostato, alza il prezzo se serve</span></div></li>
+            <li><div class="step-body"><strong>+ IVA %</strong><span class="step-desc">se attiva</span></div></li>
+            <li><div class="step-body"><strong>+ Spedizione</strong><span class="step-desc">se prevista</span></div></li>
+            <li><div class="step-body"><strong>Arrotondamento</strong><span class="step-desc">se attivo, a multipli di 0,50€</span></div></li>
+            <li><div class="step-body"><strong>= Prezzo finale</strong></div></li>
+          </ol>
           <div class="total-box">
             <div class="label">Prezzo finale consigliato</div>
             <div class="value" id="recommendedPriceBox">--</div>
@@ -592,14 +598,14 @@
           <h3>Guida rapida</h3>
           <p class="subtitle" style="margin-top:8px;">I file esportati sono in formato <strong>JSON</strong>, leggibili e modificabili con qualsiasi editor di testo. Puoi salvarli nella cartella del lavoro insieme al PDF del preventivo.</p>
 
-          <div class="summary-block cost-real" style="margin-top:14px;">
+          <div class="guide-block guide-blue" style="margin-top:14px;">
             <div class="summary-block-head"><span class="icon">⚙️</span><span class="title">Dati base</span></div>
             <div class="summary-line sub"><span>Cosa contiene</span><strong>Profilo fornitore, tutte le macchine, tutti i materiali</strong></div>
             <div class="summary-line sub"><span>Quando esportarlo</span><strong>Una volta sola, poi ogni volta che aggiungi macchine o materiali</strong></div>
             <div class="summary-line sub"><span>Nome file</span><strong>dati-base-AAAA-MM-GG.json</strong></div>
           </div>
 
-          <div class="summary-block cost-client" style="margin-top:10px;">
+          <div class="guide-block guide-amber" style="margin-top:10px;">
             <div class="summary-block-head"><span class="icon">📄</span><span class="title">Lavorazione</span></div>
             <div class="summary-line sub"><span>Cosa contiene</span><strong>Tutti i dati del preventivo: lavorazioni, margini, prezzi, spedizione, risultato calcolato</strong></div>
             <div class="summary-line sub"><span>Quando esportarlo</span><strong>Dopo aver calcolato il riepilogo, per ogni preventivo completato</strong></div>

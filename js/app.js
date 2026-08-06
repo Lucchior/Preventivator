@@ -445,24 +445,44 @@ if ('serviceWorker' in navigator) {
 }
 
 function showUpdateBanner(newWorker) {
+  const banner = document.createElement('div');
+  banner.id = 'updateBanner';
+  banner.innerHTML = `
+    <span class="update-banner-text">🔄 Nuova versione disponibile</span>
+    <button type="button" id="updateNowBtn" class="primary">Aggiorna ora</button>
+    <button type="button" id="updateMoreInfoBtn" class="update-banner-link">Problemi con l'aggiornamento?</button>
+    <button type="button" id="updateLaterBtn" class="update-banner-close" aria-label="Chiudi">✕</button>
+  `;
+  document.body.appendChild(banner);
+
+  const close = () => banner.remove();
+  document.getElementById('updateLaterBtn').addEventListener('click', close);
+
+  document.getElementById('updateNowBtn').addEventListener('click', () => {
+    newWorker.postMessage('skipWaiting');
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+    close();
+  });
+
+  document.getElementById('updateMoreInfoBtn').addEventListener('click', showUpdateHelpOverlay);
+}
+
+function showUpdateHelpOverlay() {
   const overlay = document.createElement('div');
   overlay.id = 'updateOverlay';
   overlay.innerHTML = `
     <div class="update-modal">
       <div class="update-icon">🔄</div>
-      <h2>Nuova versione disponibile</h2>
+      <h2>Il sito di solito si aggiorna da solo</h2>
       <p class="update-warning">
-        ⚠️ <strong>Prima di aggiornare</strong>, esporta i tuoi dati per non perdere profilo, macchine, materiali e preventivi salvati.
-        L'aggiornamento richiede di svuotare la cache del browser, che può cancellare i dati non esportati.
+        Normalmente basta cliccare <strong>"Aggiorna ora"</strong>: i tuoi dati (profilo, macchine, materiali, preventivi) non c'entrano nulla con l'aggiornamento e restano sempre al sicuro — sono salvati separatamente dalla cache del sito.
+        Se però qualcosa resta bloccato su una versione vecchia anche dopo aver cliccato "Aggiorna ora", prova a svuotare la cache del browser con la procedura qui sotto (in quel caso, per sicurezza, esporta prima i tuoi dati da "📦 Dati &amp; Backup").
       </p>
 
-      <div class="update-export-actions">
-        <button id="updateExportBaseBtn" class="primary">⬇️ Esporta dati base (profilo, macchine, materiali)</button>
-        <button id="updateExportJobBtn" class="secondary">⬇️ Esporta lavorazione corrente</button>
-      </div>
-
-      <details class="update-instructions">
-        <summary>📖 Come svuotare la cache e ricaricare (per browser)</summary>
+      <details class="update-instructions" open>
+        <summary>📖 Come svuotare la cache (solo se necessario)</summary>
         <div class="browser-guides">
           <div class="browser-guide">
             <h4>🧭 Safari</h4>
@@ -495,32 +515,13 @@ function showUpdateBanner(newWorker) {
       </details>
 
       <div class="update-final-actions">
-        <button id="updateNowBtn" class="primary">✅ Ho esportato i dati, aggiorna ora</button>
-        <button id="updateLaterBtn" class="secondary">Più tardi</button>
+        <button type="button" id="updateHelpCloseBtn" class="secondary">Chiudi</button>
       </div>
-
-      <p class="update-reimport-hint">💡 Dopo l'aggiornamento, vai su "📦 Dati &amp; Backup" per reimportare i file appena esportati.</p>
     </div>
   `;
   document.body.appendChild(overlay);
   document.body.style.overflow = 'hidden';
-
-  document.getElementById('updateExportBaseBtn').addEventListener('click', () => {
-    document.getElementById('exportBaseBtn')?.click();
-  });
-  document.getElementById('updateExportJobBtn').addEventListener('click', () => {
-    document.getElementById('exportJobBtn')?.click();
-  });
-
   const close = () => { overlay.remove(); document.body.style.overflow = ''; };
-
-  document.getElementById('updateLaterBtn').addEventListener('click', close);
-
-  document.getElementById('updateNowBtn').addEventListener('click', () => {
-    newWorker.postMessage('skipWaiting');
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      window.location.reload();
-    });
-    close();
-  });
+  document.getElementById('updateHelpCloseBtn').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
 }

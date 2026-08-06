@@ -484,7 +484,29 @@ input[type=checkbox] { accent-color: var(--accent); cursor: pointer; flex-shrink
 .update-modal h2 { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 12px; }
 .update-warning { background: var(--orange-bg); border-radius: var(--r-sm); padding: 12px 16px; font-size: 13px; color: var(--text-2); line-height: 1.5; text-align: left; margin-bottom: 18px; }
 .update-warning strong { color: var(--orange); }
-.update-export-actions { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.update-final-actions { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.update-final-actions .secondary { background: transparent; border-color: var(--border); }
+
+/* ── Banner piccolo "nuova versione" ──────────────────────────────── */
+#updateBanner {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+  z-index: 9998;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  max-width: min(92vw, 480px);
+  background: var(--surface); border: 1px solid var(--border-2); border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 12px 14px;
+}
+.update-banner-text { font-size: 13.5px; font-weight: 600; color: var(--text); }
+#updateBanner .primary { padding: 8px 16px; font-size: 13px; }
+.update-banner-link { background: none; border: none; color: var(--muted); font-size: 12px; text-decoration: underline; cursor: pointer; padding: 4px; font-family: var(--font); }
+.update-banner-link:hover { color: var(--accent); }
+.update-banner-close { position: absolute; top: 6px; right: 8px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 4px; }
+.update-banner-close:hover { color: var(--text); }
+@media (max-width: 520px) {
+  #updateBanner { flex-direction: column; align-items: stretch; padding: 14px 16px 12px; }
+  #updateBanner .primary { width: 100%; }
+}
 .update-instructions { text-align: left; border: 1px solid var(--border); border-radius: var(--r-sm); padding: 10px 14px; margin-bottom: 18px; background: var(--surface-2); }
 .update-instructions summary { cursor: pointer; font-weight: 700; font-size: 13.5px; color: var(--text); list-style: none; }
 .update-instructions summary::-webkit-details-marker { display: none; }
@@ -496,7 +518,6 @@ input[type=checkbox] { accent-color: var(--accent); cursor: pointer; flex-shrink
 .browser-guide ol { margin: 0; padding-left: 18px; font-size: 12.5px; color: var(--muted); line-height: 1.7; }
 .update-final-actions { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
 .update-final-actions .secondary { background: transparent; border-color: var(--border); }
-.update-reimport-hint { font-size: 12px; color: var(--muted); line-height: 1.5; }
 @media (min-width: 480px) { .browser-guides { grid-template-columns: repeat(3, 1fr); } }
 
 /* ── Responsive: sidebar → barra orizzontale su tablet/mobile ─────── */
@@ -578,3 +599,29 @@ input[type=checkbox] { accent-color: var(--accent); cursor: pointer; flex-shrink
 @media (max-width: 900px) {
   .desktop-hint:not(.hidden) { display: flex; }
 }
+
+/* ── Elenco formula prezzo (statico, tab Riepilogo) ───────────────── */
+.formula-steps { list-style: none; counter-reset: step; margin: 14px 0 18px; display: flex; flex-direction: column; gap: 11px; }
+.formula-steps li { counter-increment: step; display: flex; gap: 10px; align-items: flex-start; }
+.formula-steps li::before {
+  content: counter(step);
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent-bg); color: var(--accent);
+  font-size: 11px; font-weight: 700; font-family: var(--font-mono);
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+}
+.formula-steps li .step-body { display: flex; flex-direction: column; gap: 1px; }
+.formula-steps li strong { color: var(--text); font-weight: 700; font-size: 13px; }
+.formula-steps li .step-desc { color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+/* ── Blocchi guida (tab Dati & Backup) — stessi colori dell'io-tag sopra ── */
+.guide-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 18px 20px; }
+.guide-block.guide-blue  { border-left: 3px solid var(--blue); }
+.guide-block.guide-amber { border-left: 3px solid var(--orange); }
+.guide-block .summary-line {
+  display: grid; grid-template-columns: 108px 1fr; gap: 3px 14px; align-items: start;
+  padding: 8px 2px;
+}
+.guide-block .summary-line span { font-size: 12px; color: var(--muted); }
+.guide-block .summary-line strong { font-family: var(--font); font-weight: 600; color: var(--text-2); font-size: 12.5px; line-height: 1.5; }

@@ -168,7 +168,7 @@ Da smartphone o desktop puoi installare Preventivator come una vera app (icona i
 7. **Tab 📦 Dati & Backup** → esporta la lavorazione come JSON, se vuoi conservarla a parte
 
 ### Quando esce un aggiornamento
-L'app ti avviserà con una schermata dedicata che ti guida a: esportare i dati, svuotare la cache (istruzioni per Safari/Chrome/Firefox), ricaricare, e reimportare tutto — per non perdere nulla durante l'aggiornamento.
+Compare un piccolo avviso in basso con un pulsante "Aggiorna ora": un clic e basta, i tuoi dati (profilo, macchine, materiali, preventivi) sono salvati separatamente dalla cache del sito e non vengono mai toccati da un aggiornamento normale. Solo nel raro caso in cui qualcosa restasse bloccato su una versione vecchia, un link secondario "Problemi con l'aggiornamento?" mostra come svuotare la cache del browser (con il consiglio di esportare prima i dati, per sicurezza).
 
 ---
 
